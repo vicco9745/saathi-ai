@@ -1,0 +1,133 @@
+import json
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+APPROVED_FILE = BASE_DIR / "ichat_ai" / "dataset" / "approved.jsonl"
+LEARNING_FILE = BASE_DIR / "ichat_ai" / "dataset" / "learning_queue.jsonl"
+
+
+def load_responses():
+    responses = []
+
+    if not APPROVED_FILE.exists():
+        return responses
+
+    with open(APPROVED_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                data = json.loads(line)
+                if "user" in data and "assistant" in data:
+                    responses.append(data)
+            except json.JSONDecodeError:
+                pass
+
+    return responses
+
+
+def save_to_learning_queue(user_text):
+    text = user_text.strip()
+    if not text:
+        return
+
+    sensitive_words = (
+        "password", "passwd", "api key", "apikey",
+        "secret", "token", "otp", "पासवर्ड",
+        "एपीआई की", "ओटीपी"
+    )
+
+    lower_text = text.lower()
+
+    if any(word in lower_text for word in sensitive_words):
+        return
+
+    normalized = normalize_text(text)
+    existing = set()
+
+    if LEARNING_FILE.exists():
+        with open(LEARNING_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    data = json.loads(line)
+                    existing.add(normalize_text(data.get("user", "")))
+                except json.JSONDecodeError:
+                    pass
+
+    if normalized in existing:
+        return
+
+    with open(LEARNING_FILE, "a", encoding="utf-8") as f:
+        json.dump({"user": text}, f, ensure_ascii=False)
+        f.write("\n")
+
+
+def normalize_text(text):
+    return text.strip().lower().rstrip("?!।,").replace("  ", " ")
+
+def similarity_score(text1, text2):
+    words1 = set(normalize_text(text1).split())
+    words2 = set(normalize_text(text2).split())
+
+    if not words1 or not words2:
+        return 0.0
+
+    common = words1.intersection(words2)
+    return len(common) / max(len(words1), len(words2))
+
+
+def find_similar_response(user_text):
+    best_answer = None
+    best_score = 0.0
+
+    for item in load_responses():
+        score = similarity_score(user_text, item["user"])
+
+        if score > best_score:
+            best_score = score
+            best_answer = item["assistant"]
+
+    if best_score >= 0.5:
+        return best_answer
+
+    return None
+
+
+def get_response(user_text):
+    from ichat_ai.memory.memory import remember, recall
+
+    original_text = user_text.strip()
+    normalized_original = normalize_text(original_text)
+
+    if normalized_original in ("मेरा नाम क्या है", "मुझे क्या नाम से जानते हो"):
+        name = recall("user_name")
+        if name:
+            return f"आपका नाम {name} है।"
+        return "मुझे अभी आपका नाम याद नहीं है।"
+
+    if normalized_original.startswith("मेरा नाम है "):
+        name = original_text[11:].strip()
+        if name.endswith(" है"):
+            name = name[:-3].strip()
+        if name:
+            remember("user_name", name)
+            return f"ठीक है, मैं याद रखूँगा कि आपका नाम {name} है।"
+
+    if normalized_original.startswith("मेरा नाम "):
+        name = original_text[8:].strip()
+        if name.endswith(" है"):
+            name = name[:-3].strip()
+        if name:
+            remember("user_name", name)
+            return f"ठीक है, मैं याद रखूँगा कि आपका नाम {name} है।"
+
+    user_text = normalize_text(user_text)
+
+    for item in load_responses():
+        if user_text == normalize_text(item["user"]):
+            return item["assistant"]
+
+    similar_answer = find_similar_response(original_text)
+    if similar_answer:
+        return similar_answer
+
+    save_to_learning_queue(original_text)
+    return "मैं अभी यह जवाब सीख रहा हूँ।"

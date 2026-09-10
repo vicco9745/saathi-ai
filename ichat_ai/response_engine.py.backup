@@ -1,0 +1,63 @@
+import json
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+APPROVED_FILE = BASE_DIR / "ichat_ai" / "dataset" / "approved.jsonl"
+
+
+def load_responses():
+    responses = []
+
+    if not APPROVED_FILE.exists():
+        return responses
+
+    with open(APPROVED_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                data = json.loads(line)
+                if "user" in data and "assistant" in data:
+                    responses.append(data)
+            except json.JSONDecodeError:
+                pass
+
+    return responses
+
+
+def normalize_text(text):
+    return text.strip().lower().rstrip("?!।,").replace("  ", " ")
+
+def get_response(user_text):
+    from ichat_ai.memory.memory import remember, recall
+
+    original_text = user_text.strip()
+    normalized_original = normalize_text(original_text)
+
+    if normalized_original in ("मेरा नाम क्या है", "मुझे क्या नाम से जानते हो"):
+        name = recall("user_name")
+        if name:
+            return f"आपका नाम {name} है।"
+        return "मुझे अभी आपका नाम याद नहीं है।"
+
+    if normalized_original.startswith("मेरा नाम है "):
+        name = original_text[11:].strip()
+        if name.endswith(" है"):
+            name = name[:-3].strip()
+        if name:
+            remember("user_name", name)
+            return f"ठीक है, मैं याद रखूँगा कि आपका नाम {name} है।"
+
+    if normalized_original.startswith("मेरा नाम "):
+        name = original_text[8:].strip()
+        if name.endswith(" है"):
+            name = name[:-3].strip()
+        if name:
+            remember("user_name", name)
+            return f"ठीक है, मैं याद रखूँगा कि आपका नाम {name} है।"
+
+    user_text = normalize_text(user_text)
+
+    for item in load_responses():
+        if user_text == normalize_text(item["user"]):
+            return item["assistant"]
+
+    return "मैं अभी यह जवाब सीख रहा हूँ।"

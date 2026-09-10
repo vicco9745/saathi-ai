@@ -1,0 +1,39 @@
+{
+  "test": "Saathi memory OK",
+  "user_name": "Vikas",
+  "favorite_color": "नीला",
+  "conversation_history": [
+    {
+      "user": "यह context memory का test है",
+      "assistant": "मैं अभी यह जवाब सीख रहा हूँ।"
+    },
+    {
+      "user": "और बताओ",
+      "assistant": "मैं अभी यह जवाब सीख रहा हूँ।"
+    },
+    {
+      "user": "तुम कौन हो",
+      "assistant": "मैं Saathi हूँ।"
+    },
+    {
+      "user": "और बताओ",
+      "assistant": "मैं Saathi हूँ।"
+    },
+    {
+      "user": "तुम्हारा नाम क्या है",
+      "assistant": "मेरा नाम Saathi है। मैं आपका क्या साथ दे सकता हूँ?"
+    },
+    {
+      "user": "तुम्हारा नाम क्या है",
+      "assistant": "मेरा नाम Saathi है। मैं आपका क्या साथ दे सकता हूँ?"
+    },
+    {
+      "user": "तुम्हारा नाम क्या है",
+      "assistant": "मेरा नाम Saathi है। मैं आपका क्या साथ दे सकता हूँ?"
+    },
+    {
+      "user": "तुम्हारा नाम क्या है",
+      "assistant": "मेरा नाम Saathi है। मैं आपका क्या साथ दे सकता हूँ?"
+    }
+  ]
+}

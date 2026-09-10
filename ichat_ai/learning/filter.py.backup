@@ -1,0 +1,32 @@
+import json
+from pathlib import Path
+
+APPROVED_FILE = Path("ichat_ai/dataset/approved.jsonl")
+
+def is_good_data(user_text, assistant_text):
+    if not user_text or not assistant_text:
+        return False
+
+    if len(user_text.strip()) < 2:
+        return False
+
+    if len(assistant_text.strip()) < 2:
+        return False
+
+    return True
+
+def save_approved(user_text, assistant_text):
+    if not is_good_data(user_text, assistant_text):
+        return False
+
+    APPROVED_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    record = {
+        "user": user_text.strip(),
+        "assistant": assistant_text.strip()
+    }
+
+    with open(APPROVED_FILE, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    return True
