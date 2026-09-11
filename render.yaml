@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: saathi-ai
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: sh start.sh
