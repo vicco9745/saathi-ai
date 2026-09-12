@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from .db import init_db
 from .auth import require_api_key, record_usage
@@ -8,6 +9,14 @@ app = FastAPI(
     title="iChat API",
     version="1.0.0",
     description="One API gateway for iChat services."
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.on_event("startup")
