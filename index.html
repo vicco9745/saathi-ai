@@ -2193,20 +2193,42 @@
                     const combinedText = textAttachments.length > 0
                         ? textAttachments.map(a => a.content).join('\n\n') + (text ? ('\n\n' + text) : '')
                         : text;
-                    fetch('/gemini/chat', {
+                    const SAATHI_URL = 'https://saathi-ai-y48j.onrender.com/v1/chat';
+                    let SAATHI_KEY = localStorage.getItem('saathi_api_key');
+
+                    if (!SAATHI_KEY) {
+                        SAATHI_KEY = prompt('Saathi API Key डालें:');
+                        if (SAATHI_KEY) {
+                            localStorage.setItem('saathi_api_key', SAATHI_KEY.trim());
+                        }
+                    }
+
+                    fetch(SAATHI_URL, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: combinedText, model: currentModel })
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-API-Key': SAATHI_KEY
+                        },
+                        body: JSON.stringify({
+                            message: combinedText,
+                            model: currentModel
+                        })
                     })
-                    .then(res => res.json())
+                    .then(async res => {
+                        const data = await res.json();
+                        if (!res.ok) {
+                            throw new Error(data.detail || data.error || 'API error');
+                        }
+                        return data;
+                    })
                     .then(data => {
-                        const replyText = data.success ? data.reply : ('Error: ' + (data.error || 'Unknown error'));
+                        const replyText = data.reply || 'Saathi से जवाब नहीं मिला।';
                         chat.messages.push({ role: 'ai', text: replyText });
                         saveChats();
                         renderMessages();
                     })
                     .catch(err => {
-                        chat.messages.push({ role: 'ai', text: 'Connection error: ' + err.message });
+                        chat.messages.push({ role: 'ai', text: 'Saathi connection error: ' + err.message });
                         saveChats();
                         renderMessages();
                     });
