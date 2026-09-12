@@ -2194,7 +2194,8 @@
                         ? textAttachments.map(a => a.content).join('\n\n') + (text ? ('\n\n' + text) : '')
                         : text;
                     const SAATHI_URL = 'https://saathi-ai-y48j.onrender.com/v1/chat';
-                    let SAATHI_KEY = localStorage.getItem('saathi_api_key');
+                    localStorage.removeItem('saathi_api_key');
+                    let SAATHI_KEY = null;
 
                     if (!SAATHI_KEY) {
                         SAATHI_KEY = prompt('Saathi API Key डालें:');
