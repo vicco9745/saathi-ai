@@ -1649,7 +1649,7 @@
                 return wrap;
             }
 
-            function typeAIMessage(element, text) {
+            function typeAIMessage(element, text, message) {
                 element.textContent = '';
                 let i = 0;
                 const speed = 18;
@@ -1659,6 +1659,9 @@
                         element.textContent += text[i++];
                         messagesEl.scrollTop = messagesEl.scrollHeight;
                         setTimeout(typeNext, speed);
+                    } else {
+                        message.typing = false;
+                        saveChats();
                     }
                 }
 
@@ -1703,7 +1706,7 @@
                             bubble.classList.add('text-only');
                         }
                         if (m.role === 'ai' && m.typing) {
-                            typeAIMessage(bubble, m.text);
+                            typeAIMessage(bubble, m.text, m);
                         } else {
                             bubble.textContent = m.text;
                         }
