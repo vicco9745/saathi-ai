@@ -1649,6 +1649,22 @@
                 return wrap;
             }
 
+            function typeAIMessage(element, text) {
+                element.textContent = '';
+                let i = 0;
+                const speed = 18;
+
+                function typeNext() {
+                    if (i < text.length) {
+                        element.textContent += text[i++];
+                        messagesEl.scrollTop = messagesEl.scrollHeight;
+                        setTimeout(typeNext, speed);
+                    }
+                }
+
+                typeNext();
+            }
+
             function renderMessages() {
                 messagesEl.innerHTML = '';
                 const chat = getCurrentChat();
@@ -1686,7 +1702,11 @@
                         if (m.role === 'user' && attachments.length === 0) {
                             bubble.classList.add('text-only');
                         }
-                        bubble.textContent = m.text;
+                        if (m.role === 'ai' && m.typing) {
+                            typeAIMessage(bubble, m.text);
+                        } else {
+                            bubble.textContent = m.text;
+                        }
                         row.appendChild(bubble);
                     }
 
@@ -2079,7 +2099,7 @@
                 callStatus.textContent = 'Soch raha hoon…';
                 setTimeout(() => {
                     const replyText = 'Maine suna: "' + transcript + '" — yeh ek demo jawab hai. Asli AI reply ke liye API connect karni hogi.';
-                    chat.messages.push({ role: 'ai', text: replyText });
+                    chat.messages.push({ role: 'ai', text: replyText, typing: true });
                     saveChats();
                     renderMessages();
                     callCircle.className = 'call-circle speaking';
@@ -2185,7 +2205,7 @@
                             replyText = mediaAttachments.length + ' items mil gaye (' + parts.join(', ') +
                                 '). Sabko samajh kar jawab dene ke liye AI/API connect karni hogi.';
                         }
-                        chat.messages.push({ role: 'ai', text: replyText });
+                        chat.messages.push({ role: 'ai', text: replyText, typing: true });
                         saveChats();
                         renderMessages();
                     }, 500);
@@ -2223,12 +2243,12 @@
                     })
                     .then(data => {
                         const replyText = data.reply || 'Saathi से जवाब नहीं मिला।';
-                        chat.messages.push({ role: 'ai', text: replyText });
+                        chat.messages.push({ role: 'ai', text: replyText, typing: true });
                         saveChats();
                         renderMessages();
                     })
                     .catch(err => {
-                        chat.messages.push({ role: 'ai', text: 'Saathi connection error: ' + err.message });
+                        chat.messages.push({ role: 'ai', text: 'Saathi connection error: ' + err.message, typing: true });
                         saveChats();
                         renderMessages();
                     });
