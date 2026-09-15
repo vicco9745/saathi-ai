@@ -1649,23 +1649,52 @@
                 return wrap;
             }
 
+            let currentTypingTimer = null;
+            let currentTypingMessage = null;
+
             function typeAIMessage(element, text, message) {
                 element.textContent = '';
                 let i = 0;
                 const speed = 18;
 
+                currentTypingMessage = message;
+                updateActionButton();
+
                 function typeNext() {
+                    if (message.typing !== true || currentTypingMessage !== message) {
+                        currentTypingTimer = null;
+                        return;
+                    }
+
                     if (i < text.length) {
                         element.textContent += text[i++];
                         messagesEl.scrollTop = messagesEl.scrollHeight;
-                        setTimeout(typeNext, speed);
+                        currentTypingTimer = setTimeout(typeNext, speed);
                     } else {
                         message.typing = false;
+                        currentTypingTimer = null;
+                        currentTypingMessage = null;
                         saveChats();
+                        updateActionButton();
                     }
                 }
 
                 typeNext();
+            }
+
+            function stopAIMessage() {
+                if (currentTypingTimer) {
+                    clearTimeout(currentTypingTimer);
+                    currentTypingTimer = null;
+                }
+
+                if (currentTypingMessage) {
+                    currentTypingMessage.typing = false;
+                    currentTypingMessage = null;
+                    saveChats();
+                }
+
+                updateActionButton();
             }
 
             function renderMessages() {
@@ -1707,6 +1736,7 @@
                         }
                         if (m.role === 'ai' && m.typing) {
                             typeAIMessage(bubble, m.text, m);
+                            updateActionButton();
                         } else {
                             bubble.textContent = m.text;
                         }
@@ -2028,16 +2058,28 @@
             const VOICE_ICON_PATH =
                 '<line x1="4" y1="12" x2="4" y2="12"/><line x1="8" y1="8" x2="8" y2="16"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="16" y1="8" x2="16" y2="16"/><line x1="20" y1="12" x2="20" y2="12"/>';
 
+            const CHECK_ICON_PATH =
+                '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9v6M15 9v6"/>';
+
             function updateActionButton() {
                 const hasText = msgInput.value.trim().length > 0 || pendingAttachments.length > 0;
+                const aiTyping = currentTypingMessage !== null && currentTypingMessage.typing === true;
+
                 actionIcon.setAttribute('fill', 'none');
                 actionIcon.setAttribute('stroke', 'currentColor');
                 actionIcon.setAttribute('stroke-width', '2');
                 actionIcon.setAttribute('stroke-linecap', 'round');
                 actionIcon.setAttribute('stroke-linejoin', 'round');
-                actionIcon.innerHTML = hasText ? SEND_ICON_PATH : VOICE_ICON_PATH;
-                actionBtn.classList.toggle('has-text', hasText);
-                actionBtn.title = hasText ? 'Send' : 'Voice se baat karein';
+
+                if (aiTyping) {
+                    actionIcon.innerHTML = CHECK_ICON_PATH;
+                    actionBtn.classList.remove('has-text');
+                    actionBtn.title = 'AI response rokhein';
+                } else {
+                    actionIcon.innerHTML = hasText ? SEND_ICON_PATH : VOICE_ICON_PATH;
+                    actionBtn.classList.toggle('has-text', hasText);
+                    actionBtn.title = hasText ? 'Send' : 'Voice se baat karein';
+                }
             }
 
             // ── Voice call ──
@@ -2154,6 +2196,12 @@
 
             // ── Send ──
             function sendMessage() {
+                currentTypingMessage = null;
+                if (currentTypingTimer) {
+                    clearTimeout(currentTypingTimer);
+                    currentTypingTimer = null;
+                }
+
                 const text = msgInput.value.trim();
                 if (!text && pendingAttachments.length === 0) return;
 
@@ -2219,31 +2267,54 @@
                     const SAATHI_URL = 'https://saathi-ai-y48j.onrender.com/v1/chat';
                     let SAATHI_KEY = localStorage.getItem('saathi_api_key');
 
-                    if (!SAATHI_KEY) {
-                        SAATHI_KEY = prompt('Saathi API Key डालें:');
-                        if (SAATHI_KEY) {
-                            localStorage.setItem('saathi_api_key', SAATHI_KEY.trim());
+                    const askForSaathiKey = () => {
+                        const newKey = prompt('Saathi API Key डालें:');
+                        if (!newKey || !newKey.trim()) {
+                            return null;
                         }
-                    }
+                        const cleanKey = newKey.trim();
+                        localStorage.setItem('saathi_api_key', cleanKey);
+                        return cleanKey;
+                    };
 
-                    fetch(SAATHI_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-API-Key': SAATHI_KEY
-                        },
-                        body: JSON.stringify({
-                            message: combinedText,
-                            model: currentModel
+                    const sendToSaathi = (key) => {
+                        return fetch(SAATHI_URL, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-API-Key': key || ''
+                            },
+                            body: JSON.stringify({
+                                message: combinedText,
+                                model: currentModel
+                            })
                         })
-                    })
-                    .then(async res => {
-                        const data = await res.json();
-                        if (!res.ok) {
-                            throw new Error(data.detail || data.error || 'API error');
-                        }
-                        return data;
-                    })
+                        .then(async res => {
+                            let data = {};
+                            try {
+                                data = await res.json();
+                            } catch (_) {}
+
+                            if (res.status === 401) {
+                                localStorage.removeItem('saathi_api_key');
+
+                                const newKey = askForSaathiKey();
+                                if (!newKey) {
+                                    throw new Error('API key required');
+                                }
+
+                                return sendToSaathi(newKey);
+                            }
+
+                            if (!res.ok) {
+                                throw new Error(data.detail || data.error || 'API error');
+                            }
+
+                            return data;
+                        });
+                    };
+
+                    sendToSaathi(SAATHI_KEY)
                     .then(data => {
                         const replyText = data.reply || 'Saathi से जवाब नहीं मिला।';
                         chat.messages.push({ role: 'ai', text: replyText, typing: true });
@@ -2267,6 +2338,11 @@
                 closeAttachMenu(); });
 
             actionBtn.addEventListener('click', () => {
+                if (currentTypingMessage && currentTypingMessage.typing === true) {
+                    stopAIMessage();
+                    return;
+                }
+
                 if (msgInput.value.trim().length > 0 || pendingAttachments.length > 0) {
                     sendMessage();
                 } else {
