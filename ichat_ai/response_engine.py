@@ -190,7 +190,11 @@ def web_search_answer(query):
         answer = snippet
         if title:
             answer = f"{title}\n\n{snippet}"
-        if url:
+        _wants_link = any(
+            word in query.lower()
+            for word in ("link", "url", "website", "site do", "link do", "वेबसाइट", "लिंक")
+        )
+        if url and _wants_link:
             answer = f"{answer}\n\n(Source: {url})"
         return answer
 
@@ -202,6 +206,16 @@ def get_response(user_text):
 
     original_text = user_text.strip()
     normalized_original = normalize_text(original_text)
+
+    _GREETINGS = {
+        "hi", "hii", "hiii", "hello", "hey", "heya", "hlo", "helo",
+        "namaste", "namaskar", "namaskaar",
+        "hi saathi", "hello saathi", "hey saathi",
+    }
+    if normalized_original in _GREETINGS:
+        reply = "नमस्ते! मैं Saathi हूँ, बताइए क्या मदद कर सकता हूँ?"
+        add_conversation(original_text, reply)
+        return reply
 
     if normalized_original in ("मेरा नाम क्या है", "मुझे क्या नाम से जानते हो"):
         name = recall("user_name")
