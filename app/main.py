@@ -47,10 +47,17 @@ def me(key=Depends(require_api_key)):
 @app.post("/v1/chat")
 def chat(body: ChatRequest, key=Depends(require_api_key)):
     record_usage(key, "chat")
-    reply = get_response(body.message)
+    result = get_response(body.message)
+    if isinstance(result, dict):
+        return {
+            "service": "chat",
+            "reply": result.get("reply"),
+            "sources": result.get("sources", []),
+            "model": "saathi"
+        }
     return {
         "service": "chat",
-        "reply": reply,
+        "reply": result,
         "model": "saathi"
     }
 

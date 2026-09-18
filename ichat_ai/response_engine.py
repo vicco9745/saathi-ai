@@ -160,12 +160,13 @@ def _clean_query_for_search(text):
 def web_search_answer(query):
     """
     ichat_ai/web_search.py ke Bing scraper (search_web) se jawab banata hai.
-    Pehle result ka description ya page content use karta hai. Kuch na
-    mile ya request fail ho jaye to None deta hai.
+    Return: (answer_text, sources) tuple.
+    sources ek list hai: [{"title": .., "url": ..}, ...]
+    Kuch na mile ya request fail ho jaye to (None, []) milta hai.
     """
     query = (query or "").strip()
     if not query:
-        return None
+        return None, []
 
     try:
         from ichat_ai.web_search import search_web
@@ -175,7 +176,10 @@ def web_search_answer(query):
         print(f"[web_search_answer] query={query!r} got {len(results)} results")
     except Exception as e:
         print(f"[web_search_answer] search_web CRASHED: {type(e).__name__}: {e}")
-        return None
+        return None, []
+
+    answer = None
+    sources = []
 
     for result in results:
         title = (result.get("title") or "").strip()
@@ -183,23 +187,19 @@ def web_search_answer(query):
         content = (result.get("content") or "").strip()
         url = (result.get("url") or "").strip()
 
-        snippet = description or content[:500]
-        if not snippet:
-            continue
+        if url and title and len(sources) < 3:
+            sources.append({"title": title, "url": url})
 
-        answer = snippet
-        if title:
-            answer = f"{title}\n\n{snippet}"
-        _wants_link = any(
-            word in query.lower()
-            for word in ("link", "url", "website", "site do", "link do", "वेबसाइट", "लिंक")
-        )
-        if url and _wants_link:
-            answer = f"{answer}\n\n(Source: {url})"
-        return answer
+        if answer is None:
+            snippet = description or content[:500]
+            if snippet:
+                answer = f"{title}\n\n{snippet}" if title else snippet
 
-    print("[web_search_answer] no usable snippet in any result")
-    return None
+    if answer is None:
+        print("[web_search_answer] no usable snippet in any result")
+        return None, []
+
+    return answer, sources
 
 def get_response(user_text):
     from ichat_ai.memory.memory import remember, recall
@@ -262,10 +262,12 @@ def get_response(user_text):
         add_conversation(original_text, reply)
         return reply
 
-    web_answer = web_search_answer(original_text)
+    web_answer, web_sources = web_search_answer(original_text)
     if web_answer:
         reply = web_answer
         add_conversation(original_text, reply)
+        if web_sources:
+            return {"reply": reply, "sources": web_sources}
         return reply
     save_to_learning_queue(original_text)
     reply = "मैंने इंटरनेट पर ढूँढने की कोशिश की, लेकिन विश्वसनीय जानकारी नहीं मिली।"
