@@ -123,46 +123,40 @@ def get_recent_context(limit=5):
 
 def web_search_answer(query):
     """
-    DuckDuckGo Instant Answer API se seedha jawab dhoondhta hai.
-    Koi API key nahi chahiye. Kuch na mile ya request fail ho jaye
-    to None deta hai.
+    ichat_ai/web_search.py ke Bing scraper (search_web) se jawab banata hai.
+    Pehle result ka description ya page content use karta hai. Kuch na
+    mile ya request fail ho jaye to None deta hai.
     """
     query = (query or "").strip()
     if not query:
         return None
+
     try:
-        import requests
-        resp = requests.get(
-            "https://api.duckduckgo.com/",
-            params={
-                "q": query,
-                "format": "json",
-                "no_redirect": "1",
-                "no_html": "1",
-                "skip_disambig": "1",
-            },
-            timeout=6,
-            headers={"User-Agent": "SaathiAI/1.0"},
-        )
-        data = resp.json()
-    except Exception:
+        from ichat_ai.web_search import search_web
+        results = search_web(query, limit=3)
+        print(f"[web_search_answer] query={query!r} got {len(results)} results")
+    except Exception as e:
+        print(f"[web_search_answer] search_web CRASHED: {type(e).__name__}: {e}")
         return None
 
-    answer = data.get("AbstractText") or data.get("Answer")
-    if answer:
-        source = data.get("AbstractURL") or ""
-        if source:
-            return f"{answer}\n\n(Source: {source})"
+    for result in results:
+        title = (result.get("title") or "").strip()
+        description = (result.get("description") or "").strip()
+        content = (result.get("content") or "").strip()
+        url = (result.get("url") or "").strip()
+
+        snippet = description or content[:500]
+        if not snippet:
+            continue
+
+        answer = snippet
+        if title:
+            answer = f"{title}\n\n{snippet}"
+        if url:
+            answer = f"{answer}\n\n(Source: {url})"
         return answer
 
-    for topic in data.get("RelatedTopics", []):
-        if isinstance(topic, dict) and topic.get("Text"):
-            return topic["Text"]
-        if isinstance(topic, dict) and topic.get("Topics"):
-            for sub in topic["Topics"]:
-                if isinstance(sub, dict) and sub.get("Text"):
-                    return sub["Text"]
-
+    print("[web_search_answer] no usable snippet in any result")
     return None
 
 def get_response(user_text):

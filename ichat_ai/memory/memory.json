@@ -4,10 +4,6 @@
   "favorite_color": "नीला",
   "conversation_history": [
     {
-      "user": "यह context memory का test है",
-      "assistant": "मैं अभी यह जवाब सीख रहा हूँ।"
-    },
-    {
       "user": "और बताओ",
       "assistant": "मैं अभी यह जवाब सीख रहा हूँ।"
     },
@@ -38,6 +34,14 @@
     {
       "user": "Eiffel Tower kitna lamba hai",
       "assistant": "मैंने इंटरनेट पर ढूँढने की कोशिश की, लेकिन विश्वसनीय जानकारी नहीं मिली।"
+    },
+    {
+      "user": "Eiffel Tower kitna lamba hai",
+      "assistant": "YouTube TV Help\n\nOfficial YouTube TV Help Center where you can find tips and tutorials on using YouTube TV and other answers to frequently asked …\n\n(Source: https://support.google.com/youtubetv/?hl=en)"
+    },
+    {
+      "user": "Eiffel Tower height",
+      "assistant": "The OFFICIAL Eiffel Tower website: tickets, news, info...\n\nWondering what there is to see at the Eiffel Tower and what you’ll find on each floor? From its bustling esplanade to its dizzying 276 …\n\n(Source: https://www.toureiffel.paris/en)"
     }
   ]
 }
