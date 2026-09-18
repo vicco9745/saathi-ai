@@ -121,6 +121,42 @@ def get_recent_context(limit=5):
 
 
 
+
+import re as _re_web_search
+
+_HINDI_FILLER_WORDS = [
+    "kya hai", "kya h", "kya tha", "kya thi",
+    "kahan hai", "kaha hai", "kahan h", "kaha h",
+    "kitna hai", "kitni hai", "kitne hai", "kitna h",
+    "kaun hai", "kaun tha", "kaun h",
+    "kab hai", "kab tha", "kab h",
+    "kyun hai", "kyu hai", "kyun h",
+    "kaise hai", "kaise h",
+    "hai kya", "hai kaha", "hai kitna",
+    "क्या है", "कहाँ है", "कहां है", "कितना है", "कितनी है",
+    "कौन है", "कब है", "क्यों है", "कैसे है",
+    "kya", "kaha", "kahan", "kitna", "kitni", "kaun",
+    "kab", "kyun", "kyu", "kaise", "hai", "h", "tha", "thi", "the",
+]
+
+
+def _clean_query_for_search(text):
+    """Hindi filler/question words hata ke sirf topic nikaalta hai."""
+    words = text.strip().split()
+    if not words:
+        return text
+
+    lowered_words = [w.lower().strip("?!।,.") for w in words]
+
+    kept = []
+    for original, lowered in zip(words, lowered_words):
+        if lowered in _HINDI_FILLER_WORDS:
+            continue
+        kept.append(original)
+
+    cleaned = " ".join(kept).strip()
+    return cleaned if cleaned else text
+
 def web_search_answer(query):
     """
     ichat_ai/web_search.py ke Bing scraper (search_web) se jawab banata hai.
@@ -133,7 +169,9 @@ def web_search_answer(query):
 
     try:
         from ichat_ai.web_search import search_web
-        results = search_web(query, limit=3)
+        cleaned_query = _clean_query_for_search(query)
+        results = search_web(cleaned_query, limit=3)
+        print(f"[web_search_answer] cleaned query={cleaned_query!r} (original={query!r})")
         print(f"[web_search_answer] query={query!r} got {len(results)} results")
     except Exception as e:
         print(f"[web_search_answer] search_web CRASHED: {type(e).__name__}: {e}")
