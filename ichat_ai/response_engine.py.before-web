@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-import requests
 from ichat_ai.memory.memory import add_conversation, get_conversation_history
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -120,51 +119,6 @@ def get_recent_context(limit=5):
     return history[-limit:]
 
 
-
-def web_search_answer(query):
-    """
-    DuckDuckGo Instant Answer API se seedha jawab dhoondhta hai.
-    Koi API key nahi chahiye. Kuch na mile ya request fail ho jaye
-    to None deta hai.
-    """
-    query = (query or "").strip()
-    if not query:
-        return None
-    try:
-        import requests
-        resp = requests.get(
-            "https://api.duckduckgo.com/",
-            params={
-                "q": query,
-                "format": "json",
-                "no_redirect": "1",
-                "no_html": "1",
-                "skip_disambig": "1",
-            },
-            timeout=6,
-            headers={"User-Agent": "SaathiAI/1.0"},
-        )
-        data = resp.json()
-    except Exception:
-        return None
-
-    answer = data.get("AbstractText") or data.get("Answer")
-    if answer:
-        source = data.get("AbstractURL") or ""
-        if source:
-            return f"{answer}\n\n(Source: {source})"
-        return answer
-
-    for topic in data.get("RelatedTopics", []):
-        if isinstance(topic, dict) and topic.get("Text"):
-            return topic["Text"]
-        if isinstance(topic, dict) and topic.get("Topics"):
-            for sub in topic["Topics"]:
-                if isinstance(sub, dict) and sub.get("Text"):
-                    return sub["Text"]
-
-    return None
-
 def get_response(user_text):
     from ichat_ai.memory.memory import remember, recall
 
@@ -216,12 +170,7 @@ def get_response(user_text):
         add_conversation(original_text, reply)
         return reply
 
-    web_answer = web_search_answer(original_text)
-    if web_answer:
-        reply = web_answer
-        add_conversation(original_text, reply)
-        return reply
     save_to_learning_queue(original_text)
-    reply = "मैंने इंटरनेट पर ढूँढने की कोशिश की, लेकिन विश्वसनीय जानकारी नहीं मिली।"
+    reply = "मैं अभी यह जवाब सीख रहा हूँ।"
     add_conversation(original_text, reply)
     return reply
