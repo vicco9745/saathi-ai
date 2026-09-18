@@ -863,6 +863,12 @@
             width: 14px;
             height: 14px;
         }
+        .sources-btn-favicon {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
         .sources-inline-panel {
             display: none;
             flex-direction: column;
@@ -2279,8 +2285,13 @@
                 btn.className = 'msg-action-btn sources-inline-btn';
                 btn.type = 'button';
                 btn.title = 'Sources';
+                let _firstDomain = '';
+                try { _firstDomain = new URL(sources[0].url).hostname.replace('www.', ''); } catch (e) { _firstDomain = ''; }
+                const _faviconUrl = _firstDomain
+                    ? ('https://www.google.com/s2/favicons?domain=' + _firstDomain + '&sz=64')
+                    : '';
                 btn.innerHTML =
-                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' +
+                    (_faviconUrl ? '<img class="sources-btn-favicon" src="' + _faviconUrl + '" alt="" loading="lazy">' : '') +
                     '<span>Sources · ' + sources.length + '</span>';
 
                 const panel = document.createElement('div');
