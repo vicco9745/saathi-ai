@@ -3474,6 +3474,16 @@
                     const imageMatch = /^\/image\s+([\s\S]+)/i.exec(combinedText.trim());
                     if (imageMatch) {
                         const imgPrompt = imageMatch[1].trim();
+                        const _detectImageSize = (p) => {
+                            const t = p.toLowerCase();
+                            if (t.includes('thumbnail')) return { width: 1280, height: 720 };
+                            if (t.includes('reel') || t.includes('shorts') || t.includes('story') || t.includes('status')) return { width: 1080, height: 1920 };
+                            if (t.includes('instagram post') || t.includes('square')) return { width: 1080, height: 1080 };
+                            if (t.includes('banner') || t.includes('cover photo') || t.includes('facebook cover')) return { width: 1200, height: 630 };
+                            if (t.includes('poster')) return { width: 1080, height: 1350 };
+                            return { width: 1024, height: 1024 };
+                        };
+                        const _imgSize = _detectImageSize(imgPrompt);
                         const SAATHI_IMAGE_URL = 'https://saathi-ai-y48j.onrender.com/v1/image';
                         fetch(SAATHI_IMAGE_URL, {
                             method: 'POST',
@@ -3483,7 +3493,9 @@
                             },
                             body: JSON.stringify({
                                 prompt: imgPrompt,
-                                model: currentModel
+                                model: currentModel,
+                                width: _imgSize.width,
+                                height: _imgSize.height
                             })
                         })
                         .then(async res => {
