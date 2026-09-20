@@ -29,6 +29,8 @@ class ChatRequest(BaseModel):
 
 class GenericRequest(BaseModel):
     prompt: str
+    width: int = 1024
+    height: int = 1024
 
 @app.get("/")
 def home():
@@ -68,12 +70,19 @@ def image(body: GenericRequest, key=Depends(require_api_key)):
     prompt = (body.prompt or "").strip()
     if not prompt:
         raise HTTPException(400, "Prompt khaali nahi ho sakta")
+    width = body.width or 1024
+    height = body.height or 1024
     encoded_prompt = urllib.parse.quote(prompt)
-    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}"
+    image_url = (
+        f"https://image.pollinations.ai/prompt/{encoded_prompt}"
+        f"?width={width}&height={height}"
+    )
     return {
         "service": "image",
         "image_url": image_url,
         "prompt": prompt,
+        "width": width,
+        "height": height,
         "model": "saathi-image"
     }
 
