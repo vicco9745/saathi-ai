@@ -329,6 +329,18 @@ def get_response(user_text):
         add_conversation(original_text, reply)
         return reply
 
+    try:
+        from ichat_ai.ai_providers import ai_provider_answer
+        ai_answer = ai_provider_answer(original_text)
+    except Exception as e:
+        print(f"[get_response] ai_provider_answer CRASHED: {type(e).__name__}: {e}")
+        ai_answer = None
+
+    if ai_answer:
+        reply = ai_answer
+        add_conversation(original_text, reply)
+        return reply
+
     web_answer, web_sources = web_search_answer(original_text)
     if web_answer:
         reply = web_answer
