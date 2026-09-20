@@ -64,7 +64,18 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
 @app.post("/v1/image")
 def image(body: GenericRequest, key=Depends(require_api_key)):
     record_usage(key, "image")
-    raise HTTPException(501, "Image model/provider अभी connect नहीं है")
+    import urllib.parse
+    prompt = (body.prompt or "").strip()
+    if not prompt:
+        raise HTTPException(400, "Prompt khaali nahi ho sakta")
+    encoded_prompt = urllib.parse.quote(prompt)
+    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}"
+    return {
+        "service": "image",
+        "image_url": image_url,
+        "prompt": prompt,
+        "model": "saathi-image"
+    }
 
 @app.post("/v1/video")
 def video(body: GenericRequest, key=Depends(require_api_key)):
