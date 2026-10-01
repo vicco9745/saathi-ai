@@ -180,6 +180,36 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
     return response
 
 
+
+def call_groq(prompt: str, system: str = "") -> str:
+    """Groq API se reply laata hai."""
+    import os as _os
+    key = _os.environ.get("GROQ_API_KEY")
+    if not key:
+        raise HTTPException(status_code=503, detail="GROQ_API_KEY set nahi hai")
+    try:
+        r = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={
+                "model": "openai/gpt-oss-20b",
+                "messages": (
+                    ([{"role": "system", "content": system}] if system else []) +
+                    [{"role": "user", "content": prompt}]
+                ),
+            },
+            timeout=60,
+        )
+        if r.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Groq error: {r.status_code}")
+        data = r.json()
+        return (data["choices"][0]["message"]["content"] or "").strip()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Groq crash: {e}")
+
+
 @app.post("/v1/image")
 def generate_image(req: ImageRequest, x_api_key: Optional[str] = Header(None)):
     check_api_key(x_api_key)
@@ -194,11 +224,25 @@ def generate_image(req: ImageRequest, x_api_key: Optional[str] = Header(None)):
 @app.post("/v1/website")
 def generate_website(req: WebsiteRequest, x_api_key: Optional[str] = Header(None)):
     check_api_key(x_api_key)
-    # TODO: Yahan LLM se HTML code generate karwana hai jab LLM ready ho.
-    raise HTTPException(
-        status_code=503,
-        detail="Website generation abhi backend mein connect nahi hai. Koi LLM jodni hogi."
+    system = (
+        "Tum ek expert web developer ho. User ki request ke hisab se ek "
+        "COMPLETE, ready-to-use HTML file banao (HTML + inline CSS + JS). "
+        "Sirf pure HTML code return karo, koi explanation nahi, koi markdown "
+        "code-fence nahi (``` nahi). Shuru <!DOCTYPE html> se aur khatam "
+        "</html> par. Design modern, responsive aur sundar rakho. "
+        "Hindi/English content user ki request ke hisab se daalo."
     )
+    html = call_groq(req.prompt, system=system)
+    # Agar model ne ```html fence lagaya to hata do
+    html = html.strip()
+    if html.startswith("```"):
+        html = html.split("\n", 1)[1] if "\n" in html else html
+        if html.endswith("```"):
+            html = html[:-3]
+        html = html.strip()
+    if "```" in html:
+        html = html.replace("```html", "").replace("```", "").strip()
+    return {"html": html, "filename": "index.html" }
 
 
 @app.post("/v1/video")
