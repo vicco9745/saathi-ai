@@ -41,7 +41,7 @@ def _call_gemini(prompt):
         }
         resp = requests.post(
             url,
-            params={"key": api_key},
+            headers={"x-goog-api-key": api_key},
             json=payload,
             timeout=20,
         )
