@@ -63,6 +63,36 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
         "model": "saathi"
     }
 
+
+import os as _os
+import requests as _requests
+
+def _call_groq(prompt: str, system: str = "") -> str:
+    key = _os.environ.get("GROQ_API_KEY")
+    if not key:
+        raise HTTPException(503, "GROQ_API_KEY set nahi hai")
+    try:
+        r = _requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={
+                "model": "openai/gpt-oss-20b",
+                "messages": (
+                    ([{"role": "system", "content": system}] if system else []) +
+                    [{"role": "user", "content": prompt}]
+                ),
+            },
+            timeout=90,
+        )
+        if r.status_code != 200:
+            raise HTTPException(500, f"Groq error: {r.status_code}")
+        return (r.json()["choices"][0]["message"]["content"] or "").strip()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"Groq crash: {e}")
+
+
 @app.post("/v1/image")
 def image(body: GenericRequest, key=Depends(require_api_key)):
     record_usage(key, "image")
@@ -109,4 +139,16 @@ def code(body: GenericRequest, key=Depends(require_api_key)):
 @app.post("/v1/website")
 def website(body: GenericRequest, key=Depends(require_api_key)):
     record_usage(key, "website")
-    raise HTTPException(501, "Website builder अभी connect नहीं है")
+    system = (
+        "Tum ek expert web developer ho. User ki request ke hisab se ek "
+        "COMPLETE, ready-to-use HTML file banao (HTML + inline CSS + JS). "
+        "Sirf pure HTML code return karo, koi explanation nahi, koi markdown "
+        "code-fence nahi. Shuru <!DOCTYPE html> se aur khatam </html> par. "
+        "Design modern, responsive aur sundar rakho. Hindi/English content "
+        "user ki request ke hisab se daalo."
+    )
+    html = _call_groq(body.prompt, system=system)
+    html = html.strip()
+    if "```" in html:
+        html = html.replace("```html", "").replace("```", "").strip()
+    return {"html": html, "filename": "index.html"}
