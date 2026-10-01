@@ -100,7 +100,33 @@ def _call_deepseek(prompt):
         return None
 
 
+def _call_groq(prompt):
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
+    try:
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        payload = {"model": "openai/gpt-oss-20b", "messages": [
+            {"role": "system", "content": SYSTEM_INSTRUCTION},
+            {"role": "user", "content": prompt},
+        ]}
+        resp = requests.post(url, headers=headers, json=payload, timeout=30)
+        if resp.status_code != 200:
+            print(f"[groq] HTTP {resp.status_code}")
+            return None
+        data = resp.json()
+        choices = data.get("choices") or []
+        if not choices:
+            return None
+        return (choices[0].get("message", {}).get("content") or "").strip() or None
+    except Exception as e:
+        print(f"[groq] CRASHED: {e}")
+        return None
+
+
 _PROVIDERS = [
+    ("groq", _call_groq),
     ("gemini", _call_gemini),
     ("deepseek", _call_deepseek),
 ]
