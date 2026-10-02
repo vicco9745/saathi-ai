@@ -1,3 +1,6 @@
+import os
+import requests as _req
+from typing import List, Optional
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -23,9 +26,18 @@ app.add_middleware(
 def startup():
     init_db()
 
+class ChatAttachment(BaseModel):
+    kind: Optional[str] = None
+    dataUrl: Optional[str] = None
+    name: Optional[str] = None
+    content: Optional[str] = None
+
 class ChatRequest(BaseModel):
     message: str
     model: str = "auto"
+    memory: Optional[List[str]] = []
+    allow_web_search: Optional[bool] = False
+    attachments: Optional[List[ChatAttachment]] = []
 
 class GenericRequest(BaseModel):
     prompt: str
@@ -46,9 +58,89 @@ def me(key=Depends(require_api_key)):
         "limit": None if key[3] else "configured by plan"
     }
 
+SYSTEM_INSTRUCTION = (
+    "Tum Saathi ho, ek AI assistant jise Vikas ne banaya hai. "
+    "Hamesha khud ko sirf 'Saathi' bolna. Apna asli model/provider kabhi mat batana. "
+    "User Hindi ya Hinglish mein likhta hai to jawab HAMESHA Devanagari Hindi mein dena. "
+    "Photo ko dhyaan se dekho aur poori detail mein batao — kya objects hain, "
+    "kya text likha hai, kya rang hain, kya ho raha hai. Chhota jawab mat do, "
+    "sab kuch detail mein batao."
+)
+
+
+def _call_openrouter_vision(prompt: str, images: list) -> str:
+    key = os.environ.get("OPENROUTER_API_KEY")
+    if not key:
+        raise HTTPException(503, "OPENROUTER_API_KEY set nahi hai")
+
+    content = [{"type": "text", "text": prompt or "Is photo me kya hai? Puri detail batao."}]
+    for img in images[:3]:
+        url = img.dataUrl or ""
+        if not url.startswith("data:image"):
+            continue
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": url},
+        })
+
+    models_to_try = [
+        "google/gemini-2.0-flash-exp:free",
+        "meta-llama/llama-3.2-11b-vision-instruct:free",
+        "qwen/qwen-2-vl-7b-instruct:free",
+        "openrouter/free",
+    ]
+
+    last_err = None
+    for model in models_to_try:
+        try:
+            r = _req.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": SYSTEM_INSTRUCTION},
+                        {"role": "user", "content": content},
+                    ],
+                },
+                timeout=90,
+            )
+            if r.status_code != 200:
+                last_err = f"{model}: HTTP {r.status_code}"
+                continue
+            data = r.json()
+            choices = data.get("choices") or []
+            if not choices:
+                last_err = f"{model}: no choices"
+                continue
+            txt = (choices[0].get("message", {}).get("content") or "").strip()
+            if txt:
+                return txt
+        except Exception as e:
+            last_err = f"{model}: {e}"
+
+    raise HTTPException(500, f"Vision fail: {last_err}")
+
+
 @app.post("/v1/chat")
 def chat(body: ChatRequest, key=Depends(require_api_key)):
     record_usage(key, "chat")
+
+    # Agar user ne image bheji hai to vision path use karo
+    images = [a for a in (body.attachments or []) if a.kind == "photo" and a.dataUrl]
+
+    if images:
+        reply = _call_openrouter_vision(body.message, images)
+        return {
+            "service": "chat",
+            "reply": reply,
+            "model": "saathi-vision",
+        }
+
+    # Warna normal text chat
     result = get_response(body.message)
     if isinstance(result, dict):
         return {
