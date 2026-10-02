@@ -147,13 +147,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica N
 .attachment-tile.attachment-file-tile .attachment-tile-label{font-size:10.5px;color:var(--text-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .attachment-tile.attachment-file-tile svg{width:32%;height:32%;flex-shrink:0}
 .attachment-img-broken{width:100%;height:100%;border:1px dashed var(--border);color:var(--text-muted);font-size:11px;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;border-radius:14px}
-.artifact-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;border:1px solid var(--border);background:var(--panel-bg);cursor:pointer;width:fit-content;min-width:220px;max-width:100%;margin-top:8px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-.artifact-icon-wrap{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fee2e2;color:#dc2626;flex-shrink:0}
-.artifact-icon-wrap svg{width:22px;height:22px}
-.artifact-info{display:flex;flex-direction:column;gap:3px;min-width:0}
-.artifact-title{font-size:15px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.artifact-sub{font-size:12px;color:var(--text-muted)}
-[data-theme="dark"] .artifact-icon-wrap{background:#451a1a;color:#f87171}
+.artifact-card{display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:16px;border:1px solid var(--border);background:var(--bg);cursor:pointer;width:100%;max-width:100%;margin-top:8px;box-shadow:none}
+.artifact-icon-wrap{width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#f7e6c4;color:#8a5a14;flex-shrink:0}
+.artifact-icon-wrap svg{width:28px;height:28px}
+.artifact-info{display:flex;flex-direction:column;gap:4px;min-width:0}
+.artifact-title{font-size:19px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.artifact-title::first-letter{text-transform:uppercase}
+.artifact-sub{font-size:15px;color:var(--text-muted)}
+.file-chip{display:flex;align-items:center;gap:14px;padding:10px 16px 10px 10px;border-radius:18px;border:1px solid var(--border);background:var(--bg);cursor:pointer;width:fit-content;max-width:100%;margin-top:4px}
+.file-chip-icon{width:52px;height:52px;border-radius:12px;background:var(--icon-hover);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#4f6df5}
+.file-chip-icon svg{width:28px;height:28px}
+.file-chip-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.file-chip-name{font-size:16px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-chip-size{font-size:14px;color:var(--text-muted)}
+[data-theme="dark"] .artifact-icon-wrap{background:#3a2f1a;color:#e0b66a}
 .artifact-card.pdf-card .artifact-icon-wrap{background:#dbeafe;color:#2563eb}
 [data-theme="dark"] .artifact-card.pdf-card .artifact-icon-wrap{background:#1e3a8a;color:#93c5fd}
 .code-preview-overlay{position:fixed;inset:0;z-index:400;display:none;flex-direction:column;background:#ffffff}
@@ -274,7 +281,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica N
 .suggestion-chip{border:1px solid var(--border);background:var(--bg);color:var(--text);padding:8px 14px;border-radius:16px;font-size:13px;font-weight:500;cursor:pointer}
 .msg-actions{display:flex;align-items:center;gap:2px;margin-top:6px;flex-wrap:wrap}
 .msg-row.user .msg-actions{justify-content:flex-end}
-.msg-row.ai .msg-actions{justify-content:flex-start}
+.msg-row.ai .msg-actions{justify-content:flex-start;width:100%}
+.msg-actions .msg-reset-right{order:99;margin-left:auto}
 .ad-wrap{width:100%;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
 .ad-wrap.ad-pending{position:fixed;left:-9999px;top:0;width:340px;visibility:hidden}
 .ad-card{display:flex;align-items:stretch;gap:14px;border:1px solid var(--border);border-radius:14px;background:var(--panel-bg);overflow:hidden}
@@ -360,8 +368,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica N
 .attachment-tile{width:96px;height:96px}
 .loader-grid{width:min(70vw,260px);gap:6px}
 .generating-loader{min-height:220px}
-.artifact-card{padding:12px 14px;min-width:200px}
-.artifact-icon-wrap{width:38px;height:38px}
+.artifact-card{padding:16px 16px;min-width:0;gap:16px}
+.artifact-icon-wrap{width:52px;height:52px}
 .topbar-menu{min-width:220px;right:8px}
 }
 .call-overlay{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;background:var(--page-bg);overflow:hidden;touch-action:none}
@@ -724,7 +732,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica N
     <button type="button" id="cpMenuCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copy</span></button>
     <button type="button" id="cpMenuDownload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download</span></button>
   </div>
-  <iframe class="code-preview-frame" id="codePreviewFrame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"></iframe>
+  <iframe class="code-preview-frame" id="codePreviewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
   <pre class="code-preview-code" id="codePreviewCode"><code id="codePreviewCodeContent"></code></pre>
 </div>
 
@@ -759,7 +767,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica N
 <div class="sheet" id="previewSheet" style="height:75vh;">
 <div class="sheet-grip" id="previewSheetGrip"><div class="sheet-grip-bar"></div></div>
 <div class="sheet-header"><span>Live Preview</span><button class="icon-btn" id="previewCloseBtn" title="Cancel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-<div class="preview-frame-wrap"><iframe id="previewFrame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"></iframe></div>
+<div class="preview-frame-wrap"><iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe></div>
 </div>
 </div>
 
@@ -1514,7 +1522,7 @@ const cpMenuCopy = document.getElementById('cpMenuCopy');
 const cpMenuDownload = document.getElementById('cpMenuDownload');
 let cpCurrentName = 'index.html';let cpCurrentContent = '';
 function setCodePreviewMode(mode){if(mode === 'code'){codePreviewFrame.style.display = 'none';codePreviewCode.style.display = 'block';cpMenuPreview.classList.remove('active');cpMenuCode.classList.add('active');}else{codePreviewFrame.style.display = 'block';codePreviewCode.style.display = 'none';cpMenuPreview.classList.add('active');cpMenuCode.classList.remove('active');}}
-function openCodePreview(name, content){cpCurrentName = name || 'index.html';cpCurrentContent = content || '<h1>No content</h1>';codePreviewTitle.textContent = cpCurrentName;codePreviewFrame.srcdoc = cpCurrentContent;codePreviewCodeContent.textContent = cpCurrentContent;setCodePreviewMode('preview');codePreviewMenu.classList.remove('open');codePreviewOverlay.classList.add('open');}
+function openCodePreview(name, content, codeOnly){cpCurrentName = name || 'index.html';cpCurrentContent = content || '<h1>No content</h1>';codePreviewTitle.textContent = cpCurrentName;codePreviewFrame.srcdoc = codeOnly ? '' : cpCurrentContent;codePreviewCodeContent.textContent = cpCurrentContent;const _hide = codeOnly ? 'none' : '';cpMenuPreview.style.display = _hide;cpMenuPublish.style.display = _hide;const _dv = codePreviewMenu.querySelector('.cp-divider');if(_dv)_dv.style.display = _hide;setCodePreviewMode(codeOnly ? 'code' : 'preview');codePreviewMenu.classList.remove('open');codePreviewOverlay.classList.add('open');}
 function closeCodePreviewMenu(){ codePreviewMenu.classList.remove('open'); }
 codePreviewCloseBtn.addEventListener('click',()=>{codePreviewOverlay.classList.remove('open');closeCodePreviewMenu();setTimeout(()=>{ codePreviewFrame.srcdoc=''; codePreviewCodeContent.textContent=''; }, 200);});
 codePreviewMenuBtn.addEventListener('click',(e)=>{e.stopPropagation();codePreviewMenu.classList.toggle('open');});
@@ -1718,6 +1726,7 @@ function updateMultiSelectBar(){if(!multiSelectMode){multiSelectBar.classList.re
 multiSelectDeleteBtn.addEventListener('click',()=>{if(selectedChatIds.size===0)return;selectedChatIds.forEach(id=>{const idx=chats.findIndex(c=>c.id===id);if(idx!==-1)chats.splice(idx,1);projects.forEach(p=>{p.chatIds=p.chatIds.filter(cid=>!selectedChatIds.has(cid));});});saveProjects();if(selectedChatIds.has(currentChatId))currentChatId=chats.length>0?chats[0].id:null;saveChats();multiSelectMode=false;selectedChatIds.clear();renderChatList();renderMessages();updateMultiSelectBar();});
 multiSelectCancelBtn.addEventListener('click',()=>{multiSelectMode=false;selectedChatIds.clear();renderChatList();updateMultiSelectBar();});
 
+function fmtFileSize(b){b=Number(b)||0;if(b<=0)return '';if(b<1024)return b+'B';if(b<1048576)return Math.round(b/1024)+'KB';return (b/1048576).toFixed(1)+'MB';}
 function buildAttachmentsBlock(attachments){
 const wrap=document.createElement('div');wrap.className='msg-attachments';
 attachments.forEach(att=>{
@@ -1728,8 +1737,11 @@ else{
 const nameLower = (att.name||'').toLowerCase();
 const isHtml = nameLower.endsWith('.html') || nameLower.endsWith('.htm');
 const isPdf = nameLower.endsWith('.pdf');
-if(isPdf && att.dataUrl){const card=document.createElement('div');card.className='artifact-card pdf-card';card.innerHTML='<div class="artifact-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="13" y2="11"/></svg></div><div class="artifact-info"><div class="artifact-title">'+((att.name||'document').replace(/\.[^.]+$/,''))+'</div><div class="artifact-sub">Document · PDF</div></div>';card.addEventListener('click',()=>openPdfViewer(att));wrap.appendChild(card);}
-else if(isHtml && att.content){const card=document.createElement('div');card.className='artifact-card';card.innerHTML='<div class="artifact-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><div class="artifact-info"><div class="artifact-title">'+(att.name.replace(/\.[^.]+$/,'')||'Index')+'</div><div class="artifact-sub">Code · HTML</div></div>';card.addEventListener('click',()=>openCodePreview(att.name,att.content));wrap.appendChild(card);}
+if(att.origin!=='ai'){const chip=document.createElement('div');chip.className='file-chip';chip.innerHTML='<div class="file-chip-icon"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="currentColor" stroke="none"/><path d="M14 2v6h6" fill="#ffffff" fill-opacity=".35" stroke="none"/><line x1="8" y1="13" x2="16" y2="13" stroke="#fff" stroke-width="1.8"/><line x1="8" y1="17" x2="16" y2="17" stroke="#fff" stroke-width="1.8"/><line x1="8" y1="9" x2="11" y2="9" stroke="#fff" stroke-width="1.8"/></svg></div><div class="file-chip-info"><div class="file-chip-name"></div><div class="file-chip-size"></div></div>';chip.querySelector('.file-chip-name').textContent=att.name||'file';const szTxt=fmtFileSize(att.size||(att.content?att.content.length:0));const szEl=chip.querySelector('.file-chip-size');if(szTxt)szEl.textContent=szTxt;else szEl.style.display='none';
+if(att.content){chip.addEventListener('click',()=>openCodePreview(att.name,att.content,true));}else if(isPdf&&att.dataUrl){chip.addEventListener('click',()=>openPdfViewer(att));}else if(att.dataUrl){chip.addEventListener('click',()=>window.open(att.dataUrl,'_blank'));}
+wrap.appendChild(chip);}
+else if(isPdf && att.dataUrl){const card=document.createElement('div');card.className='artifact-card pdf-card';card.innerHTML='<div class="artifact-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="13" y2="11"/></svg></div><div class="artifact-info"><div class="artifact-title">'+((att.name||'document').replace(/\.[^.]+$/,''))+'</div><div class="artifact-sub">Document · PDF</div></div>';card.addEventListener('click',()=>openPdfViewer(att));wrap.appendChild(card);}
+else if(isHtml && att.content){const card=document.createElement('div');card.className='artifact-card';card.innerHTML='<div class="artifact-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 7 3 12 8 17"/><polyline points="16 7 21 12 16 17"/><line x1="14" y1="5" x2="10" y2="19"/></svg></div><div class="artifact-info"><div class="artifact-title">'+(att.name.replace(/\.[^.]+$/,'')||'Index')+'</div><div class="artifact-sub">Code · HTML</div></div>';card.addEventListener('click',()=>openCodePreview(att.name,att.content));wrap.appendChild(card);}
 else{const tile=document.createElement('div');tile.className='attachment-tile attachment-file-tile';const clickable=(att.content||att.dataUrl);if(clickable)tile.style.cursor='pointer';tile.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span class="attachment-tile-label"></span>';tile.querySelector('.attachment-tile-label').textContent=att.name;if(att.content){tile.addEventListener('click',()=>showTextModal(att.content,(newContent)=>{att.content=newContent;saveChats();},att.name));}else if(att.dataUrl){tile.addEventListener('click',()=>window.open(att.dataUrl,'_blank'));}wrap.appendChild(tile);}
 }
 });
@@ -1875,7 +1887,7 @@ actions.appendChild(listenBtn);
 const shareBtn=document.createElement('button');shareBtn.className='msg-action-btn';shareBtn.title='Share';shareBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>';
 shareBtn.addEventListener('click',async()=>{const text=message.text||'';if(navigator.share){try{await navigator.share({text:text});}catch(_){}}else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).catch(()=>{});showToast('Message copy ho gaya');}});
 actions.appendChild(shareBtn);
-if(showReset){const resetBtn=document.createElement('button');resetBtn.className='msg-action-btn';resetBtn.title='Reset / Regenerate';resetBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';resetBtn.addEventListener('click',()=>{regenerateReply(chat,idx);});actions.appendChild(resetBtn);}
+if(showReset){const resetBtn=document.createElement('button');resetBtn.className='msg-action-btn msg-reset-right';resetBtn.title='Reset / Regenerate';resetBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';resetBtn.addEventListener('click',()=>{regenerateReply(chat,idx);});actions.appendChild(resetBtn);}
 const moreWrap=document.createElement('div');moreWrap.style.position='relative';
 const moreBtn=document.createElement('button');moreBtn.className='msg-action-btn';moreBtn.title='Aur options';moreBtn.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>';
 const moreMenu=document.createElement('div');moreMenu.className='msg-action-menu';
@@ -1904,7 +1916,7 @@ const sectionPageBody=document.getElementById('sectionPageBody');
 const sectionPageBackBtn=document.getElementById('sectionPageBackBtn');
 function categoryForAttachment(att){if(att.origin==='ai'){if(att.kind==='file'){const n=(att.name||'').toLowerCase();if(n.endsWith('.html')||n.endsWith('.htm'))return 'websites';return 'files';}return 'files';}return 'files';}
 function collectSectionItems(route){const items=[];chats.forEach(chat=>{(chat.messages||[]).forEach((m,idx)=>{(m.attachments||[]).forEach(att=>{if(categoryForAttachment(att)===route)items.push({att,chat,message:m,idx});});});});return items;}
-function openAttachmentPreview(att){if(att.kind==='photo'){openDownloadSheet(att.dataUrl,'photo',att.name);}else if(att.kind==='video'){window.open(att.dataUrl,'_blank');}else if(att.name && att.name.toLowerCase().endsWith('.pdf') && att.dataUrl){openPdfViewer(att);}else if(att.content){if(att.name && att.name.toLowerCase().endsWith('.html')){ openCodePreview(att.name, att.content); }else{ showTextModal(att.content,(newContent)=>{att.content=newContent;saveChats();},att.name); }}else if(att.dataUrl){window.open(att.dataUrl,'_blank');}}
+function openAttachmentPreview(att){if(att.kind==='photo'){openDownloadSheet(att.dataUrl,'photo',att.name);}else if(att.kind==='video'){window.open(att.dataUrl,'_blank');}else if(att.name && att.name.toLowerCase().endsWith('.pdf') && att.dataUrl){openPdfViewer(att);}else if(att.content){if(att.name && att.name.toLowerCase().endsWith('.html')){ openCodePreview(att.name, att.content, att.origin!=='ai'); }else{ showTextModal(att.content,(newContent)=>{att.content=newContent;saveChats();},att.name); }}else if(att.dataUrl){window.open(att.dataUrl,'_blank');}}
 function renderSectionItems(route){const items=collectSectionItems(route);if(items.length===0){sectionPageBody.innerHTML='<div class="empty-state"><div class="icon-big">'+SECTION_INFO[route].icon+'</div><div>'+SECTION_INFO[route].title+' abhi khaali hai</div><div class="sub">Chat mein upload/generate karein</div></div>';return;}const grid=document.createElement('div');grid.className='section-grid';items.forEach(({att})=>{const card=document.createElement('div');card.className='section-card';const media=document.createElement('div');media.className='section-card-media';if(att.kind==='photo'){const img=document.createElement('img');img.src=att.dataUrl;img.alt=att.name||'';media.appendChild(img);}else if(att.kind==='video'){const vid=document.createElement('video');vid.src=att.dataUrl;vid.muted=true;media.appendChild(vid);}else{const iconWrap=document.createElement('div');iconWrap.className='section-card-file-icon';iconWrap.innerHTML=route==='websites'?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';media.appendChild(iconWrap);}card.appendChild(media);const name=document.createElement('div');name.className='section-card-name';name.textContent=att.name||'';card.appendChild(name);card.addEventListener('click',()=>openAttachmentPreview(att));grid.appendChild(card);});sectionPageBody.innerHTML='';sectionPageBody.appendChild(grid);}
 function openSection(route){const info=SECTION_INFO[route];if(!info)return;sectionPageTitle.textContent=info.title;renderSectionItems(route);sectionPageOverlay.classList.add('open');closePanel();}
 function closeSection(){sectionPageOverlay.classList.remove('open');}
@@ -2037,7 +2049,10 @@ loadFeedback();
 loadSmartLearning();
 loadProjects();
 loadPluginState();
-if(chats.length>0){const first=chats.find(c=>!c.archived)||chats[0];currentChatId=first.id;}
+function openFreshChat(){const e=chats.find(c=>!c.archived&&(!c.messages||c.messages.length===0));if(e){const i=chats.indexOf(e);if(i>0){chats.splice(i,1);chats.unshift(e);}currentChatId=e.id;}else{const chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;}saveChats();}
+function clearComposerDraft(){msgInput.value='';pendingAttachments=[];try{renderPendingAttachments();}catch(_){}autoResizeInput();updateActionButton();}
+openFreshChat();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;const c=getCurrentChat();if(c&&(!c.messages||c.messages.length===0)&&(msgInput.value||pendingAttachments.length>0)){clearComposerDraft();}});
 renderChatList();
 renderMessages();
 updateActionButton();
