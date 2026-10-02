@@ -125,7 +125,39 @@ def _call_groq(prompt):
         return None
 
 
+def _call_openrouter(prompt):
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        return None
+    try:
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": "openrouter/free",
+            "messages": [
+                {"role": "system", "content": SYSTEM_INSTRUCTION},
+                {"role": "user", "content": prompt},
+            ],
+        }
+        resp = requests.post(url, headers=headers, json=payload, timeout=60)
+        if resp.status_code != 200:
+            print(f"[openrouter] HTTP {resp.status_code}: {resp.text[:200]}")
+            return None
+        data = resp.json()
+        choices = data.get("choices") or []
+        if not choices:
+            return None
+        return (choices[0].get("message", {}).get("content") or "").strip() or None
+    except Exception as e:
+        print(f"[openrouter] CRASHED: {e}")
+        return None
+
+
 _PROVIDERS = [
+    ("openrouter", _call_openrouter),
     ("groq", _call_groq),
     ("gemini", _call_gemini),
     ("deepseek", _call_deepseek),
