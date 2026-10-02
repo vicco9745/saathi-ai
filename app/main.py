@@ -129,7 +129,33 @@ def voice(body: GenericRequest, key=Depends(require_api_key)):
 @app.post("/v1/pdf")
 def pdf(body: GenericRequest, key=Depends(require_api_key)):
     record_usage(key, "pdf")
-    raise HTTPException(501, "PDF generator अभी connect नहीं है")
+    import base64
+    from io import BytesIO
+    from xhtml2pdf import pisa
+
+    system = (
+        "Tum ek professional document writer ho. User ki request ke hisab se "
+        "ek achha HTML document banao (title, headings, paragraphs). "
+        "Sirf pure HTML return karo — <html> se shuru, </html> par khatam. "
+        "Sirf HTML content, koi CSS, koi markdown, koi explanation nahi."
+    )
+    html_body = _call_groq(body.prompt, system=system)
+    html_body = html_body.strip()
+    if "```" in html_body:
+        html_body = html_body.replace("```html", "").replace("```", "").strip()
+
+    full_html = "<html><head><meta charset=\'utf-8\'></head><body>" + html_body + "</body></html>"
+
+    pdf_buffer = BytesIO()
+    pisa.CreatePDF(full_html, dest=pdf_buffer, encoding="utf-8")
+    pdf_bytes = pdf_buffer.getvalue()
+    pdf_buffer.close()
+
+    pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+    return {
+        "pdf_base64": pdf_b64,
+        "filename": "saathi.pdf",
+    }
 
 @app.post("/v1/code")
 def code(body: GenericRequest, key=Depends(require_api_key)):
