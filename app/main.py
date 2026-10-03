@@ -253,9 +253,13 @@ from dotenv import load_dotenv as _load_dotenv
 _load_dotenv()
 
 def _call_groq(prompt: str, system: str = "") -> str:
+    """Groq se reply laata hai. Poora output deta hai, fallback OpenRouter se."""
     key = _os.environ.get("GROQ_API_KEY")
     if not key:
-        raise HTTPException(503, "GROQ_API_KEY set nahi hai")
+        try:
+            return _call_openrouter(prompt, system)
+        except Exception:
+            raise HTTPException(503, "GROQ_API_KEY set nahi hai")
     try:
         r = _requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -266,16 +270,61 @@ def _call_groq(prompt: str, system: str = "") -> str:
                     ([{"role": "system", "content": system}] if system else []) +
                     [{"role": "user", "content": prompt}]
                 ),
+                "max_tokens": 8000,
+                "temperature": 0.6,
             },
-            timeout=90,
+            timeout=180,
         )
         if r.status_code != 200:
-            raise HTTPException(500, f"Groq error: {r.status_code}")
-        return (r.json()["choices"][0]["message"]["content"] or "").strip()
+            print(f"[groq] HTTP {r.status_code}, OpenRouter fallback")
+            return _call_openrouter(prompt, system)
+        data = r.json()
+        content = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+        finish = data.get("choices", [{}])[0].get("finish_reason", "")
+        if finish == "length" or (content and not content.rstrip().endswith((">", "}", ")", "]", ".", "!", "?", "`"))):
+            print(f"[groq] Response cut ho gaya (finish={finish}), OpenRouter try")
+            try:
+                alt = _call_openrouter(prompt, system)
+                if alt and len(alt) > len(content):
+                    return alt
+            except Exception:
+                pass
+        return content
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, f"Groq crash: {e}")
+        try:
+            return _call_openrouter(prompt, system)
+        except Exception:
+            raise HTTPException(500, f"Groq crash: {e}")
+
+
+def _call_openrouter(prompt: str, system: str = "") -> str:
+    """OpenRouter se reply laata hai (fallback ke liye)."""
+    key = _os.environ.get("OPENROUTER_API_KEY")
+    if not key:
+        raise HTTPException(503, "OPENROUTER_API_KEY set nahi hai")
+    try:
+        r = _requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={
+                "model": "openrouter/free",
+                "messages": (
+                    ([{"role": "system", "content": system}] if system else []) +
+                    [{"role": "user", "content": prompt}]
+                ),
+                "max_tokens": 8000,
+            },
+            timeout=180,
+        )
+        if r.status_code != 200:
+            raise HTTPException(500, f"OpenRouter error: {r.status_code}")
+        return (r.json().get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, f"OpenRouter crash: {e}")
 
 
 @app.post("/v1/image")
