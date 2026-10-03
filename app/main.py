@@ -125,6 +125,24 @@ def _call_openrouter_vision(prompt: str, images: list) -> str:
     raise HTTPException(500, f"Vision fail: {last_err}")
 
 
+import re as _re
+
+def _detect_action(msg: str) -> str:
+    """User ke message se samjho kya banane ka hai."""
+    m = (msg or "").lower()
+    # PDF
+    if _re.search(r"\bpdf\b|पीडीएफ|पी\.डी\.एफ|document banao|report banao|docx banao|letter banao", m):
+        return "pdf"
+    # Website
+    if _re.search(r"\bwebsite\b|\bsite\b|वेबसाइट|webpage|landing page|html page|homepage banao|web page", m):
+        return "website"
+    # Image (banane ke liye — dekhne ke liye nahi)
+    if _re.search(r"(image|photo|picture|तस्वीर|फोटो|चित्र|pic).*(banao|banaao|bana do|generate|create|banade|बनाओ|बनाओ|बना दो|बनाएं|बनायें)", m) or \
+       _re.search(r"(banao|banaao|generate|create|bana do).*(image|photo|picture|तस्वीर|फोटो|चित्र)", m):
+        return "image"
+    return "chat"
+
+
 @app.post("/v1/chat")
 def chat(body: ChatRequest, key=Depends(require_api_key)):
     record_usage(key, "chat")
@@ -139,6 +157,78 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             "reply": reply,
             "model": "saathi-vision",
         }
+
+    # Auto-detect: kya user PDF/website/image banana chahta hai?
+    action = _detect_action(body.message)
+
+    if action == "pdf":
+        try:
+            import base64 as _b64
+            from io import BytesIO as _BIO
+            from xhtml2pdf import pisa as _pisa
+            system = (
+                "Tum ek professional document writer ho. User ki request ke hisab se "
+                "ek achha HTML document banao (title, headings, paragraphs, lists). "
+                "Sirf pure HTML return karo — <html> se shuru, </html> par khatam. "
+                "User jis bhasha mein likhe usi bhasha mein content banao. "
+                "Sirf HTML, koi explanation nahi, koi markdown nahi."
+            )
+            html_body = _call_groq(body.message, system=system).strip()
+            if "```" in html_body:
+                html_body = html_body.replace("```html", "").replace("```", "").strip()
+            full_html = "<html><head><meta charset='utf-8'></head><body>" + html_body + "</body></html>"
+            buf = _BIO()
+            _pisa.CreatePDF(full_html, dest=buf, encoding="utf-8")
+            pdf_b64 = _b64.b64encode(buf.getvalue()).decode("utf-8")
+            buf.close()
+            return {
+                "service": "chat",
+                "reply": "Yeh raha aapka PDF.",
+                "pdf_base64": pdf_b64,
+                "filename": "saathi.pdf",
+                "model": "saathi",
+                "kind": "pdf",
+            }
+        except Exception as e:
+            return {"service": "chat", "reply": f"PDF banane mein problem aayi: {e}", "model": "saathi"}
+
+    if action == "website":
+        try:
+            system = (
+                "Tum ek expert web developer ho. User ki request ke hisab se ek "
+                "COMPLETE, ready-to-use HTML file banao (HTML + inline CSS + JS). "
+                "Sirf pure HTML code return karo, koi explanation nahi, koi markdown "
+                "code-fence nahi. Shuru <!DOCTYPE html> se aur khatam </html> par. "
+                "Design modern, responsive aur sundar rakho. User ki bhasha ka content daalo."
+            )
+            html = _call_groq(body.message, system=system).strip()
+            if "```" in html:
+                html = html.replace("```html", "").replace("```", "").strip()
+            return {
+                "service": "chat",
+                "reply": "Yeh raha aapki website ka code.",
+                "html": html,
+                "filename": "index.html",
+                "model": "saathi",
+                "kind": "website",
+            }
+        except Exception as e:
+            return {"service": "chat", "reply": f"Website banane mein problem aayi: {e}", "model": "saathi"}
+
+    if action == "image":
+        try:
+            import urllib.parse as _up
+            encoded = _up.quote(body.message)
+            image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024"
+            return {
+                "service": "chat",
+                "reply": "Yeh rahi aapki image.",
+                "image_url": image_url,
+                "model": "saathi",
+                "kind": "image",
+            }
+        except Exception as e:
+            return {"service": "chat", "reply": f"Image banane mein problem aayi: {e}", "model": "saathi"}
 
     # Warna normal text chat
     result = get_response(body.message)
