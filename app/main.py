@@ -248,6 +248,9 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
 
 import os as _os
 import requests as _requests
+from dotenv import load_dotenv as _load_dotenv
+
+_load_dotenv()
 
 def _call_groq(prompt: str, system: str = "") -> str:
     key = _os.environ.get("GROQ_API_KEY")
