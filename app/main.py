@@ -195,11 +195,22 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     if action == "website":
         try:
             system = (
-                "Tum ek expert web developer ho. User ki request ke hisab se ek "
-                "COMPLETE, ready-to-use HTML file banao (HTML + inline CSS + JS). "
-                "Sirf pure HTML code return karo, koi explanation nahi, koi markdown "
-                "code-fence nahi. Shuru <!DOCTYPE html> se aur khatam </html> par. "
-                "Design modern, responsive aur sundar rakho. User ki bhasha ka content daalo."
+                "Tum ek expert full-stack web developer ho. User ki request ke hisab se ek "
+                "COMPLETE, FULLY WORKING HTML website banao (HTML + inline CSS + JS). "
+                "Sirf pure HTML code return karo, koi explanation nahi, koi markdown nahi. "
+                "Shuru <!DOCTYPE html> se, khatam </html> par.\n"
+                "ZAROORI RULES:\n"
+                "1. IMAGES: Sirf picsum.photos ya placehold.co use karo. source.unsplash.com KABHI NAHI (band hai).\n"
+                "2. HAR BUTTON KAAM KARE: nav links smooth scroll, Get Started contact pe, hamburger JS toggle.\n"
+                "3. IMAGE UPLOAD: input type=file with preview.\n"
+                "4. EDIT: headings pe contenteditable=true, Edit button.\n"
+                "5. ADD/DELETE: Add Item button, har item pe delete button.\n"
+                "6. FORM: submit pe alert + reset.\n"
+                "7. SMOOTH SCROLL: html{scroll-behavior:smooth}.\n"
+                "8. HOVER EFFECTS: har button aur card pe.\n"
+                "9. MOBILE RESPONSIVE: media queries.\n"
+                "10. CSS VARIABLES colors ke liye.\n"
+                "11. Koi button dead nahi — har click pe action."
             )
             html = _call_groq(body.message, system=system).strip()
             if "```" in html:
@@ -400,11 +411,22 @@ def code(body: GenericRequest, key=Depends(require_api_key)):
 def website(body: GenericRequest, key=Depends(require_api_key)):
     record_usage(key, "website")
     system = (
-        "Tum ek expert web developer ho. User ki request ke hisab se ek "
-        "COMPLETE, ready-to-use HTML file banao (HTML + inline CSS + JS). "
-        "Sirf pure HTML code return karo, koi explanation nahi, koi markdown "
-        "code-fence nahi. Shuru <!DOCTYPE html> se aur khatam </html> par. "
-        "Design modern, responsive aur sundar rakho. Hindi/English content "
+                "Tum ek expert full-stack web developer ho. User ki request ke hisab se ek "
+                "COMPLETE, FULLY WORKING HTML website banao (HTML + inline CSS + JS). "
+                "Sirf pure HTML code return karo, koi explanation nahi, koi markdown nahi. "
+                "Shuru <!DOCTYPE html> se, khatam </html> par.\n"
+                "ZAROORI RULES:\n"
+                "1. IMAGES: Sirf picsum.photos ya placehold.co use karo. source.unsplash.com KABHI NAHI (band hai).\n"
+                "2. HAR BUTTON KAAM KARE: nav links smooth scroll, Get Started contact pe, hamburger JS toggle.\n"
+                "3. IMAGE UPLOAD: input type=file with preview.\n"
+                "4. EDIT: headings pe contenteditable=true, Edit button.\n"
+                "5. ADD/DELETE: Add Item button, har item pe delete button.\n"
+                "6. FORM: submit pe alert + reset.\n"
+                "7. SMOOTH SCROLL: html{scroll-behavior:smooth}.\n"
+                "8. HOVER EFFECTS: har button aur card pe.\n"
+                "9. MOBILE RESPONSIVE: media queries.\n"
+                "10. CSS VARIABLES colors ke liye.\n"
+                "11. Koi button dead nahi — har click pe action."
         "user ki request ke hisab se daalo."
     )
     html = _call_groq(body.prompt, system=system)
