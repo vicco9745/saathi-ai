@@ -1991,8 +1991,10 @@ renderPendingAttachments();updateActionButton();saveChats();renderChatList();ren
 const mediaAttachments=attachments.filter(a=>a.kind!=='text');
 const textAttachments=attachments.filter(a=>a.kind==='text');
 if(mediaAttachments.length>0){
-const isPhotoOnly=mediaAttachments.length===1&&mediaAttachments[0].kind==='photo';
-{setTimeout(()=>{let replyText;if(mediaAttachments.length===1){const a=mediaAttachments[0];if(a.kind==='video')replyText='Video mil gaya: "'+a.name+'" ('+formatSize(a.size)+').';else if(a.kind==='photo')replyText='Image mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';else replyText='File mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';}else{replyText=mediaAttachments.length+' items mil gaye.';}pendingReply.text=replyText;saveChats();renderMessages();},500);}
+const SAATHI_KEY_STORE='saathi_api_key';
+let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
+if(!SAATHI_KEY){SAATHI_KEY=prompt('Saathi API Key dalein:');if(SAATHI_KEY)localStorage.setItem(SAATHI_KEY_STORE,SAATHI_KEY.trim());}
+fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:text||'Is photo me kya hai? Puri detail batao',model:currentModel,memory:memoryNotes,attachments:mediaAttachments.map(a=>({kind:a.kind,dataUrl:a.dataUrl,name:a.name}))})}).then(async res=>{const data=await res.json();if(!res.ok){throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{pendingReply.text=data.reply||'Koi jawab nahi mila';saveChats();renderMessages();}).catch(err=>{pendingReply.text='Photo error: '+err.message;saveChats();renderMessages();});
 }else{
 const combinedText=textAttachments.length>0?textAttachments.map(a=>a.content).join('\n\n')+(text?('\n\n'+text):''):text;
 const SAATHI_KEY_STORE='saathi_api_key';
