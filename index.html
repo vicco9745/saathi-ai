@@ -49,6 +49,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica N
 .chat-list li:hover{background:var(--icon-hover)}
 .chat-list li.active{background:var(--icon-hover)}
 .chat-list .chat-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px;font-weight:400;color:var(--text)}
+.chat-spinner{width:18px;height:18px;flex-shrink:0;border:2px solid var(--text);border-top-color:transparent;border-radius:50%;animation:chatSpin .8s linear infinite}
+@keyframes chatSpin{to{transform:rotate(360deg)}}
 .empty-list{padding:24px 16px;font-size:13px;color:var(--text-muted);text-align:center}
 .chat-select-checkbox{width:17px;height:17px;flex-shrink:0;accent-color:var(--accent)}
 .chat-pin-icon{width:15px;height:15px;flex-shrink:0;color:var(--accent);display:flex}
@@ -183,11 +185,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica N
 .pdf-viewer-topbar .icon-btn{background:transparent;color:var(--text)}
 .pdf-viewer-title{font-size:16px;font-weight:600;color:var(--text);flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 8px;min-width:0}
 .pdf-viewer-spacer{width:38px;flex-shrink:0;display:block}
-.pdf-viewer-frame-wrap{flex:1;min-height:0;width:100%;overflow:hidden;background:#525659}
+.pdf-viewer-frame-wrap{flex:1;min-height:0;width:100%;overflow:hidden;background:#f1f1f1}
+.pdf-viewer-pages{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#f1f1f1;padding:12px;box-sizing:border-box}
 .pdf-viewer-frame{width:100%;height:100%;border:none;display:block;background:#525659}
-.pdf-viewer-bottom{flex-shrink:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--border);display:flex;justify-content:center;align-items:center}
-.pdf-viewer-download-btn{display:flex;align-items:center;gap:10px;background:#0d0d0f;color:#ffffff;border:none;padding:14px 32px;border-radius:30px;font-size:15.5px;font-weight:600;font-family:inherit;cursor:pointer;min-width:200px;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.15)}
-[data-theme="dark"] .pdf-viewer-download-btn{background:#ffffff;color:#0d0d0f}
+.pdf-viewer-bottom{flex-shrink:0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));background:#f1f1f1;border-top:none;display:flex;justify-content:center;align-items:center}
+.pdf-viewer-download-btn{display:flex;align-items:center;gap:14px;background:#e8e6e1;color:#1a1a1a;border:none;padding:16px 36px;border-radius:30px;font-size:18px;font-weight:400;font-family:inherit;cursor:pointer;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.pdf-viewer-download-btn svg{width:24px;height:24px;stroke-width:1.7}
+[data-theme="dark"] .pdf-viewer-bottom{background:#1a1a1e}
+[data-theme="dark"] .pdf-viewer-download-btn{background:#2a2a34;color:#ececf0}
 .ai-processing{display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:22px;width:fit-content;max-width:100%;margin-top:2px}
 .ai-processing .ap-term{font-family:'SF Mono',Consolas,'Courier New',monospace;font-size:15px;font-weight:700;color:#6366f1;flex-shrink:0;animation:apBlink 1s steps(2,end) infinite}
 @keyframes apBlink{0%,100%{opacity:1}50%{opacity:.35}}
@@ -742,7 +747,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica N
     <span class="pdf-viewer-title" id="pdfViewerTitle">document.pdf</span>
     <span class="pdf-viewer-spacer"></span>
   </div>
-  <div class="pdf-viewer-frame-wrap"><iframe class="pdf-viewer-frame" id="pdfViewerFrame"></iframe></div>
+  <div class="pdf-viewer-frame-wrap"><div class="pdf-viewer-pages" id="pdfViewerPages"></div><iframe class="pdf-viewer-frame" id="pdfViewerFrame" style="display:none"></iframe></div>
   <div class="pdf-viewer-bottom"><button class="pdf-viewer-download-btn" id="pdfViewerDownloadBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download</span></button></div>
 </div>
 
@@ -1539,8 +1544,33 @@ const pdfViewerFrame = document.getElementById('pdfViewerFrame');
 const pdfViewerCloseBtn = document.getElementById('pdfViewerCloseBtn');
 const pdfViewerDownloadBtn = document.getElementById('pdfViewerDownloadBtn');
 let pdfCurrentAtt = null;let pdfCurrentBlobUrl = null;
-function openPdfViewer(att){if(!att) return;pdfCurrentAtt = att;const url = att.dataUrl || att.content;if(!url) return;pdfViewerTitle.textContent = att.name || 'document.pdf';let finalUrl = url;if(typeof url === 'string' && url.startsWith('data:application/pdf;base64,')){try{const base64 = url.split(',')[1];const byteChars = atob(base64);const byteArr = new Uint8Array(byteChars.length);for(let i=0;i<byteChars.length;i++) byteArr[i] = byteChars.charCodeAt(i);const blob = new Blob([byteArr], {type:'application/pdf'});if(pdfCurrentBlobUrl){ URL.revokeObjectURL(pdfCurrentBlobUrl); }pdfCurrentBlobUrl = URL.createObjectURL(blob);finalUrl = pdfCurrentBlobUrl;}catch(e){}}pdfViewerFrame.src = finalUrl;pdfViewerOverlay.classList.add('open');}
-function closePdfViewer(){pdfViewerOverlay.classList.remove('open');setTimeout(()=>{pdfViewerFrame.src = 'about:blank';if(pdfCurrentBlobUrl){ URL.revokeObjectURL(pdfCurrentBlobUrl); pdfCurrentBlobUrl = null; }pdfCurrentAtt = null;}, 200);}
+let pdfRenderToken=0;
+async function renderPdfPages(att,finalUrl){
+const host=document.getElementById('pdfViewerPages');host.innerHTML='';host.style.display='block';pdfViewerFrame.style.display='none';
+const token=++pdfRenderToken;
+try{
+const url=att.dataUrl||att.content;let src;
+if(typeof url==='string'&&url.startsWith('data:')){const bin=atob(url.split(',')[1]);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);src={data:arr};}else{src={url:url};}
+const pdf=await pdfjsLib.getDocument(src).promise;
+const width=Math.max(200,(host.clientWidth||window.innerWidth)-24);
+const dpr=Math.min(window.devicePixelRatio||1,2.5);
+for(let p=1;p<=pdf.numPages;p++){
+if(token!==pdfRenderToken)return;
+const page=await pdf.getPage(p);
+const base=page.getViewport({scale:1});const scale=width/base.width;
+const vp=page.getViewport({scale:scale*dpr});
+const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;
+canvas.style.cssText='display:block;width:'+width+'px;height:'+(vp.height/dpr)+'px;margin:0 auto 12px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.15)';
+host.appendChild(canvas);
+await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+}
+}catch(e){
+if(token!==pdfRenderToken)return;
+host.style.display='none';pdfViewerFrame.style.display='block';pdfViewerFrame.src=finalUrl;
+}
+}
+function openPdfViewer(att){if(!att) return;pdfCurrentAtt = att;const url = att.dataUrl || att.content;if(!url) return;pdfViewerTitle.textContent = att.name || 'document.pdf';let finalUrl = url;if(typeof url === 'string' && url.startsWith('data:application/pdf;base64,')){try{const base64 = url.split(',')[1];const byteChars = atob(base64);const byteArr = new Uint8Array(byteChars.length);for(let i=0;i<byteChars.length;i++) byteArr[i] = byteChars.charCodeAt(i);const blob = new Blob([byteArr], {type:'application/pdf'});if(pdfCurrentBlobUrl){ URL.revokeObjectURL(pdfCurrentBlobUrl); }pdfCurrentBlobUrl = URL.createObjectURL(blob);finalUrl = pdfCurrentBlobUrl;}catch(e){}}pdfViewerOverlay.classList.add('open');if(window.pdfjsLib){renderPdfPages(att, finalUrl);}else{pdfViewerFrame.style.display='block';pdfViewerFrame.src = finalUrl;}}
+function closePdfViewer(){pdfRenderToken++;try{document.getElementById('pdfViewerPages').innerHTML='';}catch(_){}pdfViewerOverlay.classList.remove('open');setTimeout(()=>{pdfViewerFrame.src = 'about:blank';if(pdfCurrentBlobUrl){ URL.revokeObjectURL(pdfCurrentBlobUrl); pdfCurrentBlobUrl = null; }pdfCurrentAtt = null;}, 200);}
 pdfViewerCloseBtn.addEventListener('click', closePdfViewer);
 pdfViewerDownloadBtn.addEventListener('click', ()=>{if(!pdfCurrentAtt) return;const filename = pdfCurrentAtt.name || 'document.pdf';if(pdfCurrentAtt.dataUrl){triggerDownload(pdfCurrentAtt.dataUrl, filename);}else if(pdfCurrentBlobUrl){triggerDownload(pdfCurrentBlobUrl, filename);}});
 
@@ -1669,22 +1699,24 @@ function loadFeedback(){try{const raw=localStorage.getItem(FEEDBACK_KEY);feedbac
 function saveFeedback(){try{localStorage.setItem(FEEDBACK_KEY,JSON.stringify(feedbackEntries));}catch(_){}}
 
 function genId(){return 'c_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);}
-function createChat(){const chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;saveChats();renderChatList();renderMessages();updateActionButton();closePanel();}
+function createChat(){const chat={id:genId(),title:'New chat',messages:[]};chats=chats.filter(c=>c.messages&&c.messages.length>0);chats.unshift(chat);currentChatId=chat.id;saveChats();renderChatList();renderMessages();updateActionButton();closePanel();}
 function getCurrentChat(){return chats.find(c=>c.id===currentChatId)||null;}
-function switchChat(id){currentChatId=id;{const _i=chats.findIndex(c=>c.id===id);if(_i>0){const _c=chats.splice(_i,1)[0];chats.unshift(_c);saveChats();}}renderChatList();renderMessages();updateActionButton();closePanel();}
+function switchChat(id){chats=chats.filter(c=>c.id===id||(c.messages&&c.messages.length>0));currentChatId=id;{const _i=chats.findIndex(c=>c.id===id);if(_i>0){const _c=chats.splice(_i,1)[0];chats.unshift(_c);saveChats();}}renderChatList();renderMessages();updateActionButton();closePanel();}
 function deleteChat(id){const idx=chats.findIndex(c=>c.id===id);if(idx===-1)return;projects.forEach(p=>{p.chatIds=p.chatIds.filter(cid=>cid!==id);});saveProjects();chats.splice(idx,1);saveChats();if(currentChatId===id)currentChatId=chats.length>0?chats[0].id:null;renderChatList();renderMessages();}
 
 function renderChatList(){
-chatList.innerHTML='';
+const _st=chatList.scrollTop;chatList.innerHTML='';
 const archivedCount=chats.filter(c=>c.archived).length;
 const showArchivedBtn=document.getElementById('showArchivedBtn');
 if(archivedCount>0){showArchivedBtn.style.display='';showArchivedBtn.textContent=showArchived?'Back':'Archived ('+archivedCount+')';}else{showArchivedBtn.style.display='none';if(showArchived) showArchived=false;}
-chatCountLabel.textContent=chats.filter(c=>!c.archived).length;
+chatCountLabel.textContent=chats.filter(c=>!c.archived&&c.messages&&c.messages.length>0).length;
 const q=(chatSearchQuery||'').toLowerCase();
 let filtered=q?chats.filter(c=>(c.title||'').toLowerCase().includes(q)):chats;
 filtered=filtered.filter(c=>showArchived?c.archived:!c.archived);
+filtered=filtered.filter(c=>c.messages&&c.messages.length>0);
 filtered=[...filtered].sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
 if(filtered.length===0){const empty=document.createElement('div');empty.className='empty-list';empty.textContent=q?'Koi chat match nahi hui':(showArchived?'Koi archived chat nahi':'Abhi koi chat nahi hai');chatList.appendChild(empty);return;}
+requestAnimationFrame(()=>{chatList.scrollTop=_st;});
 filtered.forEach(chat=>{
 const li=document.createElement('li');
 if(chat.id===currentChatId)li.classList.add('active');
@@ -1692,6 +1724,7 @@ if(multiSelectMode){const checkbox=document.createElement('input');checkbox.type
 if(chat.pinned){const pinIcon=document.createElement('span');pinIcon.className='chat-pin-icon';pinIcon.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a1 1 0 0 1 1 1v6.5l3.4 4.9a1 1 0 0 1-.82 1.6H13v5a1 1 0 1 1-2 0v-5H8.42a1 1 0 0 1-.82-1.6L11 9.5V3a1 1 0 0 1 1-1Z"/></svg>';li.appendChild(pinIcon);}
 if(chat.archived){const arcIcon=document.createElement('span');arcIcon.className='chat-archive-icon';arcIcon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="5" rx="1"/><path d="M4 9v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9"/><line x1="10" y1="14" x2="14" y2="14"/></svg>';li.appendChild(arcIcon);}
 const nameSpan=document.createElement('span');nameSpan.className='chat-name';nameSpan.textContent=chat.title||'New chat';li.appendChild(nameSpan);
+if(chat.messages.some(mm=>mm.role==='ai'&&(mm.typing||mm.generating))){const sp=document.createElement('span');sp.className='chat-spinner';li.appendChild(sp);}
 li.addEventListener('click',()=>{if(multiSelectMode){const cb=li.querySelector('.chat-select-checkbox');if(cb){cb.checked=!cb.checked;cb.dispatchEvent(new Event('click',{bubbles:false}));}return;}switchChat(chat.id);});
 attachChatItemLongPress(li,chat.id);chatList.appendChild(li);
 });
@@ -1784,6 +1817,7 @@ if(m.role==='ai'&&!m.typing&&!m.interrupted){const showReset=(idx===lastAiIdx);r
 messagesList.appendChild(row);
 });
 pruneAds(adKeep);
+try{renderChatList();}catch(_){}
 messagesEl.scrollTop=messagesEl.scrollHeight;
 try{updateTopbarThreeDot((chat.messages||[]).length>0);}catch(_){}
 if(inChatSearchBar && inChatSearchBar.classList.contains('open')) performInChatSearch();
@@ -1991,10 +2025,8 @@ renderPendingAttachments();updateActionButton();saveChats();renderChatList();ren
 const mediaAttachments=attachments.filter(a=>a.kind!=='text');
 const textAttachments=attachments.filter(a=>a.kind==='text');
 if(mediaAttachments.length>0){
-const SAATHI_KEY_STORE='saathi_api_key';
-let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
-if(!SAATHI_KEY){SAATHI_KEY=prompt('Saathi API Key dalein:');if(SAATHI_KEY)localStorage.setItem(SAATHI_KEY_STORE,SAATHI_KEY.trim());}
-fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:text||'Is photo me kya hai? Puri detail batao',model:currentModel,memory:memoryNotes,attachments:mediaAttachments.map(a=>({kind:a.kind,dataUrl:a.dataUrl,name:a.name}))})}).then(async res=>{const data=await res.json();if(!res.ok){throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{pendingReply.text=data.reply||'Koi jawab nahi mila';saveChats();renderMessages();}).catch(err=>{pendingReply.text='Photo error: '+err.message;saveChats();renderMessages();});
+const isPhotoOnly=mediaAttachments.length===1&&mediaAttachments[0].kind==='photo';
+{setTimeout(()=>{let replyText;if(mediaAttachments.length===1){const a=mediaAttachments[0];if(a.kind==='video')replyText='Video mil gaya: "'+a.name+'" ('+formatSize(a.size)+').';else if(a.kind==='photo')replyText='Image mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';else replyText='File mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';}else{replyText=mediaAttachments.length+' items mil gaye.';}pendingReply.text=replyText;saveChats();renderMessages();},500);}
 }else{
 const combinedText=textAttachments.length>0?textAttachments.map(a=>a.content).join('\n\n')+(text?('\n\n'+text):''):text;
 const SAATHI_KEY_STORE='saathi_api_key';
@@ -2010,7 +2042,7 @@ if(videoMatch){const videoPrompt=videoMatch[1].trim();pendingReply.mediaType='vi
 const pdfMatch=/^\/pdf\s+([\s\S]+)/i.exec(combinedText.trim());
 if(pdfMatch){const pdfPrompt=pdfMatch[1].trim();pendingReply.processing='pdf';pendingReply.text='';pendingReply.typing=false;pendingReply.attachments=[];saveChats();renderMessages();fetch(SAATHI_API_BASE+'/v1/pdf',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({prompt:pdfPrompt,model:currentModel,learning:smartCtx})}).then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error((data.detail||data.error||'API key invalid ya expired ho gayi hai'));}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{const pdfSrc=data.pdf_url||(data.pdf_base64?('data:application/pdf;base64,'+data.pdf_base64):null);pendingReply.processing=null;if(pdfSrc){pendingReply.attachments=[{kind:'file',name:data.filename||'generated.pdf',dataUrl:pdfSrc,origin:'ai'}];pendingReply.text=data.caption||'Yeh raha aapka generated PDF.';}else{pendingReply.attachments=[];pendingReply.text='PDF generate nahi ho paya.';}pendingReply.typing=true;saveChats();renderMessages();}).catch(err=>{pendingReply.processing=null;pendingReply.attachments=[];pendingReply.text='PDF generation error: '+err.message;pendingReply.typing=true;saveChats();renderMessages();});return;}
 const searchMatch=/^\/search\s+([\s\S]+)/i.exec(combinedText.trim());
-fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:searchMatch?searchMatch[1].trim():combinedText,model:currentModel,memory:memoryNotes,learning:smartCtx,allow_web_search:!!searchMatch})}).then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error((data.detail||data.error||'API key invalid ya expired ho gayi hai'));}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{pendingReply.text=data.reply||'Saathi se jawab nahi mila.';if(data.kind==='pdf'&&data.pdf_base64){pendingReply.attachments=[{kind:'file',name:data.filename||'saathi.pdf',dataUrl:'data:application/pdf;base64,'+data.pdf_base64,origin:'ai'}];}else if(data.kind==='website'&&data.html){pendingReply.attachments=[{kind:'file',name:data.filename||'index.html',content:data.html,origin:'ai'}];}else if(data.kind==='image'&&data.image_url){pendingReply.attachments=[{kind:'photo',name:'saathi-generated-image',dataUrl:data.image_url,origin:'ai'}];}if(Array.isArray(data.suggestions)&&data.suggestions.length>0)pendingReply.suggestions=data.suggestions.slice(0,4);if(Array.isArray(data.sources)&&data.sources.length>0)pendingReply.sources=data.sources.slice(0,10);saveChats();renderMessages();}).catch(err=>{pendingReply.text='Saathi connection error: '+err.message;saveChats();renderMessages();});
+fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:searchMatch?searchMatch[1].trim():combinedText,model:currentModel,memory:memoryNotes,learning:smartCtx,allow_web_search:!!searchMatch})}).then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error((data.detail||data.error||'API key invalid ya expired ho gayi hai'));}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{const replyText=data.reply||'Saathi से जवाब नहीं मिला।';pendingReply.text=replyText;if(Array.isArray(data.suggestions)&&data.suggestions.length>0)pendingReply.suggestions=data.suggestions.slice(0,4);if(Array.isArray(data.sources)&&data.sources.length>0)pendingReply.sources=data.sources.slice(0,10);saveChats();renderMessages();}).catch(err=>{pendingReply.text='Saathi connection error: '+err.message;saveChats();renderMessages();});
 }
 }
 
@@ -2050,7 +2082,7 @@ loadFeedback();
 loadSmartLearning();
 loadProjects();
 loadPluginState();
-function openFreshChat(){const e=chats.find(c=>!c.archived&&(!c.messages||c.messages.length===0));if(e){const i=chats.indexOf(e);if(i>0){chats.splice(i,1);chats.unshift(e);}currentChatId=e.id;}else{const chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;}saveChats();}
+function openFreshChat(){chats.forEach(c=>(c.messages||[]).forEach(mm=>{if(mm.typing)mm.typing=false;if(mm.generating)mm.generating=false;}));chats=chats.filter(c=>c.messages&&c.messages.length>0);const chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;saveChats();}
 function clearComposerDraft(){msgInput.value='';pendingAttachments=[];try{renderPendingAttachments();}catch(_){}autoResizeInput();updateActionButton();}
 openFreshChat();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;const c=getCurrentChat();if(c&&(!c.messages||c.messages.length===0)&&(msgInput.value||pendingAttachments.length>0)){clearComposerDraft();}});
