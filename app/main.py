@@ -229,7 +229,14 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
                 "8. HOVER EFFECTS: har button aur card pe.\n"
                 "9. MOBILE RESPONSIVE: media queries.\n"
                 "10. CSS VARIABLES colors ke liye.\n"
-                "11. Koi button dead nahi — har click pe action."
+                "11. Koi button dead nahi — har click pe action.\n"
+                "\n📋 CHANGES / क्या किया (code ke neeche likho):\n"
+                "- [Kya-kya banaya/badla — list mein]\n"
+                "\n✅ FEATURES ADD KIYE:\n"
+                "- [Naye features]\n"
+                "\n📝 Aap check kariye:\n"
+                "Koi galti ho, kuch aur chahiye, ya samajh na aaye to bataaiye — "
+                "main turant theek kar dunga."
             )
             html = _call_groq(body.message, system=system).strip()
             if "```" in html:
@@ -445,7 +452,14 @@ def website(body: GenericRequest, key=Depends(require_api_key)):
                 "8. HOVER EFFECTS: har button aur card pe.\n"
                 "9. MOBILE RESPONSIVE: media queries.\n"
                 "10. CSS VARIABLES colors ke liye.\n"
-                "11. Koi button dead nahi — har click pe action."
+                "11. Koi button dead nahi — har click pe action.\n"
+                "\n📋 CHANGES / क्या किया (code ke neeche likho):\n"
+                "- [Kya-kya banaya/badla — list mein]\n"
+                "\n✅ FEATURES ADD KIYE:\n"
+                "- [Naye features]\n"
+                "\n📝 Aap check kariye:\n"
+                "Koi galti ho, kuch aur chahiye, ya samajh na aaye to bataaiye — "
+                "main turant theek kar dunga."
         "user ki request ke hisab se daalo."
     )
     html = _call_groq(body.prompt, system=system)
