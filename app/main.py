@@ -125,7 +125,7 @@ def _call_openrouter_vision(prompt: str, images: list) -> str:
                         {"role": "user", "content": content},
                     ],
                 },
-                timeout=90,
+                timeout=300,
             )
             if r.status_code != 200:
                 last_err = f"{model}: HTTP {r.status_code}"
@@ -151,6 +151,12 @@ def _detect_action(msg: str) -> str:
     m = (msg or "").lower()
     # ANALYZE — SABSE PEHLE (highest priority)
     if '=== file:' in m or '===file:' in m:
+        return "analyze"
+    if 'user ne neeche file bheji' in m:
+        return "analyze"
+    if 'file ka naam:' in m and '---' in m:
+        return "analyze"
+    if 'file analyze karo' in m or 'file padho' in m:
         return "analyze"
     has_code = any(x in m for x in ['<!doctype', '<html', '<body', '<div', 'function ', 'const ', 'class ', 'def ', 'import ', 'public class'])
     has_analyze = any(x in m for x in ['analyze', 'check karo', 'batao isme', 'isme kya', 'kya kya hai', 'review karo', 'dekho isko', 'sahi hai ya', 'theek hai ya', 'quality batao', 'improve karo', 'file check', 'file dekho', 'file batao'])
@@ -189,25 +195,20 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
 
     if action == "analyze":
         system = (
-            "Tum ek professional code reviewer ho. User ne ek file/code bheja hai. "
-            "Uska POORA detail mein analysis karo aur ye format follow karo:\n\n"
-            "## 📄 File Ka Naam aur Type\n"
-            "[HTML/CSS/JS/Python kya hai]\n\n"
-            "## 📋 Isme Kya-Kya Hai\n"
-            "- Sections (header, hero, services, waghairah)\n"
-            "- Features (buttons, forms, animations)\n"
-            "- Design (colors, fonts, layout)\n"
-            "- Images aur unke sources\n\n"
+            "Tum ek professional code reviewer ho. User ne file bheji hai. "
+            "CHHOTA aur SAARBHUT analysis do (max 200 words):\n\n"
+            "## 📄 File Type\n"
+            "[HTML/CSS/JS/Python]\n\n"
+            "## 📋 Kya-Kya Hai\n"
+            "- [4-6 main points]\n\n"
             "## ✅ Achhi Baatein\n"
-            "[Kya sahi hai]\n\n"
-            "## ⚠️ Kamiyan (Missing Things)\n"
-            "[Kya missing hai — jo honi chahiye thi]\n\n"
-            "## 🔧 Kya-Kya Improve Kar Sakte Hain\n"
-            "[Suggestions list]\n\n"
-            "## 🌟 Quality Rating: X/10\n"
-            "[Kyun ye rating di]\n\n"
-            "Aakhir mein: 'Bataaiye kya-kya theek karwana hai — main turant kar dunga.'\n\n"
-            "User ki bhasha mein jawab do (Hindi/English/Hinglish)."
+            "- [3-4 points]\n\n"
+            "## ⚠️ Kamiyan\n"
+            "- [3-4 points]\n\n"
+            "## 🔧 Improvements\n"
+            "- [3-4 suggestions]\n\n"
+            "## 🌟 Rating: X/10\n\n"
+            "Chhota rakho. User ki bhasha mein."
         )
         try:
             reply = _call_groq(body.message, system=system)
@@ -345,7 +346,7 @@ def _call_groq(prompt: str, system: str = "") -> str:
                 "max_tokens": 8000,
                 "temperature": 0.6,
             },
-            timeout=180,
+            timeout=300,
         )
         if r.status_code != 200:
             print(f"[groq] HTTP {r.status_code}, OpenRouter fallback")
@@ -388,7 +389,7 @@ def _call_openrouter(prompt: str, system: str = "") -> str:
                 ),
                 "max_tokens": 8000,
             },
-            timeout=180,
+            timeout=300,
         )
         if r.status_code != 200:
             raise HTTPException(500, f"OpenRouter error: {r.status_code}")
