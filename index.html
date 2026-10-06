@@ -1799,10 +1799,16 @@ element.textContent='';
 const totalLen=text.length;
 const TARGET_MS=20000;
 const steps=100;
-const interval=TARGET_MS/steps;
+const interval=Math.max(50,TARGET_MS/steps);
 const chunk=Math.max(1,Math.ceil(totalLen/steps));
 let i=0;let lastRender=0;
 aiIsTyping=true;activeTypingMessage=message;message.fullText=text;updateActionButton();
+function finish(){
+message.typing=false;message.interrupted=false;activeTypingTimeout=null;activeTypingMessage=null;aiIsTyping=false;
+try{if(typeof renderMarkdown==='function')element.innerHTML=renderMarkdown(text);else element.textContent=text;}catch(_){element.textContent=text;}
+saveChats();updateActionButton();
+setTimeout(function(){try{renderMessages();}catch(_){}},50);
+}
 function typeNext(){
 if(i<text.length){
 i=Math.min(i+chunk,text.length);
@@ -1814,11 +1820,8 @@ lastRender=now;
 }
 messagesEl.scrollTop=messagesEl.scrollHeight;
 activeTypingTimeout=setTimeout(typeNext,interval);
-}else{
-message.typing=false;message.interrupted=false;activeTypingTimeout=null;activeTypingMessage=null;aiIsTyping=false;
-try{if(typeof renderMarkdown==='function')element.innerHTML=renderMarkdown(text);else element.textContent=text;}catch(_){element.textContent=text;}
-saveChats();updateActionButton();
-}}
+}else{finish();}
+}
 typeNext();}
 function stopAITyping(){if(!aiIsTyping)return;if(activeTypingTimeout){clearTimeout(activeTypingTimeout);activeTypingTimeout=null;}if(activeTypingMessage){activeTypingMessage.typing=false;activeTypingMessage.interrupted=true;activeTypingMessage=null;}aiIsTyping=false;saveChats();renderMessages();updateActionButton();}
 function retryInterrupted(message,chat){if(!message||!message.fullText)return;message.text='';message.interrupted=false;message.typing=true;saveChats();renderMessages();setTimeout(()=>{const row=document.querySelector('.msg-row.ai:last-child');const bubble=row?row.querySelector('.bubble'):null;if(bubble)typeAIMessage(bubble,message.fullText,message);},50);}
@@ -2208,6 +2211,29 @@ updateDictateButton();
 autoResizeInput();
 updateCallActionButton();
 })();
+
+(function(){
+try{
+  const raw = localStorage.getItem('ai_chat_history_v1');
+  if(raw){
+    const chats = JSON.parse(raw);
+    let changed = false;
+    chats.forEach(function(ch){
+      (ch.messages||[]).forEach(function(m){
+        if(m.role==='ai' && m.typing===true && (!m.text || !m.text.trim())){
+          m.typing = false;
+          changed = true;
+        }
+      });
+    });
+    if(changed){
+      localStorage.setItem('ai_chat_history_v1', JSON.stringify(chats));
+      console.log('Fixed stuck typing messages');
+    }
+  }
+}catch(_){}
+})();
+
 </script>
 </body>
 </html>
