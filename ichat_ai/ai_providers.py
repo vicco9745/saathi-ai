@@ -193,8 +193,8 @@ def _call_openrouter(prompt):
 
 
 _PROVIDERS = [
-    ("openrouter", _call_openrouter),
     ("groq", _call_groq),
+    ("openrouter", _call_openrouter),
     ("gemini", _call_gemini),
     ("deepseek", _call_deepseek),
 ]
