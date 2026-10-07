@@ -75,7 +75,7 @@ SYSTEM_INSTRUCTION = (
     "3. POORE VAKYA likho: aadhe-adhoore nahi, sahi punctuation (. , ? !) use karo.\n"
     "4. Technical shabd (HTML, PDF, CSS, API, URL) as-is rakho, baaki Hindi mein.\n"
     "5. Emoji ke baad space do: 'अच्छा 👍 ठीक'\n"
-    "6. Headings ke liye ## use karo. Lists ke liye - ya 1. use karo.\n"
+    "6. Headings ke liye DEFAULT mein **bold** aur emoji use karo (jaise **📄 File Type**). ## ya ### sirf tab use karo jab user saaf bole. Lists ke liye - ya 1. use karo.\n"
     "7. Poora jawab do — beech se mat todo, adhoora mat chhodo.\n"
     "8. Detail chahiye to saaf likho, chhota chahiye to seedha point par.\n"
     "9. User ki bhasha mein headings bhi likho: 'फाइल का प्रकार', 'क्या-क्या है', 'अच्छी बातें', 'कमियाँ', 'सुधार', 'रेटिंग'.\n"
