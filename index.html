@@ -1833,9 +1833,9 @@ function renderMarkdown(t){
 if(!t)return'';
 let h=t;
 h=h.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-h=h.replace(/^### (.+)$/gm,'<h3 style="font-size:1.1em;margin:12px 0 6px;font-weight:700;">$1</h3>');
-h=h.replace(/^## (.+)$/gm,'<h2 style="font-size:1.25em;margin:14px 0 8px;font-weight:700;">$1</h2>');
-h=h.replace(/^# (.+)$/gm,'<h1 style="font-size:1.4em;margin:16px 0 10px;font-weight:700;">$1</h1>');
+h=h.replace(/^###+ (.+)$/gm,'<p style="font-size:1.1em;margin:10px 0 6px;font-weight:700;">$1</p>');
+h=h.replace(/^##+ (.+)$/gm,'<p style="font-size:1.15em;margin:12px 0 6px;font-weight:700;">$1</p>');
+h=h.replace(/^#+ (.+)$/gm,'<p style="font-size:1.2em;margin:14px 0 8px;font-weight:700;">$1</p>');
 h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
 h=h.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g,'<em>$1</em>');
 h=h.replace(/`([^`]+)`/g,'<code style="background:rgba(0,0,0,0.06);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:0.9em;">$1</code>');
