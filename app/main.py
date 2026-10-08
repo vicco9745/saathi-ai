@@ -518,8 +518,6 @@ def _call_vision_v2(prompt: str, images: list) -> str:
     if groq_key:
         groq_models = [
             "qwen/qwen3.8-27b",
-            "meta-llama/llama-4-scout-17b-16e-instruct",
-            "meta-llama/llama-4-maverick-17b-128e-instruct",
         ]
         for model in groq_models:
             try:
@@ -554,9 +552,10 @@ def _call_vision_v2(prompt: str, images: list) -> str:
     or_key = os.environ.get("OPENROUTER_API_KEY")
     if or_key:
         or_models = [
-            "qwen/qwen3.8-27b:free",
-            "google/gemma-4-31b-it:free",
             "qwen/qwen2.5-vl-72b-instruct:free",
+            "qwen/qwen2.5-vl-32b-instruct:free",
+            "google/gemma-3-27b-it:free",
+            "meta-llama/llama-4-scout:free",
         ]
         for model in or_models:
             try:
