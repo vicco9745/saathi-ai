@@ -184,7 +184,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
 
     if images:
         raw = _call_vision_v2(body.message, images)
-        reply = _polish_vision_reply(raw, body.message)
+        reply = _strip_markdown(_polish_vision_reply(raw, body.message))
         return {
             "service": "chat",
             "reply": reply,
@@ -309,13 +309,13 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     if isinstance(result, dict):
         return {
             "service": "chat",
-            "reply": result.get("reply"),
+            "reply": _strip_markdown(result.get("reply") or ""),
             "sources": result.get("sources", []),
             "model": "saathi"
         }
     return {
         "service": "chat",
-        "reply": result,
+        "reply": _strip_markdown(result if isinstance(result, str) else str(result)),
         "model": "saathi"
     }
 
@@ -623,6 +623,34 @@ def _polish_vision_reply(vision_text: str, user_message: str) -> str:
         return polished if polished else vision_text
     except Exception:
         return vision_text
+
+
+def _strip_markdown(text: str) -> str:
+    """Jawab se *** , ** , ## , ### jaise markdown symbols hata do.
+    Sirf saaf plain text rakho — headings, bullets, sab as-is."""
+    if not text:
+        return text
+    import re as _r
+    t = text
+    # Triple asterisk/underscore
+    t = _r.sub(r'\*\*\*+', '', t)
+    t = _r.sub(r'___+', '', t)
+    # Double asterisk / underscore (bold/italic)
+    t = _r.sub(r'\*\*', '', t)
+    t = _r.sub(r'(?<!\w)__(?!\w)', '', t)
+    # Headings: ## ### etc — hata do hashes
+    t = _r.sub(r'(?m)^\s*#{1,6}\s*', '', t)
+    # Horizontal rule --- or ___
+    t = _r.sub(r'(?m)^\s*[-*_]{3,}\s*$', '', t)
+    # Inline code backticks
+    t = t.replace('`', '')
+    # Leading asterisk in bullets -> convert to bullet dot
+    t = _r.sub(r'(?m)^\s*\*\s+', '• ', t)
+    # Stray asterisks leftover
+    t = _r.sub(r'(?<!\w)\*(?!\w)', '', t)
+    # Extra blank lines
+    t = _r.sub(r'\n{3,}', '\n\n', t)
+    return t.strip()
 
 
 def _call_vision_v2(prompt: str, images: list) -> str:
