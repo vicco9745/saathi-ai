@@ -517,6 +517,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
     groq_key = os.environ.get("GROQ_API_KEY")
     if groq_key:
         groq_models = [
+            "qwen/qwen3.8-27b",
             "meta-llama/llama-4-scout-17b-16e-instruct",
             "meta-llama/llama-4-maverick-17b-128e-instruct",
         ]
@@ -536,7 +537,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
                     timeout=120,
                 )
                 if r.status_code != 200:
-                    errors.append("groq/" + model + ": HTTP " + str(r.status_code))
+                    errors.append("groq/" + model + ": " + str(r.status_code))
                     continue
                 data = r.json()
                 choices = data.get("choices") or []
@@ -553,14 +554,20 @@ def _call_vision_v2(prompt: str, images: list) -> str:
     or_key = os.environ.get("OPENROUTER_API_KEY")
     if or_key:
         or_models = [
+            "qwen/qwen3.8-27b:free",
+            "google/gemma-4-31b-it:free",
             "qwen/qwen2.5-vl-72b-instruct:free",
-            "qwen/qwen2.5-vl-32b-instruct:free",
         ]
         for model in or_models:
             try:
                 r = _req.post(
                     "https://openrouter.ai/api/v1/chat/completions",
-                    headers={"Authorization": "Bearer " + or_key, "Content-Type": "application/json"},
+                    headers={
+                        "Authorization": "Bearer " + or_key,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://saathi-ai-y48j.onrender.com",
+                        "X-Title": "Saathi AI",
+                    },
                     json={
                         "model": model,
                         "messages": [
@@ -572,7 +579,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
                     timeout=120,
                 )
                 if r.status_code != 200:
-                    errors.append("or/" + model + ": HTTP " + str(r.status_code))
+                    errors.append("or/" + model + ": " + str(r.status_code))
                     continue
                 data = r.json()
                 choices = data.get("choices") or []
