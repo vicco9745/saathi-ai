@@ -184,7 +184,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
 
     if images:
         raw = _call_vision_v2(body.message, images)
-        reply = _strip_markdown(_polish_vision_reply(raw, body.message))
+        reply = _polish_vision_reply(raw, body.message)
         return {
             "service": "chat",
             "reply": reply,
@@ -309,13 +309,13 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     if isinstance(result, dict):
         return {
             "service": "chat",
-            "reply": _strip_markdown(result.get("reply") or ""),
+            "reply": result.get("reply") or "",
             "sources": result.get("sources", []),
             "model": "saathi"
         }
     return {
         "service": "chat",
-        "reply": _strip_markdown(result if isinstance(result, str) else str(result)),
+        "reply": result if isinstance(result, str) else str(result),
         "model": "saathi"
     }
 

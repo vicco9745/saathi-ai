@@ -1797,6 +1797,57 @@ function typeAIMessage(element,text,message){element.textContent='';let i=0;cons
 function stopAITyping(){if(!aiIsTyping)return;if(activeTypingTimeout){clearTimeout(activeTypingTimeout);activeTypingTimeout=null;}if(activeTypingMessage){activeTypingMessage.typing=false;activeTypingMessage.interrupted=true;activeTypingMessage=null;}aiIsTyping=false;saveChats();renderMessages();updateActionButton();}
 function retryInterrupted(message,chat){if(!message||!message.fullText)return;message.text='';message.interrupted=false;message.typing=true;saveChats();renderMessages();setTimeout(()=>{const row=document.querySelector('.msg-row.ai:last-child');const bubble=row?row.querySelector('.bubble'):null;if(bubble)typeAIMessage(bubble,message.fullText,message);},50);}
 function escapeHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function renderMarkdown(text){
+  if(!text) return '';
+  let t = String(text)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+
+  // Code fence
+  t = t.replace(/```([\s\S]*?)```/g, function(m, code){
+    return '<pre style="background:var(--icon-hover);padding:10px 12px;border-radius:10px;overflow-x:auto;font-family:monospace;font-size:13px;margin:8px 0;white-space:pre-wrap;word-break:break-word;">'+code.replace(/^\n+|\n+$/g,'')+'</pre>';
+  });
+
+  // Inline code
+  t = t.replace(/`([^`\n]+)`/g, '<code style="background:var(--icon-hover);padding:2px 6px;border-radius:5px;font-family:monospace;font-size:.92em;">$1</code>');
+
+  // Headings
+  t = t.replace(/^\s*###\s+(.+)$/gm, '<div style="font-size:14.5px;font-weight:700;margin:14px 0 6px;color:var(--text);">$1</div>');
+  t = t.replace(/^\s*##\s+(.+)$/gm,  '<div style="font-size:16.5px;font-weight:700;margin:16px 0 8px;color:var(--text);">$1</div>');
+  t = t.replace(/^\s*#\s+(.+)$/gm,   '<div style="font-size:18.5px;font-weight:700;margin:18px 0 10px;color:var(--text);">$1</div>');
+
+  // Bold
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, '<strong style="font-weight:700;">$1</strong>');
+  t = t.replace(/__([^_\n]+)__/g, '<strong style="font-weight:700;">$1</strong>');
+
+  // Italic
+  t = t.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+
+  // HR
+  t = t.replace(/^\s*[-*_]{3,}\s*$/gm, '<div style="border-top:1px solid var(--border);margin:14px 0;"></div>');
+
+  // Bullets - * -> nice dot
+  t = t.replace(/^\s*[\*\-]\s+(.+)$/gm, '<div style="display:flex;gap:8px;margin:5px 0;padding-left:2px;"><span style="flex-shrink:0;color:var(--accent);font-weight:700;line-height:1.6;">•</span><span style="flex:1;">$1</span></div>');
+
+  // Numbered
+  t = t.replace(/^\s*(\d+)\.\s+(.+)$/gm, '<div style="display:flex;gap:8px;margin:5px 0;padding-left:2px;"><span style="flex-shrink:0;font-weight:600;color:var(--text-soft);min-width:20px;">$1.</span><span style="flex:1;">$2</span></div>');
+
+  // Blockquote
+  t = t.replace(/^&gt;\s+(.+)$/gm, '<div style="border-left:3px solid var(--accent);padding:6px 12px;margin:8px 0;background:var(--icon-hover);border-radius:0 8px 8px 0;color:var(--text-soft);">$1</div>');
+
+  // ═══ LAST: koi bhi bacha hua * ya # hata do ═══
+  t = t.replace(/\*/g, '');
+  t = t.replace(/#/g, '');
+
+  // Breaks
+  t = t.replace(/\n{2,}/g, '</p><p style="margin:8px 0;">');
+  t = t.replace(/\n/g, '<br>');
+
+  return '<p style="margin:8px 0;">' + t + '</p>';
+}
+
 function linkifyText(text){const escaped=escapeHtml(text);const urlRegex=/(https?:\/\/[^\s<]+)/g;return escaped.replace(urlRegex,url=>'<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="msg-link">'+url+'</a>');}
 
 function makeCollapsible(bubble){requestAnimationFrame(()=>{if(!bubble.isConnected)return;if(bubble.scrollHeight<=206)return;bubble.classList.add('has-more','collapsed');const btn=document.createElement('button');btn.type='button';btn.className='bubble-expand';btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';btn.addEventListener('click',(e)=>{e.stopPropagation();const c=bubble.classList.toggle('collapsed');btn.classList.toggle('up',!c);});bubble.appendChild(btn);});}
@@ -1813,12 +1864,12 @@ const row=document.createElement('div');row.className='msg-row '+(m.role==='user
 if(m.role==='ai' && m.mediaType && (m.generating || m.typing)){const loaderWrap=document.createElement('div');loaderWrap.className='generating-loader';loaderWrap.appendChild(buildTwinkleGrid());row.appendChild(loaderWrap);messagesList.appendChild(row);return;}
 if(m.role==='ai' && (m.processing==='website' || m.processing==='pdf')){const proc=document.createElement('div');proc.className='ai-processing';proc.innerHTML='<span class="ap-term">&gt;_</span><span class="ap-text">'+getProcessingMessage(m.processing, 0)+'</span><span class="ap-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>';row.appendChild(proc);messagesList.appendChild(row);const textEl = proc.querySelector('.ap-text');const type = m.processing;let msgIdx = 0;const interval = setInterval(()=>{if(!document.body.contains(textEl)){ clearInterval(interval); return; }msgIdx++;textEl.textContent = getProcessingMessage(type, msgIdx);}, 1600);window._processingIntervals = window._processingIntervals || [];window._processingIntervals.push(interval);return;}
 const attachments=m.attachments||(m.attachment?[m.attachment]:[]);
-if(m.role==='ai' && m.mediaType && attachments.length>0 && !m.generating && !m.typing){attachments.forEach(att=>{row.appendChild(buildMediaPreviewTile(att));});if(m.text){const bubble=document.createElement('div');bubble.className='bubble';bubble.innerHTML=linkifyText(m.text);row.appendChild(bubble);}messagesList.appendChild(row);return;}
+if(m.role==='ai' && m.mediaType && attachments.length>0 && !m.generating && !m.typing){attachments.forEach(att=>{row.appendChild(buildMediaPreviewTile(att));});if(m.text){const bubble=document.createElement('div');bubble.className='bubble';bubble.innerHTML=renderMarkdown(m.text);row.appendChild(bubble);}messagesList.appendChild(row);return;}
 if(attachments.length>0)row.appendChild(buildAttachmentsBlock(attachments));
 if(m.text||(m.role==='ai'&&m.typing)){
 const bubble=document.createElement('div');bubble.className='bubble';
 if(m.role==='user'){bubble.classList.add('text-only');attachMessageLongPress(bubble,m);}
-if(m.role==='ai'&&m.typing){const typingWrap=document.createElement('div');typingWrap.className='ai-typing-row';const avatar=document.createElement('img');avatar.className='ai-typing-avatar';avatar.src=WHALE_LOGO;avatar.alt='';typingWrap.appendChild(avatar);typingWrap.appendChild(bubble);row.appendChild(typingWrap);if(m.text)typeAIMessage(bubble,m.text,m);else{bubble.textContent='';aiIsTyping=true;activeTypingMessage=m;updateActionButton();}}else{bubble.innerHTML=linkifyText(m.text);row.appendChild(bubble);if(m.role==='user')makeCollapsible(bubble);}
+if(m.role==='ai'&&m.typing){const typingWrap=document.createElement('div');typingWrap.className='ai-typing-row';const avatar=document.createElement('img');avatar.className='ai-typing-avatar';avatar.src=WHALE_LOGO;avatar.alt='';typingWrap.appendChild(avatar);typingWrap.appendChild(bubble);row.appendChild(typingWrap);if(m.text)typeAIMessage(bubble,m.text,m);else{bubble.textContent='';aiIsTyping=true;activeTypingMessage=m;updateActionButton();}}else{bubble.innerHTML=renderMarkdown(m.text);row.appendChild(bubble);if(m.role==='user')makeCollapsible(bubble);}
 }
 if(m.role==='ai'&&m.interrupted&&!m.typing){const ibox=document.createElement('div');ibox.className='interruption-box';const itext=document.createElement('div');itext.className='interruption-text';itext.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Saathi\'s response was interrupted.</span>';const tryBtn=document.createElement('button');tryBtn.className='interruption-try-btn';tryBtn.textContent='Try again';tryBtn.addEventListener('click',()=>{retryInterrupted(m,chat);});ibox.appendChild(itext);ibox.appendChild(tryBtn);row.appendChild(ibox);}
 if(m.role==='ai'&&!m.typing&&Array.isArray(m.sources)&&m.sources.length>0)row.appendChild(buildSourcesChip(m.sources));
