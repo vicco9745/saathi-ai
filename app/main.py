@@ -183,7 +183,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     images = [a for a in (body.attachments or []) if a.kind == "photo" and a.dataUrl]
 
     if images:
-        reply = _call_openrouter_vision(body.message, images)
+        reply = _call_vision_v2(body.message, images)
         return {
             "service": "chat",
             "reply": reply,
@@ -503,3 +503,93 @@ def website(body: GenericRequest, key=Depends(require_api_key)):
     if "```" in html:
         html = html.replace("```html", "").replace("```", "").strip()
     return {"html": html, "filename": "index.html"}
+
+def _call_vision_v2(prompt: str, images: list) -> str:
+    content = [{"type": "text", "text": prompt or "Is photo me kya hai? Puri detail batao."}]
+    for img in images[:3]:
+        url = img.dataUrl or ""
+        if not url.startswith("data:image"):
+            continue
+        content.append({"type": "image_url", "image_url": {"url": url}})
+
+    errors = []
+
+    groq_key = os.environ.get("GROQ_API_KEY")
+    if groq_key:
+        groq_models = [
+            "meta-llama/llama-4-scout-17b-16e-instruct",
+            "meta-llama/llama-4-maverick-17b-128e-instruct",
+            "llama-3.2-90b-vision-preview",
+            "llama-3.2-11b-vision-preview",
+        ]
+        for model in groq_models:
+            try:
+                r = _req.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={"Authorization": "Bearer " + groq_key, "Content-Type": "application/json"},
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": SYSTEM_INSTRUCTION},
+                            {"role": "user", "content": content},
+                        ],
+                        "max_tokens": 2000,
+                    },
+                    timeout=120,
+                )
+                if r.status_code != 200:
+                    errors.append("groq/" + model + ": HTTP " + str(r.status_code))
+                    continue
+                data = r.json()
+                choices = data.get("choices") or []
+                if not choices:
+                    errors.append("groq/" + model + ": no choices")
+                    continue
+                txt = (choices[0].get("message", {}).get("content") or "").strip()
+                if txt:
+                    return txt
+                errors.append("groq/" + model + ": empty")
+            except Exception as e:
+                errors.append("groq/" + model + ": " + str(e))
+
+    or_key = os.environ.get("OPENROUTER_API_KEY")
+    if or_key:
+        or_models = [
+            "google/gemini-2.0-flash-exp:free",
+            "google/gemini-flash-1.5:free",
+            "meta-llama/llama-3.2-11b-vision-instruct:free",
+            "qwen/qwen-2-vl-72b-instruct:free",
+            "mistralai/pixtral-12b:free",
+        ]
+        for model in or_models:
+            try:
+                r = _req.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={"Authorization": "Bearer " + or_key, "Content-Type": "application/json"},
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": SYSTEM_INSTRUCTION},
+                            {"role": "user", "content": content},
+                        ],
+                        "max_tokens": 2000,
+                    },
+                    timeout=120,
+                )
+                if r.status_code != 200:
+                    errors.append("or/" + model + ": HTTP " + str(r.status_code))
+                    continue
+                data = r.json()
+                choices = data.get("choices") or []
+                if not choices:
+                    errors.append("or/" + model + ": no choices")
+                    continue
+                txt = (choices[0].get("message", {}).get("content") or "").strip()
+                if txt:
+                    return txt
+                errors.append("or/" + model + ": empty")
+            except Exception as e:
+                errors.append("or/" + model + ": " + str(e))
+
+    err_text = " | ".join(errors[-6:]) if errors else "no keys"
+    raise HTTPException(500, "Vision fail: " + err_text)
