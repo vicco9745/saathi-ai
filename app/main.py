@@ -601,10 +601,10 @@ def _call_vision_v2(prompt: str, images: list) -> str:
     or_key = os.environ.get("OPENROUTER_API_KEY")
     if or_key:
         or_models = [
-            "qwen/qwen2.5-vl-72b-instruct:free",
-            "qwen/qwen2.5-vl-32b-instruct:free",
+            "qwen/qwen-2.5-vl-7b-instruct:free",
+            "nvidia/nemotron-nano-12b-v2-vl:free",
             "google/gemma-3-27b-it:free",
-            "meta-llama/llama-4-scout:free",
+            "mistralai/mistral-small-3.1-24b-instruct:free",
         ]
         for model in or_models:
             try:
