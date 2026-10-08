@@ -183,7 +183,8 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     images = [a for a in (body.attachments or []) if a.kind == "photo" and a.dataUrl]
 
     if images:
-        reply = _call_vision_v2(body.message, images)
+        raw = _call_vision_v2(body.message, images)
+        reply = _polish_vision_reply(raw, body.message)
         return {
             "service": "chat",
             "reply": reply,
@@ -551,6 +552,77 @@ VISION_SYSTEM_INSTRUCTION = (
     "Agar user ne saath mein kuch likha hai (jaise 'iski PDF banao') to pehle upar ke "
     "chaaron hisse poore karo, PHIR jo maanga gaya kaam karo."
 )
+
+
+def _polish_vision_reply(vision_text: str, user_message: str) -> str:
+    """Vision model ke tukde-tukde jawab ko saaf, insaan-jaisi bhasha mein likho.
+    User ki bhasha detect karke usi mein likho — Hindi, English, Arabic, Tamil, jo bhi."""
+    if not vision_text or not vision_text.strip():
+        return vision_text
+
+    key = os.environ.get("GROQ_API_KEY")
+    if not key:
+        return vision_text
+
+    system = (
+        "Tum ek expert editor ho. Neeche ek vision AI ka raw observation hai — "
+        "photo/video/file mein kya-kya dikha, uski tafseel. Yeh raw text tuti-phooti "
+        "bhasha mein hai, shabd bigde hue hain (jaise 'HISLA' ka matlab 'hissa', "
+        "'kish' ka matlab 'kis', 'aaaj' ka matlab 'aaj').\n\n"
+        "Tumhara kaam: is raw text ko uthao aur ek SAFA, INSAN-JAISI bhasha mein "
+        "dobara likho. Matlab badalna NAHI — sirf bhasha sudhaarni hai.\n\n"
+        "═══ BHASHA KA RULE (SABSE ZAROORI) ═══\n"
+        "User ne jo message bheja hai, usi bhasha mein jawab likho:\n"
+        "- User Hindi/Hinglish mein likhe → Hindi/Hinglish mein likho (Devanagari + Roman mix, jaise log bolte hain)\n"
+        "- User English mein likhe → English mein likho\n"
+        "- User Arabic mein likhe → Arabic mein likho\n"
+        "- User Tamil/Bengali/Marathi/jo bhi bhasha → usi bhasha mein likho\n"
+        "- Agar user ne kuch likha hi nahi (sirf photo bheji) → Hindi/Hinglish mein likho\n\n"
+        "═══ JAWAB KA DHANCHA — 4 HISSE (HAMESHA) ═══\n"
+        "Ye chaar hisse saaf-saaf headings ke saath likho:\n\n"
+        "1. KYA-KYA HAI (poora vivaran — kya dikha, kahan-kahan, kya likha hai)\n"
+        "2. KIS KAAM KI HAI (yeh cheez kis kaam aati hai, kahan istemal hoti hai)\n"
+        "3. SALAH (kya sahi hai, kya galat; koi khatra to door raho; achhi cheez to rakho)\n"
+        "4. SAWAAL (user se aage poochho — aur kuch jaanna hai? kuch banwana hai?)\n\n"
+        "═══ BHASHA KI SAFAAI ═══\n"
+        "Ye shabd KABHI mat likho: 'HISLA', 'HESSLA', 'kish', 'aaaj', 'kahaat', "
+        "'mulf fahaasat', 'bikau', 'pehchaan banayi', 'tukde'.\n"
+        "Inki jagah aam bolchaal ke shabd: 'hissa', 'kis', 'aaj', 'kahan', "
+        "'mukhya baatein', 'bikri ka dabav', 'upar gaya', 'tez'.\n\n"
+        "Lambaai: jitna vishay maangta hai utna. Chhota mat karo, badha-chadha bhi mat karo.\n"
+        "Sirf saaf-suthra, insaan-jaisa jawab do. Koi bhumika nahi, koi 'yaha hai aapka' nahi."
+    )
+
+    user_prompt = (
+        "USER KA MESSAGE:\n" + (user_message or "(kuch nahi likha, sirf file bheji)") + "\n\n"
+        "VISION AI KA RAW OUTPUT (ise saaf karke dobara likho):\n" + vision_text
+    )
+
+    try:
+        r = _req.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
+            json={
+                "model": "openai/gpt-oss-20b",
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "max_tokens": 2500,
+                "temperature": 0.4,
+            },
+            timeout=120,
+        )
+        if r.status_code != 200:
+            return vision_text
+        data = r.json()
+        choices = data.get("choices") or []
+        if not choices:
+            return vision_text
+        polished = (choices[0].get("message", {}).get("content") or "").strip()
+        return polished if polished else vision_text
+    except Exception:
+        return vision_text
 
 
 def _call_vision_v2(prompt: str, images: list) -> str:
