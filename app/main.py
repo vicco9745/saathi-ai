@@ -634,68 +634,55 @@ def _call_vision_v2(prompt: str, images: list) -> str:
         content.append({"type": "image_url", "image_url": {"url": url}})
 
     errors = []
+    import time as _time
 
+    # Groq (तेज़, पर 429 आ सकता है — इसलिए 3 बार कोशिश)
     groq_key = os.environ.get("GROQ_API_KEY")
     if groq_key:
-        groq_models = [
-            "qwen/qwen3.8-27b",
-        ]
+        groq_models = ["qwen/qwen3.8-27b"]
         for model in groq_models:
-            try:
-                r = _req.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={"Authorization": "Bearer " + groq_key, "Content-Type": "application/json"},
-                    json={
-                        "model": model,
-                        "messages": [
-                            {"role": "system", "content": VISION_SYSTEM_INSTRUCTION},
-                            {"role": "user", "content": content},
-                        ],
-                        "max_tokens": 2000,
-                    },
-                    timeout=120,
-                )
-                if r.status_code != 200:
-                    errors.append("groq/" + model + ": " + str(r.status_code))
-                    continue
-                data = r.json()
-                choices = data.get("choices") or []
-                if not choices:
-                    errors.append("groq/" + model + ": no choices")
-                    continue
-                txt = (choices[0].get("message", {}).get("content") or "").strip()
-                if txt:
-                    return txt
-                errors.append("groq/" + model + ": empty")
-            except Exception as e:
-                errors.append("groq/" + model + ": " + str(e))
+            for attempt in range(3):
+                try:
+                    r = _req.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={"Authorization": "Bearer " + groq_key, "Content-Type": "application/json"},
+                        json={"model": model, "messages": [{"role": "system", "content": SYSTEM_INSTRUCTION}, {"role": "user", "content": content}], "max_tokens": 2000},
+                        timeout=120,
+                    )
+                    if r.status_code == 429:
+                        wait = (attempt + 1) * 2
+                        errors.append("groq/" + model + ": 429 (wait " + str(wait) + "s)")
+                        _time.sleep(wait)
+                        continue
+                    if r.status_code != 200:
+                        errors.append("groq/" + model + ": " + str(r.status_code))
+                        break
+                    data = r.json()
+                    choices = data.get("choices") or []
+                    if choices:
+                        txt = (choices[0].get("message", {}).get("content") or "").strip()
+                        if txt:
+                            return txt
+                    break
+                except Exception as e:
+                    errors.append("groq/" + model + ": " + str(e))
+                    break
 
+    # OpenRouter (भरोसेमंद फॉलबैक) — अब चालू मॉडल्स
     or_key = os.environ.get("OPENROUTER_API_KEY")
     if or_key:
         or_models = [
-            "qwen/qwen-2.5-vl-7b-instruct:free",
+            "qwen/qwen3.8-27b:free",
+            "google/gemma-4-31b-it:free",
             "nvidia/nemotron-nano-12b-v2-vl:free",
-            "google/gemma-3-27b-it:free",
-            "mistralai/mistral-small-3.1-24b-instruct:free",
+            "thinkingmachines/inkling-small:free",
         ]
         for model in or_models:
             try:
                 r = _req.post(
                     "https://openrouter.ai/api/v1/chat/completions",
-                    headers={
-                        "Authorization": "Bearer " + or_key,
-                        "Content-Type": "application/json",
-                        "HTTP-Referer": "https://saathi-ai-y48j.onrender.com",
-                        "X-Title": "Saathi AI",
-                    },
-                    json={
-                        "model": model,
-                        "messages": [
-                            {"role": "system", "content": VISION_SYSTEM_INSTRUCTION},
-                            {"role": "user", "content": content},
-                        ],
-                        "max_tokens": 2000,
-                    },
+                    headers={"Authorization": "Bearer " + or_key, "Content-Type": "application/json", "HTTP-Referer": "https://saathi-ai-y48j.onrender.com", "X-Title": "Saathi AI"},
+                    json={"model": model, "messages": [{"role": "system", "content": SYSTEM_INSTRUCTION}, {"role": "user", "content": content}], "max_tokens": 2000},
                     timeout=120,
                 )
                 if r.status_code != 200:
@@ -703,13 +690,10 @@ def _call_vision_v2(prompt: str, images: list) -> str:
                     continue
                 data = r.json()
                 choices = data.get("choices") or []
-                if not choices:
-                    errors.append("or/" + model + ": no choices")
-                    continue
-                txt = (choices[0].get("message", {}).get("content") or "").strip()
-                if txt:
-                    return txt
-                errors.append("or/" + model + ": empty")
+                if choices:
+                    txt = (choices[0].get("message", {}).get("content") or "").strip()
+                    if txt:
+                        return txt
             except Exception as e:
                 errors.append("or/" + model + ": " + str(e))
 
