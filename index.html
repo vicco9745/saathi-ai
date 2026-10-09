@@ -1726,6 +1726,27 @@ function smartTitleFromAI(aiText){
   return '';
 }
 
+async function requestTitleFromServer(text, attachments){
+  try{
+    const key = localStorage.getItem('saathi_api_key');
+    if(!key) return '';
+    const body = { message: (text || '').trim() };
+    const photo = (attachments || []).find(a => (a.kind === 'photo' || a.kind === 'image') && a.dataUrl);
+    if(photo && photo.dataUrl){
+      body.image = photo.dataUrl.length > 200000 ? photo.dataUrl.slice(0, 200000) : photo.dataUrl;
+    }
+    if(!body.message && !body.image) return '';
+    const res = await fetch(SAATHI_API_BASE + '/v1/title', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': key },
+      body: JSON.stringify(body),
+    });
+    if(!res.ok) return '';
+    const data = await res.json();
+    return (data.title || '').trim();
+  }catch(_){ return ''; }
+}
+
 function friendlyChatTitle(text, attachments){
   const t = (text || '').trim();
   if(t){
@@ -2303,6 +2324,20 @@ if(!chat){chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);cur
 const attachments=pendingAttachments;
 if(chat.messages.length===0 || isGenericTitle(chat.title)){chat.title=friendlyChatTitle(text, attachments);}
 chat.messages.push({role:'user',text:text,attachments:attachments});
+if(isGenericTitle(chat.title)){
+  const _capturedId = chat.id;
+  requestTitleFromServer(text, attachments).then(function(newTitle){
+    if(!newTitle) return;
+    try{
+      const _c = chats.find(function(x){return x.id === _capturedId;});
+      if(_c){
+        _c.title = newTitle;
+        saveChats();
+        try{ renderChatList(); }catch(_){}
+      }
+    }catch(_){}
+  });
+}
 const pendingReply={role:'ai',text:'',typing:true};
 chat.messages.push(pendingReply);
 msgInput.value='';autoResizeInput();pendingAttachments=[];
