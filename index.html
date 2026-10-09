@@ -1759,6 +1759,26 @@ function getCurrentChat(){return chats.find(c=>c.id===currentChatId)||null;}
 function switchChat(id){chats=chats.filter(c=>c.id===id||(c.messages&&c.messages.length>0));currentChatId=id;{const _i=chats.findIndex(c=>c.id===id);if(_i>0){const _c=chats.splice(_i,1)[0];chats.unshift(_c);saveChats();}}renderChatList();renderMessages();updateActionButton();closePanel();}
 function deleteChat(id){const idx=chats.findIndex(c=>c.id===id);if(idx===-1)return;projects.forEach(p=>{p.chatIds=p.chatIds.filter(cid=>cid!==id);});saveProjects();chats.splice(idx,1);saveChats();if(currentChatId===id)currentChatId=chats.length>0?chats[0].id:null;renderChatList();renderMessages();}
 
+function cleanupBadTitles(){
+  let ch=false;
+  chats.forEach(function(c){
+    var t=(c.title||'').trim();
+    if(/\.(jpg|jpeg|png|gif|webp|mp4|mov|pdf|txt|doc|docx)$/i.test(t)){
+      // Purana filename title — chat ke pehle message se naya naam nikaalo
+      var firstUser=(c.messages||[]).find(function(m){return m.role==='user';});
+      if(firstUser && firstUser.text && firstUser.text.trim()){
+        c.title=friendlyChatTitle(firstUser.text,[]);
+      }else if(firstUser && firstUser.attachments && firstUser.attachments.length){
+        c.title=friendlyChatTitle('',firstUser.attachments);
+      }else{
+        c.title='Chat';
+      }
+      ch=true;
+    }
+  });
+  if(ch){try{saveChats();}catch(_){}}
+}
+
 function renderChatList(){
 const _st=chatList.scrollTop;chatList.innerHTML='';
 const archivedCount=chats.filter(c=>c.archived).length;
@@ -2176,7 +2196,7 @@ function stopSpeechKeepAlive(){if(speechKeepAliveTimer){clearInterval(speechKeep
 
 let recognition=null;let callActive=false;let callChunks=[];
 function listenOnce(){if(!callActive)return;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){return;}try{recognition=new SR();recognition.lang='hi-IN';recognition.interimResults=true;recognition.continuous=true;recognition.maxAlternatives=1;recognition.onresult=(e)=>{let liveFinal='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal){liveFinal+=r[0].transcript;}}if(liveFinal.trim()){addLiveUserText(liveFinal.trim());}};recognition.onerror=()=>{};recognition.onend=()=>{if(callActive){try{recognition.start();}catch(_){}}};try{recognition.start();}catch(_){}}catch(_){}}
-function addLiveUserText(text){let chat=getCurrentChat();if(!chat){chat={id:genId(),title:text.length>28?text.slice(0,28)+'…':text,messages:[]};chats.unshift(chat);currentChatId=chat.id;}if(chat.messages.length===0){chat.title=friendlyChatTitle(text, []);}chat.messages.push({role:'user',text:text});saveChats();renderChatList();renderMessages();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}
+function addLiveUserText(text){let chat=getCurrentChat();if(!chat){chat={id:genId(),title:friendlyChatTitle(text,[]),messages:[]};chats.unshift(chat);currentChatId=chat.id;}if(chat.messages.length===0){chat.title=friendlyChatTitle(text, []);}chat.messages.push({role:'user',text:text});saveChats();renderChatList();renderMessages();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}
 function startCall(){callActive=true;callChunks=[];callOverlay.classList.add('open');callOverlay.classList.remove('chat-open');updateCallActionButton();listenOnce();}
 function stopCall(){callActive=false;if(recognition){try{recognition.abort();}catch(_){}recognition=null;}if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeechKeepAlive();callOverlay.classList.remove('open');callOverlay.classList.remove('chat-open');callChunks=[];}
 callAttachBtn.addEventListener('click',(e)=>{e.stopPropagation();callAttachMenu.classList.toggle('open');});
@@ -2261,7 +2281,7 @@ if(!text&&pendingAttachments.length===0)return;
 try{ analyzeUserMessage(text); }catch(_){}
 let chat=getCurrentChat();
 if(!chat){chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;}
-if(chat.messages.length===0){chat.title=friendlyChatTitle(text, attachments);}
+if(chat.messages.length===0 || isGenericTitle(chat.title)){chat.title=friendlyChatTitle(text, attachments);}
 const attachments=pendingAttachments;
 chat.messages.push({role:'user',text:text,attachments:attachments});
 const pendingReply={role:'ai',text:'',typing:true};
@@ -2363,6 +2383,7 @@ function openFreshChat(){chats.forEach(c=>(c.messages||[]).forEach(mm=>{if(mm.ty
 function clearComposerDraft(){msgInput.value='';pendingAttachments=[];try{renderPendingAttachments();}catch(_){}autoResizeInput();updateActionButton();}
 openFreshChat();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;const c=getCurrentChat();if(c&&(!c.messages||c.messages.length===0)&&(msgInput.value||pendingAttachments.length>0)){clearComposerDraft();}});
+cleanupBadTitles();
 renderChatList();
 renderMessages();
 updateActionButton();
