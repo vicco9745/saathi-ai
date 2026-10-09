@@ -1744,7 +1744,7 @@ function aiPreviewTitle(aiText){
     .replace(/\s+/g, ' ')
     .trim();
   // Emoji aur special chars hata do shuruaat se
-  t = t.replace(/^[\p{Emoji}\p{Punct}\s]+/u, '').trim();
+  t = t.replace(/^[\s\p{P}\p{S}]+/gu, '').trim();
   if(!t) return '';
   // Pehla vaakya — 40 chars tak
   const m = t.match(/^[^।.!?\n]{5,60}/);
