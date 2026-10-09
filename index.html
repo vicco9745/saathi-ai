@@ -1843,6 +1843,37 @@ typeNext();
 function stopAITyping(){if(!aiIsTyping)return;if(activeTypingTimeout){clearTimeout(activeTypingTimeout);activeTypingTimeout=null;}if(activeTypingMessage){activeTypingMessage.typing=false;activeTypingMessage.interrupted=true;activeTypingMessage=null;}aiIsTyping=false;saveChats();renderMessages();updateActionButton();}
 function retryInterrupted(message,chat){if(!message||!message.fullText)return;message.text='';message.interrupted=false;message.typing=true;saveChats();renderMessages();setTimeout(()=>{const row=document.querySelector('.msg-row.ai:last-child');const bubble=row?row.querySelector('.bubble'):null;if(bubble)typeAIMessage(bubble,message.fullText,message);},50);}
 function escapeHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function plainTextForVoice(text){
+  if(!text) return '';
+  let t = String(text);
+  // Code fences — content rakho, backticks hatao
+  t = t.replace(/```[\s\S]*?```/g, function(m){
+    return m.replace(/```[a-z]*\n?/gi, '').replace(/```/g, '');
+  });
+  // Inline code
+  t = t.replace(/`([^`]+)`/g, '$1');
+  // Bold **text** aur __text__
+  t = t.replace(/\*\*([^*]+)\*\*/g, '$1');
+  t = t.replace(/__([^_]+)__/g, '$1');
+  // Italic *text*
+  t = t.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1$2');
+  // Headings ## ###
+  t = t.replace(/^\s*#{1,6}\s+/gm, '');
+  // HR
+  t = t.replace(/^\s*[-*_]{3,}\s*$/gm, '');
+  // Bullets * - -> hatao
+  t = t.replace(/^\s*[\*\-]\s+/gm, '');
+  // Numbers rakh do — "1." theek hai voice ke liye
+  // Blockquote >
+  t = t.replace(/^\s*>\s+/gm, '');
+  // Extra * # ` _ | \ hatao
+  t = t.replace(/[*#`_|\\]/g, '');
+  // Multiple newlines -> ek
+  t = t.replace(/\n{2,}/g, '। ');
+  t = t.replace(/\n/g, ', ');
+  return t.trim();
+}
+
 function renderMarkdown(text){
   if(!text) return '';
   let t = String(text)
@@ -2014,7 +2045,7 @@ return wrap;
 function buildMessageActions(message,idx,chat,showReset){
 const actions=document.createElement('div');actions.className='msg-actions';
 const copyBtn=document.createElement('button');copyBtn.className='msg-action-btn';copyBtn.title='Copy';copyBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
-copyBtn.addEventListener('click',()=>{const text=message.text||'';if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).catch(()=>{});copyBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';setTimeout(()=>{copyBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';},1200);});
+copyBtn.addEventListener('click',()=>{const text=plainTextForVoice(message.text||'');if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).catch(()=>{});copyBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';setTimeout(()=>{copyBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';},1200);});
 actions.appendChild(copyBtn);
 const likeBtn=document.createElement('button');likeBtn.className='msg-action-btn'+(message.rating==='like'?' active':'');likeBtn.title='Achha jawab';likeBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14Z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>';
 likeBtn.addEventListener('click',()=>{if(message.rating==='like'){message.rating=null;saveChats();renderMessages();}else openFeedbackModal(message,'like');});
@@ -2023,10 +2054,10 @@ const dislikeBtn=document.createElement('button');dislikeBtn.className='msg-acti
 dislikeBtn.addEventListener('click',()=>{if(message.rating==='dislike'){message.rating=null;saveChats();renderMessages();}else openFeedbackModal(message,'dislike');});
 actions.appendChild(dislikeBtn);
 const listenBtn=document.createElement('button');listenBtn.className='msg-action-btn';listenBtn.title='Sunein';listenBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
-listenBtn.addEventListener('click',()=>{speakText(message.text||'',null,listenBtn);});
+listenBtn.addEventListener('click',()=>{speakText(plainTextForVoice(message.text||''),null,listenBtn);});
 actions.appendChild(listenBtn);
 const shareBtn=document.createElement('button');shareBtn.className='msg-action-btn';shareBtn.title='Share';shareBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>';
-shareBtn.addEventListener('click',async()=>{const text=message.text||'';if(navigator.share){try{await navigator.share({text:text});}catch(_){}}else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).catch(()=>{});showToast('Message copy ho gaya');}});
+shareBtn.addEventListener('click',async()=>{const text=plainTextForVoice(message.text||'');if(navigator.share){try{await navigator.share({text:text});}catch(_){}}else if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).catch(()=>{});showToast('Message copy ho gaya');}});
 actions.appendChild(shareBtn);
 if(showReset){const resetBtn=document.createElement('button');resetBtn.className='msg-action-btn msg-reset-right';resetBtn.title='Reset / Regenerate';resetBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>';resetBtn.addEventListener('click',()=>{regenerateReply(chat,idx);});actions.appendChild(resetBtn);}
 const moreWrap=document.createElement('div');moreWrap.style.position='relative';
