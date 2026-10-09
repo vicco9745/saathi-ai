@@ -1707,6 +1707,25 @@ function saveMemory(){try{localStorage.setItem(MEMORY_KEY,JSON.stringify(memoryN
 function loadFeedback(){try{const raw=localStorage.getItem(FEEDBACK_KEY);feedbackEntries=raw?JSON.parse(raw):[];}catch(_){feedbackEntries=[];}}
 function saveFeedback(){try{localStorage.setItem(FEEDBACK_KEY,JSON.stringify(feedbackEntries));}catch(_){}}
 
+function smartTitleFromAI(aiText){
+  if(!aiText) return '';
+  var lines = String(aiText).split(/\n+/);
+  var skip = /^(KYA[\s\-]?KYA|KIS KAAM|SALAH|SAWAAL|📋|🔧|✅|❓|\d+\.\s*(KYA|KIS|SALAH|SAWAAL|📋|🔧|✅|❓))/i;
+  for(var i=0;i<lines.length;i++){
+    var l = lines[i].replace(/[*#`_>]+/g,' ').replace(/^\s*[-•●]\s*/,'').replace(/^\s*\d+\.\s*/,'').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').trim();
+    if(!l) continue;
+    if(skip.test(l)) continue;
+    if(l.length < 6) continue;
+    // "Asset: Gold" jaisa label ho to sirf value lo
+    var stripped = l.replace(/^[^:]{1,20}:\s*/, '').trim();
+    var use = (stripped && stripped.length >= 5) ? stripped : l;
+    // 6-7 shabd, 42 char tak
+    var words = use.split(/\s+/).slice(0,7).join(' ');
+    return words.length > 42 ? words.slice(0,42)+'…' : words;
+  }
+  return '';
+}
+
 function friendlyChatTitle(text, attachments){
   const t = (text || '').trim();
   if(t){
@@ -2297,7 +2316,7 @@ let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
 if(!SAATHI_KEY){SAATHI_KEY=prompt('Saathi API Key: ');if(SAATHI_KEY)localStorage.setItem(SAATHI_KEY_STORE,SAATHI_KEY.trim());}
 const attPayload=mediaAttachments.map(a=>({kind:a.kind||'file',name:a.name||'',dataUrl:a.dataUrl||null,content:a.content||null}));
 fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:text||'',model:currentModel,memory:memoryNotes,learning:getSmartLearningContext(),allow_web_search:false,attachments:attPayload})}).then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error(data.detail||data.error||'API key invalid');}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{
-pendingReply.text=data.reply||'';
+pendingReply.text=data.reply||'';try{var _c=getCurrentChat();var _ut=(text||'').trim();if(_c&&!_ut&&isGenericTitle(_c.title)){var _t=smartTitleFromAI(data.reply||'');if(_t){_c.title=_t;saveChats();try{renderChatList();}catch(_){}}}}catch(_){}
 const inc=[];
 if(data.html)inc.push({kind:'file',name:data.filename||'index.html',content:data.html,origin:'ai'});
 if(data.pdf_base64)inc.push({kind:'file',name:data.filename||'saathi.pdf',dataUrl:'data:application/pdf;base64,'+data.pdf_base64,origin:'ai'});
