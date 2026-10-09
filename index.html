@@ -1794,16 +1794,16 @@ function buildMediaPreviewTile(att){const tile=document.createElement('div');til
 
 let activeTypingTimeout=null;let activeTypingMessage=null;
 function typeAIMessage(element,text,message){
+if(activeTypingTimeout){clearTimeout(activeTypingTimeout);activeTypingTimeout=null;}
+if(activeTypingMessage && activeTypingMessage!==message){
+  try{activeTypingMessage.typing=false;activeTypingMessage.generating=false;}catch(_){}
+}
 const totalLen=text.length;
 if(!totalLen){
-  message.typing=false;
-  aiIsTyping=false;
-  activeTypingMessage=null;
-  updateActionButton();
-  renderMessages();
-  return;
+  message.typing=false;message.generating=false;message.interrupted=false;
+  if(activeTypingMessage===message)activeTypingMessage=null;
+  aiIsTyping=false;updateActionButton();renderMessages();return;
 }
-// 3.5 se 22 second ke beech — content jitna bada, utna samay, par 22 se zyada nahi
 const targetMs=Math.min(22000,Math.max(3500,totalLen*9));
 const tickMs=30;
 const totalTicks=Math.max(30,Math.floor(targetMs/tickMs));
@@ -1814,26 +1814,29 @@ activeTypingMessage=message;
 message.fullText=text;
 updateActionButton();
 element.innerHTML='';
-function typeNext(){
-if(i<text.length){
-  i=Math.min(i+charsPerTick,text.length);
-  const partial=text.slice(0,i);
-  try{element.innerHTML=renderMarkdown(partial);}catch(_){element.textContent=partial;}
-  messagesEl.scrollTop=messagesEl.scrollHeight;
-  activeTypingTimeout=setTimeout(typeNext,tickMs);
-}else{
-  // ★ FINISH — saaf-saaf khatam
+
+function finish(){
   if(activeTypingTimeout){clearTimeout(activeTypingTimeout);activeTypingTimeout=null;}
-  message.typing=false;
-  message.interrupted=false;
-  activeTypingMessage=null;
+  if(window._processingIntervals){window._processingIntervals.forEach(ii=>clearInterval(ii));window._processingIntervals=[];}
+  message.typing=false;message.generating=false;message.interrupted=false;
+  if(activeTypingMessage===message)activeTypingMessage=null;
   aiIsTyping=false;
   try{element.innerHTML=renderMarkdown(text);}catch(_){element.textContent=text;}
-  saveChats();
-  updateActionButton();
-  // ★ Ab spinner hatao — poora chat dobara render
-  renderMessages();
+  try{
+    const wrap=element.closest('.ai-typing-row');
+    if(wrap){const av=wrap.querySelector('.ai-typing-avatar');if(av)av.remove();wrap.classList.remove('ai-typing-row');}
+  }catch(_){}
+  saveChats();updateActionButton();
+  try{renderChatList();}catch(_){}
 }
+function typeNext(){
+  if(i<text.length){
+    i=Math.min(i+charsPerTick,text.length);
+    const partial=text.slice(0,i);
+    try{element.innerHTML=renderMarkdown(partial);}catch(_){element.textContent=partial;}
+    messagesEl.scrollTop=messagesEl.scrollHeight;
+    activeTypingTimeout=setTimeout(typeNext,tickMs);
+  }else{finish();}
 }
 typeNext();
 }
