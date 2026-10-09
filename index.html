@@ -1707,6 +1707,52 @@ function saveMemory(){try{localStorage.setItem(MEMORY_KEY,JSON.stringify(memoryN
 function loadFeedback(){try{const raw=localStorage.getItem(FEEDBACK_KEY);feedbackEntries=raw?JSON.parse(raw):[];}catch(_){feedbackEntries=[];}}
 function saveFeedback(){try{localStorage.setItem(FEEDBACK_KEY,JSON.stringify(feedbackEntries));}catch(_){}}
 
+function friendlyChatTitle(text, attachments){
+  const t = (text || '').trim();
+  if(t){
+    const clean = t.replace(/\s+/g, ' ').trim();
+    return clean.length > 40 ? clean.slice(0, 40) + '…' : clean;
+  }
+  const atts = attachments || [];
+  if(atts.length === 0) return 'New chat';
+  const kinds = [...new Set(atts.map(a => a.kind || 'file'))];
+  if(kinds.length === 1){
+    const k = kinds[0];
+    if(k === 'photo' || k === 'image') return 'Photo message';
+    if(k === 'video') return 'Video message';
+    if(k === 'text') return 'Pasted content';
+    if(k === 'file') return 'File message';
+  }
+  if(kinds.includes('photo') && kinds.includes('video')) return 'Photo & video';
+  return 'Attachment message';
+}
+
+function isGenericTitle(t){
+  t = (t || '').trim();
+  if(!t) return true;
+  if(t === 'New chat') return true;
+  if(/^(Photo message|Video message|File message|Pasted content|Attachment message|Photo & video)$/i.test(t)) return true;
+  if(/\.(jpg|jpeg|png|gif|webp|mp4|mov|pdf|txt|doc|docx)$/i.test(t)) return true;
+  return false;
+}
+
+function aiPreviewTitle(aiText){
+  if(!aiText) return '';
+  // Pehli line ya pehla vaakya lo, saaf karo
+  let t = String(aiText)
+    .replace(/[*#`_>\-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  // Emoji aur special chars hata do shuruaat se
+  t = t.replace(/^[\p{Emoji}\p{Punct}\s]+/u, '').trim();
+  if(!t) return '';
+  // Pehla vaakya — 40 chars tak
+  const m = t.match(/^[^।.!?\n]{5,60}/);
+  const candidate = m ? m[0].trim() : t.slice(0, 40).trim();
+  if(!candidate) return '';
+  return candidate.length > 40 ? candidate.slice(0, 40) + '…' : candidate;
+}
+
 function genId(){return 'c_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);}
 function createChat(){const chat={id:genId(),title:'New chat',messages:[]};chats=chats.filter(c=>c.messages&&c.messages.length>0);chats.unshift(chat);currentChatId=chat.id;saveChats();renderChatList();renderMessages();updateActionButton();closePanel();}
 function getCurrentChat(){return chats.find(c=>c.id===currentChatId)||null;}
@@ -1814,6 +1860,18 @@ activeTypingMessage=message;
 message.fullText=text;
 updateActionButton();
 element.innerHTML='';
+
+// ═══ Typing ke dauran chat title auto-update ═══
+try{
+  const _c=getCurrentChat();
+  if(_c && isGenericTitle(_c.title)){
+    const preview=aiPreviewTitle(text);
+    if(preview){
+      _c.title=preview;
+      try{renderChatList();}catch(_){}
+    }
+  }
+}catch(_){}
 
 function finish(){
   if(activeTypingTimeout){clearTimeout(activeTypingTimeout);activeTypingTimeout=null;}
@@ -2118,7 +2176,7 @@ function stopSpeechKeepAlive(){if(speechKeepAliveTimer){clearInterval(speechKeep
 
 let recognition=null;let callActive=false;let callChunks=[];
 function listenOnce(){if(!callActive)return;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){return;}try{recognition=new SR();recognition.lang='hi-IN';recognition.interimResults=true;recognition.continuous=true;recognition.maxAlternatives=1;recognition.onresult=(e)=>{let liveFinal='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal){liveFinal+=r[0].transcript;}}if(liveFinal.trim()){addLiveUserText(liveFinal.trim());}};recognition.onerror=()=>{};recognition.onend=()=>{if(callActive){try{recognition.start();}catch(_){}}};try{recognition.start();}catch(_){}}catch(_){}}
-function addLiveUserText(text){let chat=getCurrentChat();if(!chat){chat={id:genId(),title:text.length>28?text.slice(0,28)+'…':text,messages:[]};chats.unshift(chat);currentChatId=chat.id;}if(chat.messages.length===0){chat.title=text.length>28?text.slice(0,28)+'…':text;}chat.messages.push({role:'user',text:text});saveChats();renderChatList();renderMessages();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}
+function addLiveUserText(text){let chat=getCurrentChat();if(!chat){chat={id:genId(),title:text.length>28?text.slice(0,28)+'…':text,messages:[]};chats.unshift(chat);currentChatId=chat.id;}if(chat.messages.length===0){chat.title=friendlyChatTitle(text, []);}chat.messages.push({role:'user',text:text});saveChats();renderChatList();renderMessages();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}
 function startCall(){callActive=true;callChunks=[];callOverlay.classList.add('open');callOverlay.classList.remove('chat-open');updateCallActionButton();listenOnce();}
 function stopCall(){callActive=false;if(recognition){try{recognition.abort();}catch(_){}recognition=null;}if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeechKeepAlive();callOverlay.classList.remove('open');callOverlay.classList.remove('chat-open');callChunks=[];}
 callAttachBtn.addEventListener('click',(e)=>{e.stopPropagation();callAttachMenu.classList.toggle('open');});
@@ -2135,7 +2193,7 @@ callDictateBtn.addEventListener('click',()=>{if(isDictating){cancelDictation();}
 callMsgInput.addEventListener('input', updateCallActionButton);
 callCancelBtn.addEventListener('click',()=>{const text = callMsgInput.value.trim();if (text) {callMsgInput.value='';addLiveUserMessage(text,[]);updateCallActionButton();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}else {stopCall();}});
 callMsgInput.addEventListener('keydown',(e)=>{if(e.key==='Enter' && !e.shiftKey){e.preventDefault();const text = callMsgInput.value.trim();if (text) {callMsgInput.value='';addLiveUserMessage(text,[]);updateCallActionButton();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}}});
-function addLiveUserMessage(text, attachments) {let chat = getCurrentChat();if (!chat) {chat = { id: genId(), title: text ? (text.length > 28 ? text.slice(0, 28) + '…' : text) : 'New chat', messages: [] };chats.unshift(chat);currentChatId = chat.id;}if (chat.messages.length === 0 && text) {chat.title = text.length > 28 ? text.slice(0, 28) + '…' : text;}chat.messages.push({ role: 'user', text: text, attachments: attachments });saveChats();renderChatList();renderMessages();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}
+function addLiveUserMessage(text, attachments) {let chat = getCurrentChat();if (!chat) {chat = { id: genId(), title: friendlyChatTitle(text, attachments), messages: [] };chats.unshift(chat);currentChatId = chat.id;}if (chat.messages.length === 0) {chat.title = friendlyChatTitle(text, attachments);}chat.messages.push({ role: 'user', text: text, attachments: attachments });saveChats();renderChatList();renderMessages();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}
 
 const DICTATE_MIC_ICON_PATH='<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>';
 const DICTATE_CANCEL_ICON_PATH='<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
@@ -2203,7 +2261,7 @@ if(!text&&pendingAttachments.length===0)return;
 try{ analyzeUserMessage(text); }catch(_){}
 let chat=getCurrentChat();
 if(!chat){chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;}
-if(chat.messages.length===0){const titleSource=text||(pendingAttachments[0]?pendingAttachments[0].name:'New chat');chat.title=titleSource.length>28?titleSource.slice(0,28)+'…':titleSource;}
+if(chat.messages.length===0){chat.title=friendlyChatTitle(text, attachments);}
 const attachments=pendingAttachments;
 chat.messages.push({role:'user',text:text,attachments:attachments});
 const pendingReply={role:'ai',text:'',typing:true};
