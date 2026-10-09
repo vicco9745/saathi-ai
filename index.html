@@ -2281,8 +2281,8 @@ if(!text&&pendingAttachments.length===0)return;
 try{ analyzeUserMessage(text); }catch(_){}
 let chat=getCurrentChat();
 if(!chat){chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;}
-if(chat.messages.length===0 || isGenericTitle(chat.title)){chat.title=friendlyChatTitle(text, attachments);}
 const attachments=pendingAttachments;
+if(chat.messages.length===0 || isGenericTitle(chat.title)){chat.title=friendlyChatTitle(text, attachments);}
 chat.messages.push({role:'user',text:text,attachments:attachments});
 const pendingReply={role:'ai',text:'',typing:true};
 chat.messages.push(pendingReply);
