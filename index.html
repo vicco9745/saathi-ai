@@ -1747,6 +1747,20 @@ async function requestTitleFromServer(text, attachments){
   }catch(_){ return ''; }
 }
 
+function isDesignRequest(text){
+  const t = (text || '').toLowerCase().trim();
+  if(t.startsWith('/design')) return true;
+  const words = ['design banao','card banao','poster banao','banner banao','invitation banao','visiting card','greeting card','flyer banao','certificate banao','menu banao','wedding card','birthday card','diwali card','शादी का कार्ड','निमंत्रण','पोस्टर','बैनर','डिज़ाइन'];
+  return words.some(w => t.includes(w));
+}
+function extractDesignPrompt(text){
+  const t = (text || '').trim();
+  if(t.toLowerCase().startsWith('/design')){
+    return t.replace(/^\/design\s*/i, '').trim();
+  }
+  return t;
+}
+
 function friendlyChatTitle(text, attachments){
   const t = (text || '').trim();
   if(t){
@@ -2346,6 +2360,33 @@ const mediaAttachments=attachments.filter(a=>a.kind!=='text');
 const textAttachments=attachments.filter(a=>a.kind==='text');
 const analyzableFiles=attachments.filter(a=>a.kind==='file'&&a.content&&String(a.content).trim().length>0);
 if(mediaAttachments.length>0&&analyzableFiles.length===0){
+// ═══ DESIGN PATH ═══
+if(isDesignRequest(text)){
+  const SAATHI_KEY_STORE_D='saathi_api_key';
+  let SAATHI_KEY_D=localStorage.getItem(SAATHI_KEY_STORE_D);
+  if(!SAATHI_KEY_D){SAATHI_KEY_D=prompt('Saathi API Key:');if(SAATHI_KEY_D)localStorage.setItem(SAATHI_KEY_STORE_D,SAATHI_KEY_D.trim());}
+  const designPrompt = extractDesignPrompt(text) || 'Ek sundar design banao';
+  const photoAtt = attachments.find(a => (a.kind==='photo'||a.kind==='image') && a.dataUrl);
+  pendingReply.text = 'Design ban raha hai...';
+  saveChats(); renderMessages();
+  fetch(SAATHI_API_BASE+'/v1/design',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY_D},
+    body:JSON.stringify({prompt:designPrompt, photo:photoAtt?photoAtt.dataUrl:null, model:currentModel})
+  })
+  .then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE_D);}throw new Error(data.detail||data.error||'Design error');}return data;})
+  .then(data=>{
+    pendingReply.text = data.reply || 'Yeh raha aapka design.';
+    if(data.html){
+      pendingReply.attachments = [{kind:'file',name:data.filename||'design.html',content:data.html,origin:'ai'}];
+    }
+    pendingReply.typing = true;
+    saveChats(); renderMessages();
+  })
+  .catch(err=>{pendingReply.text='Design error: '+err.message;pendingReply.typing=true;saveChats();renderMessages();});
+  return;
+}
+
 const SAATHI_KEY_STORE='saathi_api_key';
 let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
 if(!SAATHI_KEY){SAATHI_KEY=prompt('Saathi API Key: ');if(SAATHI_KEY)localStorage.setItem(SAATHI_KEY_STORE,SAATHI_KEY.trim());}
