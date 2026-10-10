@@ -1,0 +1,15 @@
+path = 'index.html'
+with open(path, encoding='utf-8') as f:
+    c = f.read()
+
+old = """fetch(SAATHI_API_BASE+'/v1/image',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({prompt:imgPrompt,model:currentModel,learning:smartCtx})}).then(async res=>{clearTimeout(_imgTimeout);const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error((data.detail||data.error||'API key invalid ya expired ho gayi hai'));}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{const imgSrc=data.image_url||(data.image_base64?('data:image/png;base64,'+data.image_base64):null);pendingReply.generating=false;pendingReply.typing=false;pendingReply.mediaType=null;if(imgSrc){pendingReply.attachments=[{kind:'photo',name:'saathi-generated-image',dataUrl:imgSrc,origin:'ai'}];pendingReply.text=buildGenReply('image',{caption:data.caption,prompt:imgPrompt});}else{pendingReply.text='Image generate nahi ho payi. Server se koi image nahi aayi.';}saveChats();renderMessages();}).catch(err=>{pendingReply.generating=false;pendingReply.typing=false;pendingReply.mediaType=null;pendingReply.text='Image generation error: '+err.message;saveChats();renderMessages();});return;}"""
+
+new = """const _imgStartTime=Date.now();const _MIN_PROCESS_MS=60000;fetch(SAATHI_API_BASE+'/v1/image',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({prompt:imgPrompt,model:currentModel,learning:smartCtx})}).then(async res=>{clearTimeout(_imgTimeout);const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error((data.detail||data.error||'API key invalid ya expired ho gayi hai'));}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{const imgSrc=data.image_url||(data.image_base64?('data:image/png;base64,'+data.image_base64):null);if(!imgSrc){pendingReply.generating=false;pendingReply.typing=false;pendingReply.mediaType=null;pendingReply.text='Image generate nahi ho payi. Server se koi image nahi aayi.';saveChats();renderMessages();return;}const _elapsed=Date.now()-_imgStartTime;const _wait=Math.max(0,_MIN_PROCESS_MS-_elapsed);setTimeout(()=>{pendingReply.generating=false;pendingReply.typing=false;pendingReply.mediaType=null;pendingReply.attachments=[{kind:'photo',name:'saathi-generated-image',dataUrl:imgSrc,origin:'ai'}];pendingReply.text=buildGenReply('image',{caption:data.caption,prompt:imgPrompt});saveChats();renderMessages();},_wait);}).catch(err=>{pendingReply.generating=false;pendingReply.typing=false;pendingReply.mediaType=null;pendingReply.text='Image generation error: '+err.message;saveChats();renderMessages();});return;}"""
+
+if old in c:
+    c = c.replace(old, new)
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(c)
+    print("OK - Image 60 second delay add ho gaya")
+else:
+    print("FAIL - Block nahi mila")

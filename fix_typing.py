@@ -1,35 +1,51 @@
-path = 'index.html'
-with open(path, encoding='utf-8') as f:
-    c = f.read()
+with open('index.html', 'r', encoding='utf-8') as f:
+    html = f.read()
 
-# Fix 1: typeAIMessage - render markdown immediately when done
-old1 = """message.typing=false;message.interrupted=false;activeTypingTimeout=null;activeTypingMessage=null;aiIsTyping=false;saveChats();updateActionButton();renderMessages();}}"""
+old_func = '''function typeAIMessage(element,text,message){element.textContent='';let i=0;const speed=35;aiIsTyping=true;activeTypingMessage=message;message.fullText=text;updateActionButton();function typeNext(){if(i<text.length){element.textContent+=text[i++];messagesEl.scrollTop=messagesEl.scrollHeight;activeTypingTimeout=setTimeout(typeNext,speed);}else{message.typing=false;message.interrupted=false;activeTypingTimeout=null;activeTypingMessage=null;aiIsTyping=false;saveChats();updateActionButton();renderMessages();}}typeNext();}'''
 
-new1 = """message.typing=false;message.interrupted=false;activeTypingTimeout=null;activeTypingMessage=null;aiIsTyping=false;try{if(typeof renderMarkdown==='function')element.innerHTML=renderMarkdown(text);else element.textContent=text;}catch(_){element.textContent=text;}saveChats();updateActionButton();}}"""
+new_func = '''function typeAIMessage(element,text,message){
+const totalLen=text.length;
+if(!totalLen){message.typing=false;aiIsTyping=false;activeTypingMessage=null;updateActionButton();renderMessages();return;}
+const targetMs=Math.min(22000,Math.max(2500,totalLen*6));
+const tickMs=28;
+const totalTicks=Math.max(20,Math.floor(targetMs/tickMs));
+const charsPerTick=Math.max(1,Math.ceil(totalLen/totalTicks));
+let i=0;
+aiIsTyping=true;
+activeTypingMessage=message;
+message.fullText=text;
+updateActionButton();
+element.innerHTML='';
+function typeNext(){
+if(i<text.length){
+i=Math.min(i+charsPerTick,text.length);
+const partial=text.slice(0,i);
+try{element.innerHTML=renderMarkdown(partial);}catch(_){element.textContent=partial;}
+messagesEl.scrollTop=messagesEl.scrollHeight;
+activeTypingTimeout=setTimeout(typeNext,tickMs);
+}else{
+message.typing=false;
+message.interrupted=false;
+activeTypingTimeout=null;
+activeTypingMessage=null;
+aiIsTyping=false;
+try{element.innerHTML=renderMarkdown(text);}catch(_){element.textContent=text;}
+saveChats();
+updateActionButton();
+}
+}
+typeNext();
+}'''
 
-if old1 in c:
-    c = c.replace(old1, new1)
-    print("✅ typeAIMessage fix ho gaya")
+if old_func in html:
+    html = html.replace(old_func, new_func, 1)
+    print('OK: typeAIMessage updated')
+elif 'const targetMs=Math.min' in html:
+    print('SKIP: already updated')
 else:
-    print("⚠️ typeAIMessage pattern nahi mila")
+    print('FAIL: typeAIMessage not found')
+    raise SystemExit(1)
 
-# Fix 2: Regenerate - use renderMarkdown
-old2 = "'Yeh ek naya demo reply hai. Yahan apna AI / API response jodo.'"
-new2 = "'Yeh ek naya demo reply hai. Yahan apna AI / API response jodo.'"
-# Leave regenerate as is for now
-
-# Fix 3: Make sure renderMarkdown wraps paragraphs
-old3 = "h=h.replace(/\\n/g,'<br>');"
-new3 = """h=h.replace(/\\n\\n+/g,'</p><p style="margin:8px 0;">');
-h=h.replace(/\\n/g,'<br>');
-h='<p style="margin:0;">'+h+'</p>';"""
-
-if old3 in c:
-    c = c.replace(old3, new3, 1)
-    print("✅ Paragraph wrapping added")
-else:
-    print("⚠️ newline pattern nahi mila")
-
-with open(path, 'w', encoding='utf-8') as f:
-    f.write(c)
-print("✅ File saved")
+with open('index.html', 'w', encoding='utf-8') as f:
+    f.write(html)
+print('SAVED')
