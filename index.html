@@ -2361,25 +2361,22 @@ const pendingReply={role:'ai',text:'',typing:true};
 chat.messages.push(pendingReply);
 msgInput.value='';autoResizeInput();pendingAttachments=[];
 renderPendingAttachments();updateActionButton();saveChats();renderChatList();renderMessages();
-const mediaAttachments=attachments.filter(a=>a.kind!=='text');
-const textAttachments=attachments.filter(a=>a.kind==='text');
-const analyzableFiles=attachments.filter(a=>a.kind==='file'&&a.content&&String(a.content).trim().length>0);
-if(mediaAttachments.length>0&&analyzableFiles.length===0){
-// ═══ DESIGN PATH ═══
+const SAATHI_KEY_STORE='saathi_api_key';
+let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
+if(!SAATHI_KEY){SAATHI_KEY=prompt('Saathi API Key डालें:');if(SAATHI_KEY)localStorage.setItem(SAATHI_KEY_STORE,SAATHI_KEY.trim());}
+
+// ═══ DESIGN PATH — photo ho ya na ho, koi bhi design keyword match hone par ═══
 if(isDesignRequest(text)){
-  const SAATHI_KEY_STORE_D='saathi_api_key';
-  let SAATHI_KEY_D=localStorage.getItem(SAATHI_KEY_STORE_D);
-  if(!SAATHI_KEY_D){SAATHI_KEY_D=prompt('Saathi API Key:');if(SAATHI_KEY_D)localStorage.setItem(SAATHI_KEY_STORE_D,SAATHI_KEY_D.trim());}
   const designPrompt = extractDesignPrompt(text) || 'Ek sundar design banao';
   const photoAtt = attachments.find(a => (a.kind==='photo'||a.kind==='image') && a.dataUrl);
   pendingReply.text = 'Design ban raha hai...';
   saveChats(); renderMessages();
   fetch(SAATHI_API_BASE+'/v1/design',{
     method:'POST',
-    headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY_D},
+    headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},
     body:JSON.stringify({prompt:designPrompt, photo:photoAtt?photoAtt.dataUrl:null, model:currentModel})
   })
-  .then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE_D);}throw new Error(data.detail||data.error||'Design error');}return data;})
+  .then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);}throw new Error(data.detail||data.error||'Design error');}return data;})
   .then(data=>{
     pendingReply.text = data.reply || 'Yeh raha aapka design.';
     if(data.html){
@@ -2392,6 +2389,10 @@ if(isDesignRequest(text)){
   return;
 }
 
+const mediaAttachments=attachments.filter(a=>a.kind!=='text');
+const textAttachments=attachments.filter(a=>a.kind==='text');
+const analyzableFiles=attachments.filter(a=>a.kind==='file'&&a.content&&String(a.content).trim().length>0);
+if(mediaAttachments.length>0&&analyzableFiles.length===0){
 const SAATHI_KEY_STORE='saathi_api_key';
 let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
 if(!SAATHI_KEY){SAATHI_KEY=prompt('Saathi API Key: ');if(SAATHI_KEY)localStorage.setItem(SAATHI_KEY_STORE,SAATHI_KEY.trim());}
