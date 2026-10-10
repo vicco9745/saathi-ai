@@ -1750,8 +1750,13 @@ async function requestTitleFromServer(text, attachments){
 function isDesignRequest(text){
   const t = (text || '').toLowerCase().trim();
   if(t.startsWith('/design')) return true;
-  const words = ['design banao','card banao','poster banao','banner banao','invitation banao','visiting card','greeting card','flyer banao','certificate banao','menu banao','wedding card','birthday card','diwali card','शादी का कार्ड','निमंत्रण','पोस्टर','बैनर','डिज़ाइन'];
-  return words.some(w => t.includes(w));
+  const keys = [
+    'design','card','poster','banner','invitation','visiting','greeting',
+    'flyer','certificate','menu','wedding','birthday','diwali','marriage',
+    'डिज़ाइन','कार्ड','पोस्टर','बैनर','निमंत्रण','शादी','विवाह','जन्मदिन','दिवाली','प्रमाणपत्र'
+  ];
+  // Match if ANY keyword is present
+  return keys.some(function(w){ return t.indexOf(w) !== -1; });
 }
 function extractDesignPrompt(text){
   const t = (text || '').trim();
