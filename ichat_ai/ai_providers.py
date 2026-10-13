@@ -149,10 +149,17 @@ def _call_groq(prompt):
     try:
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-        payload = {"model": "openai/gpt-oss-20b", "messages": [
-            {"role": "system", "content": SYSTEM_INSTRUCTION},
-            {"role": "user", "content": prompt},
-        ]}
+        payload = {
+            "model": "llama-3.3-70b-versatile",
+            "messages": [
+                {"role": "system", "content": SYSTEM_INSTRUCTION},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 0.7,
+            "max_tokens": 2048,
+            "frequency_penalty": 0.6,
+            "presence_penalty": 0.3,
+        }
         resp = requests.post(url, headers=headers, json=payload, timeout=30)
         if resp.status_code != 200:
             print(f"[groq] HTTP {resp.status_code}")
