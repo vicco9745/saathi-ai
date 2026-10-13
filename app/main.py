@@ -172,6 +172,9 @@ def _detect_action(msg: str) -> str:
     if _re.search(r"(image|photo|picture|तस्वीर|फोटो|चित्र|pic).*(banao|banaao|bana do|generate|create|banade|बनाओ|बनाओ|बना दो|बनाएं|बनायें)", m) or \
        _re.search(r"(banao|banaao|generate|create|bana do).*(image|photo|picture|तस्वीर|फोटो|चित्र)", m):
         return "image"
+    # ═══ Kahani / Story / Poem ═══
+    if any(x in m for x in ["kahani","कहानी","story","किस्सा","कविता","poem","शायरी","baal","baat","बात","joke","चुटकुला"]):
+        return "chat"
     return "chat"
 
 
