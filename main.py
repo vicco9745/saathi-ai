@@ -162,22 +162,34 @@ def generate_reply_from_llm(message: str, memory: List[str], search_context: Opt
 def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
     check_api_key(x_api_key)
 
-    # Pehle yahan ek "guess karo ki search chahiye ya nahi" wala heuristic
-    # tha, jo bahut zyada baar (har normal message par) search shuru kar
-    # deta tha — isse user ko baar baar galat/random results milte the.
-    # Ab search SIRF tabhi hoti hai jab frontend khud "/search ..." command
-    # se explicitly allow_web_search=true bhejta hai — koi guessing nahi.
     search_context = None
     sources = []
     if req.allow_web_search:
         search_context, sources = search_duckduckgo(req.message)
 
-    reply = generate_reply_from_llm(req.message, req.memory or [], search_context)
+    system = (
+        "Tum Saathi ho - ek friendly, helpful AI assistant. "
+        "Hindi/Hinglish mein natural baat karo. "
+        "Agar user kahani, kavita, ya creative cheez maange to KHUD se likho, "
+        "web search ka result use mat karo. "
+        "Sirf facts, news, ya current info ke liye diya gaya search context use karo."
+    )
+    if search_context:
+        system += "\n\nWeb search context:\n" + search_context
+
+    try:
+        reply = call_groq(req.message, system=system)
+    except Exception:
+        if search_context:
+            reply = search_context
+        else:
+            reply = "Sorry, abhi AI se connect nahi ho pa raha."
 
     response = {"reply": reply}
     if sources:
         response["sources"] = sources
     return response
+
 
 
 
@@ -192,7 +204,7 @@ def call_groq(prompt: str, system: str = "") -> str:
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
             json={
-                "model": "openai/gpt-oss-20b",
+                "model": "llama-3.3-70b-versatile",
                 "messages": (
                     ([{"role": "system", "content": system}] if system else []) +
                     [{"role": "user", "content": prompt}]
