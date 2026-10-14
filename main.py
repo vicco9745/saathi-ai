@@ -221,6 +221,7 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
         "aaj ki", "taja", "taaza"
     ]
     is_news_request = any(kw in msg_lower for kw in news_keywords)
+    print(f"[NEWS-CHECK] msg='{req.message[:50]}', is_news_request={is_news_request}")
 
     if is_news_request:
         # Language detect
