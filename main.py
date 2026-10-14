@@ -230,7 +230,9 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
             if t in msg_lower:
                 topic = t
                 break
+        print(f"[NEWS-DEBUG] is_news_request=True, topic={topic}, lang={news_lang}")
         news_text, news_sources = fetch_news(query=topic, lang=news_lang)
+        print(f"[NEWS-DEBUG] news_text={'MILA (' + str(len(news_text)) + ' chars)' if news_text else 'NAHI MILA (None)'}")
         if news_text:
             search_context = news_text
             sources = news_sources
