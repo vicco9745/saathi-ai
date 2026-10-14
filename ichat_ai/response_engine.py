@@ -241,6 +241,60 @@ def _matches_any(normalized_text, patterns):
     return any(p in normalized_text for p in patterns)
 
 
+
+# ── News API — Google News RSS (no API key needed) ────────────────────
+def _fetch_live_news(query=None, lang="hi", country="IN"):
+    """
+    Google News RSS se latest khabar laata hai.
+    Return: (news_text, sources_list)
+    """
+    import xml.etree.ElementTree as ET
+    try:
+        if query:
+            url = f"https://news.google.com/rss/search?q={query}&hl={lang}&gl={country}&ceid={country}:{lang}"
+        else:
+            url = f"https://news.google.com/rss?hl={lang}&gl={country}&ceid={country}:{lang}"
+
+        resp = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+        resp.raise_for_status()
+
+        root = ET.fromstring(resp.content)
+        items = root.findall(".//item")
+
+        if not items:
+            return None, []
+
+        sources = []
+        news_lines = []
+        for i, item in enumerate(items[:7]):
+            title = item.findtext("title", "").strip()
+            link = item.findtext("link", "").strip()
+            if title:
+                news_lines.append(f"{i+1}. {title}")
+                sources.append({"title": title[:80], "url": link})
+
+        if news_lines:
+            header = "आज की ताज़ा खबरें:" if lang == "hi" else "Latest News:"
+            return header + "\n\n" + "\n".join(news_lines), sources
+
+        return None, []
+
+    except Exception as e:
+        print(f"[news] CRASHED: {e}")
+        return None, []
+
+
+def _is_news_request(msg_lower):
+    """Check karo ki user news maang raha hai ya nahi."""
+    news_keywords = [
+        "news", "khabar", "khabrein", "samachar", "samachaar",
+        "आज की खबर", "आज की ख़बर", "ताज़ा खबर", "ताजा खबर",
+        "समाचार", "न्यूज़", "न्यूज", "खबरें", "खबर",
+        "latest news", "breaking news", "live news", "headlines"
+    ]
+    return any(kw in msg_lower for kw in news_keywords)
+
+
 def get_response(user_text):
     from ichat_ai.memory.memory import remember, recall
 
@@ -328,6 +382,42 @@ def get_response(user_text):
         reply = similar_answer
         add_conversation(original_text, reply)
         return reply
+
+    # ── NEWS CHECK — Agar user news maang raha hai ──
+    _msg_lower = original_text.lower()
+    if _is_news_request(_msg_lower):
+        print(f"[NEWS-CHECK] msg='{original_text[:50]}', is_news_request=True")
+        # Language detect
+        _dev_count = sum(1 for c in original_text if '\u0900' <= c <= '\u097F')
+        _news_lang = "hi" if _dev_count > 3 else "en"
+        # Topic detect
+        _topic = None
+        for _t in ["cricket", "bollywood", "politics", "sports", "business", "technology", "world"]:
+            if _t in _msg_lower:
+                _topic = _t
+                break
+        print(f"[NEWS-DEBUG] topic={_topic}, lang={_news_lang}")
+        _news_text, _news_sources = _fetch_live_news(query=_topic, lang=_news_lang)
+        print(f"[NEWS-DEBUG] news_text={'MILA (' + str(len(_news_text)) + ' chars)' if _news_text else 'NAHI MILA (None)'}")
+        if _news_text:
+            # AI se news ko polish karao
+            try:
+                from ichat_ai.ai_providers import ai_provider_answer
+                _news_prompt = f"User ne kaha: {original_text}\n\nYeh live news mili hai:\n{_news_text}\n\nIn khabron ko user ki bhasha mein saaf-saaf, point-wise batao. Har khabar ka 1-2 line summary do. Sirf yeh news use karo, kuch apne se mat banao."
+                _polished = ai_provider_answer(_news_prompt)
+                if _polished:
+                    reply = _polished
+                else:
+                    reply = _news_text
+            except Exception as e:
+                print(f"[news] polish error: {e}")
+                reply = _news_text
+            add_conversation(original_text, reply)
+            if _news_sources:
+                return {"reply": reply, "sources": _news_sources}
+            return reply
+    else:
+        print(f"[NEWS-CHECK] msg='{original_text[:50]}', is_news_request=False")
 
     try:
         from ichat_ai.ai_providers import ai_provider_answer
