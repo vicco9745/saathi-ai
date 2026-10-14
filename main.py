@@ -214,11 +214,13 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
     msg_lower = (req.message or "").lower()
 
     # News detection — kya user news maang raha hai?
-    is_news_request = any(kw in msg_lower for kw in [
-        "news", "khabar", "khabrein", "samachar", "taja khabar",
-        "आज की खबर", "ताज़ा खबर", "समाचार", "न्यूज़",
-        "aaj ki khabar", "aaj ki news", "latest news", "breaking news"
-    ])
+    news_keywords = [
+        "news", "khabar", "khabrein", "samachar", "samachaar",
+        "आज की खबर", "आज की ख़बर", "ताज़ा खबर", "ताजा खबर", "समाचार", "न्यूज़", "न्यूज",
+        "latest news", "breaking news", "live news", "headlines",
+        "aaj ki", "taja", "taaza"
+    ]
+    is_news_request = any(kw in msg_lower for kw in news_keywords)
 
     if is_news_request:
         # Language detect
