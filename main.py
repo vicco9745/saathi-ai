@@ -132,6 +132,53 @@ def search_duckduckgo(query: str):
         return None, []
 
 
+# ── Free News API — Google News RSS (no API key needed) ───────────────
+def fetch_news(query: str = None, lang: str = "hi", country: str = "IN"):
+    """
+    Google News RSS se latest khabar laata hai.
+    - query: khaas topic (jaise "cricket", "bollywood", "delhi")
+    - lang: "hi" (Hindi) ya "en" (English)
+    - country: "IN" (India) ya "US", "GB", etc.
+
+    Return: (news_text, sources_list)
+    """
+    import xml.etree.ElementTree as ET
+    try:
+        if query:
+            url = f"https://news.google.com/rss/search?q={query}&hl={lang}&gl={country}&ceid={country}:{lang}"
+        else:
+            url = f"https://news.google.com/rss?hl={lang}&gl={country}&ceid={country}:{lang}"
+
+        resp = requests.get(url, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
+        resp.raise_for_status()
+
+        root = ET.fromstring(resp.content)
+        items = root.findall(".//item")
+
+        if not items:
+            return None, []
+
+        sources = []
+        news_lines = []
+        for i, item in enumerate(items[:7]):
+            title = item.findtext("title", "").strip()
+            link = item.findtext("link", "").strip()
+            pub_date = item.findtext("pubDate", "").strip()
+            if title:
+                news_lines.append(f"{i+1}. {title}")
+                sources.append({"title": title[:80], "url": link})
+
+        if news_lines:
+            header = "आज की ताज़ा खबरें:" if lang == "hi" else "Latest News:"
+            return header + "\n\n" + "\n".join(news_lines), sources
+
+        return None, []
+
+    except Exception as e:
+        print(f"[news] CRASHED: {e}")
+        return None, []
+
+
 # ── LLM placeholder — jab aap LLM connect karo, isme call daal dena ─────
 def generate_reply_from_llm(message: str, memory: List[str], search_context: Optional[str]) -> str:
     """
@@ -164,7 +211,31 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
 
     search_context = None
     sources = []
-    if req.allow_web_search:
+    msg_lower = (req.message or "").lower()
+
+    # News detection — kya user news maang raha hai?
+    is_news_request = any(kw in msg_lower for kw in [
+        "news", "khabar", "khabrein", "samachar", "taja khabar",
+        "आज की खबर", "ताज़ा खबर", "समाचार", "न्यूज़",
+        "aaj ki khabar", "aaj ki news", "latest news", "breaking news"
+    ])
+
+    if is_news_request:
+        # Language detect
+        dev_count = sum(1 for c in req.message if '\u0900' <= c <= '\u097F')
+        news_lang = "hi" if dev_count > 3 else "en"
+        # Topic detect (agar user ne koi topic bola ho)
+        topic = None
+        for t in ["cricket", "bollywood", "politics", "sports", "business", "technology", "world"]:
+            if t in msg_lower:
+                topic = t
+                break
+        news_text, news_sources = fetch_news(query=topic, lang=news_lang)
+        if news_text:
+            search_context = news_text
+            sources = news_sources
+
+    elif req.allow_web_search:
         search_context, sources = search_duckduckgo(req.message)
 
     system = (
@@ -172,10 +243,12 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
         "Hindi/Hinglish mein natural baat karo. "
         "Agar user kahani, kavita, ya creative cheez maange to KHUD se likho, "
         "web search ka result use mat karo. "
-        "Sirf facts, news, ya current info ke liye diya gaya search context use karo."
+        "Sirf facts, news, ya current info ke liye diya gaya context use karo. "
+        "Agar news context diya gaya hai, to usse achchhe se Hindi mein summary bana kar do — "
+        "har khabar ka chhota point do, aur sources bhi mention karo."
     )
     if search_context:
-        system += "\n\nWeb search context:\n" + search_context
+        system += "\n\nContext:\n" + search_context
 
     try:
         reply = call_groq(req.message, system=system)
