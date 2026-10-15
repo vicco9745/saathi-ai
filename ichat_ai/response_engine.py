@@ -387,9 +387,74 @@ def get_response(user_text):
     _msg_lower = original_text.lower()
     if _is_news_request(_msg_lower):
         print(f"[NEWS-CHECK] msg='{original_text[:50]}', is_news_request=True")
-        # Language detect
-        _dev_count = sum(1 for c in original_text if '\u0900' <= c <= '\u097F')
-        _news_lang = "hi" if _dev_count > 3 else "en"
+        # ── SMART LANGUAGE DETECT (Worldwide) ──
+        _news_lang = None
+        _explicit_lang_patterns = {
+            "en": ["english", "अंग्रेजी", "इंग्लिश", "angrezi", "english mein", "in english"],
+            "hi": ["hindi", "हिंदी", "हिन्दी", "hindi mein", "in hindi"],
+            "ta": ["tamil", "तमिल", "tamil mein"],
+            "te": ["telugu", "तेलुगु", "telugu mein"],
+            "bn": ["bengali", "बंगाली", "bangla", "bengali mein"],
+            "mr": ["marathi", "मराठी", "marathi mein"],
+            "gu": ["gujarati", "गुजराती", "gujarati mein"],
+            "kn": ["kannada", "कन्नड़", "kannada mein"],
+            "ml": ["malayalam", "मलयालम", "malayalam mein"],
+            "pa": ["punjabi", "पंजाबी", "punjabi mein"],
+            "ur": ["urdu", "उर्दू", "urdu mein"],
+            "ar": ["arabic", "अरबी", "arabic mein"],
+            "zh": ["chinese", "mandarin", "चीनी", "चाइनीज़", "chinese mein"],
+            "ja": ["japanese", "जापानी", "japanese mein"],
+            "ko": ["korean", "कोरियन", "korean mein"],
+            "ru": ["russian", "रूसी", "russian mein"],
+            "es": ["spanish", "स्पेनिश", "spanish mein"],
+            "fr": ["french", "फ्रेंच", "french mein"],
+            "de": ["german", "जर्मन", "german mein"],
+            "pt": ["portuguese", "पुर्तगाली", "portuguese mein"],
+            "it": ["italian", "इतालवी", "italian mein"],
+            "nl": ["dutch", "डच", "dutch mein"],
+            "tr": ["turkish", "तुर्की", "turkish mein"],
+            "vi": ["vietnamese", "वियतनामी", "vietnamese mein"],
+            "th": ["thai", "थाई", "thai mein"],
+            "id": ["indonesian", "इंडोनेशियन", "indonesian mein"],
+            "fa": ["persian", "farsi", "फ़ारसी", "persian mein"],
+            "he": ["hebrew", "हिब्रू", "hebrew mein"],
+            "el": ["greek", "ग्रीक", "greek mein"],
+            "pl": ["polish", "पोलिश", "polish mein"],
+            "uk": ["ukrainian", "यूक्रेनियन", "ukrainian mein"],
+            "ms": ["malay", "मलय", "malay mein"],
+            "sw": ["swahili", "स्वाहिली", "swahili mein"],
+        }
+        for _lc, _kws in _explicit_lang_patterns.items():
+            if any(_kw in _msg_lower for _kw in _kws):
+                _news_lang = _lc
+                print(f"[NEWS-LANG] Explicit request: {_lc}")
+                break
+
+        if not _news_lang:
+            def _count_range(text, start, end):
+                return sum(1 for c in text if start <= ord(c) <= end)
+            _scores = {
+                "hi": _count_range(original_text, 0x0900, 0x097F),
+                "ta": _count_range(original_text, 0x0B80, 0x0BFF),
+                "te": _count_range(original_text, 0x0C00, 0x0C7F),
+                "bn": _count_range(original_text, 0x0980, 0x09FF),
+                "gu": _count_range(original_text, 0x0A80, 0x0AFF),
+                "kn": _count_range(original_text, 0x0C80, 0x0CFF),
+                "ml": _count_range(original_text, 0x0D00, 0x0D7F),
+                "pa": _count_range(original_text, 0x0A00, 0x0A7F),
+                "ar": _count_range(original_text, 0x0600, 0x06FF),
+                "he": _count_range(original_text, 0x0590, 0x05FF),
+                "zh": _count_range(original_text, 0x4E00, 0x9FFF),
+                "ja": _count_range(original_text, 0x3040, 0x30FF),
+                "ko": _count_range(original_text, 0xAC00, 0xD7AF),
+                "ru": _count_range(original_text, 0x0400, 0x04FF),
+                "el": _count_range(original_text, 0x0370, 0x03FF),
+                "th": _count_range(original_text, 0x0E00, 0x0E7F),
+            }
+            _best = max(_scores, key=_scores.get)
+            _news_lang = _best if _scores[_best] > 3 else "en"
+
+        print(f"[NEWS-LANG] Final lang = {_news_lang}")
         # Topic detect
         _topic = None
         for _t in ["cricket", "bollywood", "politics", "sports", "business", "technology", "world"]:
