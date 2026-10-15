@@ -264,28 +264,40 @@ def _call_deepseek(prompt):
         return None
 
 
-def _call_groq(prompt):
+def _call_groq(prompt, history=None):
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         return None
     try:
         # ── Pichli baatcheet ka context lo ──
         history_messages = []
-        try:
-            from ichat_ai.memory.memory import get_conversation_history
-            _history = get_conversation_history()
-            print(f"[groq] HISTORY LOADED: {len(_history)} items")
-            # Aakhri 3 conversations (6 messages) lo
-            for _item in _history[-3:]:
-                _u = (_item.get("user") or "").strip()
-                _a = (_item.get("assistant") or "").strip()
-                if _u:
-                    history_messages.append({"role": "user", "content": _u})
-                if _a:
-                    history_messages.append({"role": "assistant", "content": _a})
-            print(f"[groq] HISTORY MSGS: {len(history_messages)} sent to AI")
-        except Exception as _e:
-            print(f"[groq] history load failed: {_e}")
+
+        # Pehle: frontend se aayi history (agar hai)
+        if history and isinstance(history, list) and len(history) > 0:
+            for _h in history[-6:]:
+                _role = _h.get("role") or "user"
+                _txt = (_h.get("text") or "").strip()
+                if _txt:
+                    history_messages.append({"role": _role, "content": _txt})
+            print(f"[groq] FRONTEND HISTORY: {len(history_messages)} msgs")
+
+        # Agar frontend se nahi aayi, to backend memory.json se lo
+        if not history_messages:
+            try:
+                from ichat_ai.memory.memory import get_conversation_history
+                _history = get_conversation_history()
+                print(f"[groq] BACKEND HISTORY LOADED: {len(_history)} items")
+                for _item in _history[-3:]:
+                    _u = (_item.get("user") or "").strip()
+                    _a = (_item.get("assistant") or "").strip()
+                    if _u:
+                        history_messages.append({"role": "user", "content": _u})
+                    if _a:
+                        history_messages.append({"role": "assistant", "content": _a})
+            except Exception as _e:
+                print(f"[groq] history load failed: {_e}")
+
+        print(f"[groq] TOTAL HISTORY MSGS: {len(history_messages)}")
 
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
@@ -354,11 +366,19 @@ _PROVIDERS = [
 ]
 
 
-def ai_provider_answer(user_text):
+def ai_provider_answer(user_text, history=None):
     """Har provider ko baari-baari try karta hai. Pehla jo kaam kare,
-    uska jawab return karta hai. Sab fail ho to None."""
+    uska jawab return karta hai. Sab fail ho to None.
+    history: chat history (optional) — frontend se aayi hui."""
     for name, fn in _PROVIDERS:
-        result = fn(user_text)
+        try:
+            # _call_groq me history support hai
+            if name == "groq":
+                result = fn(user_text, history=history)
+            else:
+                result = fn(user_text)
+        except TypeError:
+            result = fn(user_text)
         if result:
             print(f"[ai_providers] answered via {name}")
             return result
