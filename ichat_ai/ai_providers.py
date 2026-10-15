@@ -274,6 +274,7 @@ def _call_groq(prompt):
         try:
             from ichat_ai.memory.memory import get_conversation_history
             _history = get_conversation_history()
+            print(f"[groq] HISTORY LOADED: {len(_history)} items")
             # Aakhri 3 conversations (6 messages) lo
             for _item in _history[-3:]:
                 _u = (_item.get("user") or "").strip()
@@ -282,6 +283,7 @@ def _call_groq(prompt):
                     history_messages.append({"role": "user", "content": _u})
                 if _a:
                     history_messages.append({"role": "assistant", "content": _a})
+            print(f"[groq] HISTORY MSGS: {len(history_messages)} sent to AI")
         except Exception as _e:
             print(f"[groq] history load failed: {_e}")
 
