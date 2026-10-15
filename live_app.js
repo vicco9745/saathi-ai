@@ -1210,9 +1210,10 @@ function regenerateReply(chat,idx){
   if(!msg) return;
   const oldText = msg.text || msg.fullText || '';
   if(!oldText.trim()) return;
-  msg.text = '';
+  msg.text = oldText;
   msg.fullText = oldText;
   msg.typing = true;
+  msg.generating = false;
   msg.interrupted = false;
   saveChats();
   renderMessages();
