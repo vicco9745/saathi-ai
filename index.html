@@ -2215,16 +2215,18 @@ return actions;
 function regenerateReply(chat,idx){
   const msg=chat.messages[idx];
   if(!msg) return;
-  // Wahi purana text rakho, bas typing=true karo taaki dobara type ho
   const oldText = msg.text || msg.fullText || '';
-  if(!oldText.trim()){
-    // Agar text khaali hai, to kuch mat karo
-    return;
-  }
-  msg.text = '';
+  if(!oldText.trim()) return;
+  if(activeTypingTimeout){clearTimeout(activeTypingTimeout);activeTypingTimeout=null;}
+  aiIsTyping=false;
+  activeTypingMessage=null;
+  msg.text = oldText;
   msg.fullText = oldText;
   msg.typing = true;
+  msg.generating = false;
   msg.interrupted = false;
+  msg.mediaType = null;
+  msg.processing = null;
   saveChats();
   renderMessages();
 }
