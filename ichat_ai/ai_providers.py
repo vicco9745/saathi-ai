@@ -363,7 +363,7 @@ def _call_groq(prompt, history=None):
                 + [{"role": "user", "content": prompt}]
             ),
             "temperature": 0.7,
-            "max_tokens": 2048,
+            "max_tokens": 32000,
             "frequency_penalty": 0.6,
             "presence_penalty": 0.3,
         }

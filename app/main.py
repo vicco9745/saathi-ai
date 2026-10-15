@@ -352,7 +352,7 @@ def _call_groq(prompt: str, system: str = "") -> str:
                     ([{"role": "system", "content": system}] if system else []) +
                     [{"role": "user", "content": prompt}]
                 ),
-                "max_tokens": 8000,
+                "max_tokens": 32000,
                 "temperature": 0.6,
             },
             timeout=300,
@@ -396,7 +396,7 @@ def _call_openrouter(prompt: str, system: str = "") -> str:
                     ([{"role": "system", "content": system}] if system else []) +
                     [{"role": "user", "content": prompt}]
                 ),
-                "max_tokens": 8000,
+                "max_tokens": 32000,
             },
             timeout=300,
         )
@@ -616,7 +616,7 @@ def _polish_vision_reply(vision_text: str, user_message: str) -> str:
                     {"role": "system", "content": system},
                     {"role": "user", "content": user_prompt},
                 ],
-                "max_tokens": 2500,
+                "max_tokens": 32000,
                 "temperature": 0.4,
             },
             timeout=120,
