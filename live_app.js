@@ -1215,6 +1215,8 @@ function regenerateReply(chat,idx){
   msg.typing = true;
   msg.generating = false;
   msg.interrupted = false;
+  msg.mediaType = null;
+  msg.processing = null;
   saveChats();
   renderMessages();
 }
