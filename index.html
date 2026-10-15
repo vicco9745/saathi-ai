@@ -1929,10 +1929,26 @@ if(!totalLen){
   if(activeTypingMessage===message)activeTypingMessage=null;
   aiIsTyping=false;updateActionButton();renderMessages();return;
 }
-const targetMs=Math.min(22000,Math.max(3500,totalLen*9));
-const tickMs=30;
-const totalTicks=Math.max(30,Math.floor(targetMs/tickMs));
-const charsPerTick=Math.max(1,Math.ceil(totalLen/totalTicks));
+// ═══ LONG TEXT: Typing skip, seedha dikhao ═══
+if(totalLen > 2500){
+  message.typing=false;message.generating=false;message.interrupted=false;
+  aiIsTyping=false;activeTypingMessage=null;
+  try{element.innerHTML=renderMarkdown(text);}catch(_){element.textContent=text;}
+  try{
+    const wrap=element.closest('.ai-typing-row');
+    if(wrap){const av=wrap.querySelector('.ai-typing-avatar');if(av)av.remove();wrap.classList.remove('ai-typing-row');}
+  }catch(_){}
+  saveChats();updateActionButton();
+  try{renderChatList();}catch(_){}
+  // ═══ TURANT buttons dikhane ke liye ═══
+  try{renderMessages();}catch(_){}
+  return;
+}
+
+const targetMs=Math.min(6000,Math.max(1200,totalLen*3));
+const tickMs=50;
+const totalTicks=Math.max(20,Math.floor(targetMs/tickMs));
+const charsPerTick=Math.max(2,Math.ceil(totalLen/totalTicks));
 let i=0;
 aiIsTyping=true;
 activeTypingMessage=message;
@@ -1965,6 +1981,8 @@ function finish(){
   }catch(_){}
   saveChats();updateActionButton();
   try{renderChatList();}catch(_){}
+  // ═══ TURANT buttons dikhane ke liye — renderMessages ═══
+  try{renderMessages();}catch(_){}
 }
 function typeNext(){
   if(i<text.length){
