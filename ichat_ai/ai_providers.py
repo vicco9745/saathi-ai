@@ -269,14 +269,31 @@ def _call_groq(prompt):
     if not api_key:
         return None
     try:
+        # ── Pichli baatcheet ka context lo ──
+        history_messages = []
+        try:
+            from ichat_ai.memory.memory import get_conversation_history
+            _history = get_conversation_history()
+            # Aakhri 3 conversations (6 messages) lo
+            for _item in _history[-3:]:
+                _u = (_item.get("user") or "").strip()
+                _a = (_item.get("assistant") or "").strip()
+                if _u:
+                    history_messages.append({"role": "user", "content": _u})
+                if _a:
+                    history_messages.append({"role": "assistant", "content": _a})
+        except Exception as _e:
+            print(f"[groq] history load failed: {_e}")
+
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         payload = {
             "model": "openai/gpt-oss-120b",
-            "messages": [
-                {"role": "system", "content": SYSTEM_INSTRUCTION},
-                {"role": "user", "content": prompt},
-            ],
+            "messages": (
+                [{"role": "system", "content": SYSTEM_INSTRUCTION}]
+                + history_messages
+                + [{"role": "user", "content": prompt}]
+            ),
             "temperature": 0.7,
             "max_tokens": 2048,
             "frequency_penalty": 0.6,
