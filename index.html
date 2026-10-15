@@ -2212,7 +2212,22 @@ moreWrap.appendChild(moreBtn);moreWrap.appendChild(moreMenu);actions.appendChild
 return actions;
 }
 
-function regenerateReply(chat,idx){const msg=chat.messages[idx];if(!msg)return;chat.messages.splice(idx,1);const fresh={role:'ai',text:'Yeh ek naya demo reply hai. Yahan apna AI / API response jodo.',typing:true};chat.messages.push(fresh);saveChats();renderMessages();}
+function regenerateReply(chat,idx){
+  const msg=chat.messages[idx];
+  if(!msg) return;
+  // Wahi purana text rakho, bas typing=true karo taaki dobara type ho
+  const oldText = msg.text || msg.fullText || '';
+  if(!oldText.trim()){
+    // Agar text khaali hai, to kuch mat karo
+    return;
+  }
+  msg.text = '';
+  msg.fullText = oldText;
+  msg.typing = true;
+  msg.interrupted = false;
+  saveChats();
+  renderMessages();
+}
 
 document.addEventListener('click',(e)=>{if(!e.target.closest('.msg-action-menu')&&!e.target.closest('.msg-action-btn')){document.querySelectorAll('.msg-action-menu.open').forEach(m=>m.classList.remove('open'));}});
 
