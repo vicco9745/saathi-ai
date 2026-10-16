@@ -657,10 +657,26 @@ def _detect_action(msg: str) -> str:
 def chat(body: ChatRequest, key=Depends(require_api_key)):
     record_usage(key, "chat")
 
-    # Agar user ne image bheji hai to vision path use karo
+    # Images extract karo
     images = [a for a in (body.attachments or []) if a.kind == "photo" and a.dataUrl]
 
-    if images:
+    # ═══ SABSE PEHLE action detect karo ═══
+    action = _detect_action(body.message)
+
+    # ═══ PRIORITY: Agar user PDF/website/image banane ko bola hai, to WAHI karo ═══
+    # (image bheji ho ya na ho — explicit request ko priority mile)
+    if action in ("pdf", "website", "image"):
+        # Agar image bhi hai, to use content me mention karo
+        if images:
+            try:
+                _img_analysis = _call_vision_v2(body.message, images)
+                if _img_analysis:
+                    body.message = body.message + "\n\n[User ne jo image bheji hai uska analysis: " + _img_analysis[:1500] + "]"
+            except Exception as _e:
+                print(f"[chat] vision enrich failed: {_e}")
+        # Neeche wale specific action handlers chalenge (pdf/website/image)
+    elif images:
+        # Image bheji hai aur koi specific action nahi maanga → vision path
         raw = _call_vision_v2(body.message, images)
         reply = _polish_vision_reply(raw, body.message)
         return {
@@ -668,9 +684,6 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             "reply": reply,
             "model": "saathi-vision",
         }
-
-    # Auto-detect: kya user PDF/website/image banana chahta hai?
-    action = _detect_action(body.message)
 
     if action == "analyze":
         system = (
