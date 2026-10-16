@@ -318,7 +318,7 @@ def _call_deepseek(prompt):
         return None
 
 
-def _call_groq(prompt, history=None):
+def _call_groq(prompt, history=None, lang_pref=None):
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         return None
@@ -355,10 +355,41 @@ def _call_groq(prompt, history=None):
 
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        # ── Language preference prepend karo ──
+        _sys_content = SYSTEM_INSTRUCTION
+        if lang_pref and str(lang_pref).strip():
+            _lp = str(lang_pref).strip().lower()
+            _lang_name = {
+                "hi": "Hindi (Devanagari)",
+                "en": "English",
+                "ur": "Urdu",
+                "ta": "Tamil",
+                "te": "Telugu",
+                "bn": "Bengali",
+                "mr": "Marathi",
+                "gu": "Gujarati",
+                "kn": "Kannada",
+                "ml": "Malayalam",
+                "pa": "Punjabi",
+                "ar": "Arabic",
+                "zh": "Chinese",
+                "ja": "Japanese",
+                "ko": "Korean",
+                "ru": "Russian",
+                "es": "Spanish",
+                "fr": "French",
+                "de": "German",
+            }.get(_lp, _lp)
+            _sys_content = (
+                f"\n\n*** CHAT KI BHASHA PREFERENCE: Is poore chat me HAMESHA {_lang_name} "
+                f"bhasha me jawab do. User chahe kisi bhi bhasha me likhe, tum sirf {_lang_name} "
+                f"me reply karo — jab tak user kuch aur na bole. Yeh preference SABSE UPAR hai. ***\n\n"
+            ) + SYSTEM_INSTRUCTION
+
         payload = {
             "model": "openai/gpt-oss-120b",
             "messages": (
-                [{"role": "system", "content": SYSTEM_INSTRUCTION}]
+                [{"role": "system", "content": _sys_content}]
                 + history_messages
                 + [{"role": "user", "content": prompt}]
             ),
@@ -420,19 +451,22 @@ _PROVIDERS = [
 ]
 
 
-def ai_provider_answer(user_text, history=None):
+def ai_provider_answer(user_text, history=None, lang_pref=None):
     """Har provider ko baari-baari try karta hai. Pehla jo kaam kare,
     uska jawab return karta hai. Sab fail ho to None.
-    history: chat history (optional) — frontend se aayi hui."""
+    history: chat history (optional) — frontend se aayi hui.
+    lang_pref: chat ki bhasha preference (jaise 'hi', 'en'). Agar set hai to usi bhasha me jawab."""
     for name, fn in _PROVIDERS:
         try:
-            # _call_groq me history support hai
             if name == "groq":
-                result = fn(user_text, history=history)
+                result = fn(user_text, history=history, lang_pref=lang_pref)
             else:
                 result = fn(user_text)
         except TypeError:
-            result = fn(user_text)
+            try:
+                result = fn(user_text, history=history) if name == "groq" else fn(user_text)
+            except TypeError:
+                result = fn(user_text)
         if result:
             print(f"[ai_providers] answered via {name}")
             return result

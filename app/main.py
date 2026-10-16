@@ -37,6 +37,7 @@ class ChatRequest(BaseModel):
     model: str = "auto"
     memory: Optional[List[str]] = []
     history: Optional[List[dict]] = []
+    lang_pref: Optional[str] = None
     allow_web_search: Optional[bool] = False
     attachments: Optional[List[ChatAttachment]] = []
 
@@ -310,10 +311,12 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
 
     # Warna normal text chat
     try:
-        result = get_response(body.message, history=body.history or [])
+        result = get_response(body.message, history=body.history or [], lang_pref=body.lang_pref)
     except TypeError:
-        # Backup: agar get_response history accept nahi karta
-        result = get_response(body.message)
+        try:
+            result = get_response(body.message, history=body.history or [])
+        except TypeError:
+            result = get_response(body.message)
     if isinstance(result, dict):
         return {
             "service": "chat",

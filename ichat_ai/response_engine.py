@@ -295,7 +295,7 @@ def _is_news_request(msg_lower):
     return any(kw in msg_lower for kw in news_keywords)
 
 
-def get_response(user_text, history=None):
+def get_response(user_text, history=None, lang_pref=None):
     from ichat_ai.memory.memory import remember, recall
 
     original_text = user_text.strip()
@@ -486,7 +486,7 @@ def get_response(user_text, history=None):
 
     try:
         from ichat_ai.ai_providers import ai_provider_answer
-        ai_answer = ai_provider_answer(original_text, history=history)
+        ai_answer = ai_provider_answer(original_text, history=history, lang_pref=lang_pref)
     except Exception as e:
         print(f"[get_response] ai_provider_answer CRASHED: {type(e).__name__}: {e}")
         ai_answer = None
