@@ -1,6 +1,49 @@
-.env
-.venv/
+# Backup files
+*.bak
+*.bak2
+*.bak3
+*.bak4
+*.bak5
+*.bak6
+*.bak7
+*.bak_*
+*.backup
+*.before-*
+*.context_backup
+*.history_read_backup
+*.queue_backup
+*.smart_backup
+*.backup.html
+*.before-*
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+.env
+.env.local
+venv/
+env/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
 ichat.db
-index.html.before-photo-fix
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+logs/
+
+# Test
+test_*.py

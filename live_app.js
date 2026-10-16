@@ -1210,6 +1210,11 @@ function regenerateReply(chat,idx){
   if(!msg) return;
   const oldText = msg.text || msg.fullText || '';
   if(!oldText.trim()) return;
+  // ═══ Stuck timers aur flags clear karo ═══
+  if(activeTypingTimeout){clearTimeout(activeTypingTimeout);activeTypingTimeout=null;}
+  aiIsTyping=false;
+  activeTypingMessage=null;
+  // ═══ Saare flags reset karo ═══
   msg.text = oldText;
   msg.fullText = oldText;
   msg.typing = true;
@@ -1217,6 +1222,9 @@ function regenerateReply(chat,idx){
   msg.interrupted = false;
   msg.mediaType = null;
   msg.processing = null;
+  msg.adDone = true;
+  delete msg.mediaType;
+  delete msg.processing;
   saveChats();
   renderMessages();
 }
