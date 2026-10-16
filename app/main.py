@@ -45,157 +45,247 @@ class ChatRequest(BaseModel):
 # PDF GENERATION — Multi-language (Hindi, Tamil, Telugu, Bengali, etc.)
 # Uses fpdf2 with Noto Sans fonts (auto-downloaded and cached)
 # ═══════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════
+# UNIVERSAL PDF — Chart & Image Helpers (matplotlib + Pillow)
+# ═══════════════════════════════════════════════════════════════
+def _generate_chart_png(chart_type, title, data, entry=None, stop=None, target=None, width=7, height=4):
+    """matplotlib se chart PNG banao. Returns bytes ya None."""
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import io as _io
+        import json as _json
+
+        if isinstance(data, str):
+            try:
+                data = _json.loads(data)
+            except Exception:
+                data = []
+        if not data:
+            return None
+
+        fig, ax = plt.subplots(figsize=(width, height), dpi=120)
+        try:
+            if chart_type == "candlestick":
+                for i, c in enumerate(data):
+                    o = float(c.get('open', 0))
+                    h = float(c.get('high', 0))
+                    l = float(c.get('low', 0))
+                    cl = float(c.get('close', 0))
+                    color = '#26a69a' if cl >= o else '#ef5350'
+                    ax.plot([i, i], [l, h], color='#333', linewidth=1, zorder=1)
+                    ax.bar(i, abs(cl - o) or 0.001, bottom=min(o, cl), color=color, width=0.6, zorder=2, edgecolor=color)
+                if entry:
+                    ax.axhline(float(entry), color='blue', linestyle='--', linewidth=1.5, label='Entry ' + str(entry))
+                if stop:
+                    ax.axhline(float(stop), color='red', linestyle='--', linewidth=1.5, label='Stop ' + str(stop))
+                if target:
+                    ax.axhline(float(target), color='green', linestyle='--', linewidth=1.5, label='Target ' + str(target))
+                if entry or stop or target:
+                    ax.legend(loc='upper left', fontsize=8)
+                ax.set_xticks(range(len(data)))
+                ax.set_xticklabels([str(c.get('time', '')) for c in data], fontsize=7)
+            elif chart_type == "line":
+                xs = [d.get('x', i) for i, d in enumerate(data)]
+                ys = [float(d.get('y', d.get('value', 0))) for d in data]
+                ax.plot(xs, ys, color='#10a37f', linewidth=2, marker='o', markersize=5)
+            elif chart_type == "bar":
+                labels = [str(d.get('label', d.get('x', ''))) for d in data]
+                values = [float(d.get('value', d.get('y', 0))) for d in data]
+                ax.bar(labels, values, color='#3b82f6', width=0.6)
+            elif chart_type == "pie":
+                labels = [str(d.get('label', '')) for d in data]
+                values = [float(d.get('value', 0)) for d in data]
+                ax.pie(values, labels=labels, autopct='%1.1f%%', startangle=90)
+                ax.axis('equal')
+            else:
+                xs = list(range(len(data)))
+                ys = [float(d.get('value', 0)) for d in data]
+                ax.plot(xs, ys, color='#10a37f', linewidth=2)
+
+            if title and chart_type != "pie":
+                ax.set_title(title, fontsize=11, fontweight='bold')
+            if chart_type != "pie":
+                ax.grid(True, alpha=0.3)
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+
+            plt.tight_layout()
+            buf = _io.BytesIO()
+            plt.savefig(buf, format='png', dpi=120, bbox_inches='tight', facecolor='white')
+            plt.close(fig)
+            buf.seek(0)
+            return buf.getvalue()
+        except Exception as _e:
+            print("[chart] inner error: " + str(_e))
+            try:
+                plt.close(fig)
+            except Exception:
+                pass
+            return None
+    except Exception as _e:
+        print("[chart] matplotlib error: " + str(_e))
+        return None
+
+
+def _download_image_bytes(url, timeout=8):
+    """URL ya data-URL se image bytes laao. Returns bytes ya None."""
+    try:
+        if not url:
+            return None
+        if url.startswith('data:image'):
+            import base64 as _b64
+            _header, _data = url.split(',', 1)
+            return _b64.b64decode(_data)
+        import requests as _r
+        _resp = _r.get(url, timeout=timeout, headers={'User-Agent': 'Mozilla/5.0'})
+        if _resp.status_code == 200:
+            return _resp.content
+    except Exception as _e:
+        print("[img] error: " + str(_e))
+    return None
+
+
 def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
-    """HTML ko premium designed PDF me convert karo — multi-language, multi-theme."""
+    """Universal PDF — text + charts + images + tables + boxes + pagebreak."""
     import re as _re
     import os as _os
     import urllib.request as _url
     from fpdf import FPDF as _FPDF
     from html.parser import HTMLParser as _HP
 
-    # ── Theme colors define ──
     THEMES = {
-        "premium": {
-            "bg": (15, 23, 42),
-            "text": (230, 230, 240),
-            "accent": (212, 175, 55),
-            "accent2": (245, 215, 110),
-            "muted": (150, 160, 180),
-            "header_band": (15, 23, 42),
-            "header_text": (212, 175, 55),
-            "light": False,
-        },
-        "colorful": {
-            "bg": (255, 255, 255),
-            "text": (30, 30, 50),
-            "accent": (255, 87, 87),
-            "accent2": (255, 152, 0),
-            "muted": (130, 130, 150),
-            "header_band": (255, 87, 87),
-            "header_text": (255, 255, 255),
-            "light": True,
-        },
-        "business": {
-            "bg": (255, 255, 255),
-            "text": (26, 26, 46),
-            "accent": (30, 58, 138),
-            "accent2": (59, 130, 246),
-            "muted": (110, 110, 130),
-            "header_band": (30, 58, 138),
-            "header_text": (255, 255, 255),
-            "light": True,
-        },
-        "book": {
-            "bg": (253, 248, 240),
-            "text": (60, 40, 20),
-            "accent": (139, 69, 19),
-            "accent2": (160, 82, 45),
-            "muted": (140, 120, 100),
-            "header_band": (253, 248, 240),
-            "header_text": (139, 69, 19),
-            "light": True,
-        },
-        "auto": {
-            "bg": (255, 255, 255),
-            "text": (26, 26, 46),
-            "accent": (16, 163, 127),
-            "accent2": (13, 139, 108),
-            "muted": (110, 110, 130),
-            "header_band": (16, 163, 127),
-            "header_text": (255, 255, 255),
-            "light": True,
-        },
+        "premium": {"bg": (15,23,42), "text": (230,230,240), "accent": (212,175,55), "accent2": (245,215,110), "muted": (150,160,180), "header_band": (15,23,42), "header_text": (212,175,55), "light": False},
+        "colorful": {"bg": (255,255,255), "text": (30,30,50), "accent": (255,87,87), "accent2": (255,152,0), "muted": (130,130,150), "header_band": (255,87,87), "header_text": (255,255,255), "light": True},
+        "business": {"bg": (255,255,255), "text": (26,26,46), "accent": (30,58,138), "accent2": (59,130,246), "muted": (110,110,130), "header_band": (30,58,138), "header_text": (255,255,255), "light": True},
+        "book": {"bg": (253,248,240), "text": (60,40,20), "accent": (139,69,19), "accent2": (160,82,45), "muted": (140,120,100), "header_band": (253,248,240), "header_text": (139,69,19), "light": True},
+        "auto": {"bg": (255,255,255), "text": (26,26,46), "accent": (16,163,127), "accent2": (13,139,108), "muted": (110,110,130), "header_band": (16,163,127), "header_text": (255,255,255), "light": True},
     }
 
-    # ── HTML Parse ──
-    class _PDFParser(_HP):
+    html = html_body or ""
+
+    if theme == "auto" or theme not in THEMES:
+        tl = html.lower()
+        if any(x in tl for x in ["premium","gold","black"]): theme = "premium"
+        elif any(x in tl for x in ["colorful","rainbow","kids"]): theme = "colorful"
+        elif any(x in tl for x in ["business","report"]): theme = "business"
+        elif any(x in tl for x in ["book","ebook","chapter"]): theme = "book"
+        else: theme = "auto"
+    T = THEMES[theme]
+
+    # Extract chart/img/pagebreak/box tags
+    chart_blocks = []
+    img_blocks = []
+    box_blocks = []
+
+    def _extract(name, store):
+        nonlocal html
+        pat = r'<' + name + r'\b([^>]*)/?>'
+        def _r(m):
+            a = m.group(1)
+            attrs = dict(_re.findall(r'(\w+)\s*=\s*"([^"]*)"', a))
+            attrs.update(dict(_re.findall(r"(\w+)\s*=\s*'([^']*)'", a)))
+            store.append(attrs)
+            return '\n\n<<' + name.upper() + '_B_' + str(len(store)-1) + '>>\n\n'
+        html = _re.sub(pat, _r, html, flags=_re.I|_re.S)
+
+    _extract('chart', chart_blocks)
+    _extract('img', img_blocks)
+    _extract('box', box_blocks)
+
+    # Extract pagebreak
+    html = _re.sub(r'<pagebreak\s*/?>', '\n\n<<PAGEBREAK_B>>\n\n', html, flags=_re.I)
+
+    # Extract tables
+    tables = []
+    def _tbl(m):
+        inner = m.group(1)
+        rows = _re.findall(r'<tr[^>]*>(.*?)</tr>', inner, flags=_re.I|_re.S)
+        parsed = []
+        for r in rows:
+            cells = _re.findall(r'<t[hd][^>]*>(.*?)</t[hd]>', r, flags=_re.I|_re.S)
+            cells = [_re.sub(r'<[^>]+>', '', c).strip() for c in cells]
+            if cells: parsed.append(cells)
+        tables.append(parsed)
+        return '\n\n<<TABLE_B_' + str(len(tables)-1) + '>>\n\n'
+    html = _re.sub(r'<table[^>]*>(.*?)</table>', _tbl, html, flags=_re.I|_re.S)
+
+    # Parse text
+    class _P(_HP):
         def __init__(self):
             super().__init__()
-            self.blocks = []
-            self.current_tag = None
-            self.current_text = []
-        def _flush(self):
-            if self.current_tag:
-                txt = ''.join(self.current_text).strip()
-                if txt:
-                    self.blocks.append((self.current_tag, txt))
-            self.current_tag = None
-            self.current_text = []
+            self.blocks = []; self.tag = None; self.txt = []
+        def _f(self):
+            if self.tag:
+                t = ''.join(self.txt).strip()
+                if t: self.blocks.append((self.tag, t))
+            self.tag = None; self.txt = []
         def handle_starttag(self, tag, attrs):
             tag = tag.lower()
             if tag in ('h1','h2','h3','h4','p','blockquote'):
-                self._flush()
-                self.current_tag = tag
+                self._f(); self.tag = tag
             elif tag == 'li':
-                self._flush()
-                self.current_tag = 'li'
+                self._f(); self.tag = 'li'
             elif tag == 'br':
-                if self.current_tag:
-                    self.current_text.append('\n')
+                if self.tag: self.txt.append('\n')
             elif tag == 'hr':
-                self._flush()
-                self.blocks.append(('hr', ''))
+                self._f(); self.blocks.append(('hr',''))
         def handle_endtag(self, tag):
-            tag = tag.lower()
-            if tag in ('h1','h2','h3','h4','p','blockquote','li'):
-                self._flush()
+            if tag.lower() in ('h1','h2','h3','h4','p','blockquote','li'):
+                self._f()
         def handle_data(self, data):
-            if self.current_tag:
-                self.current_text.append(data)
+            if self.tag: self.txt.append(data)
 
-    parser = _PDFParser()
-    try:
-        parser.feed(html_body or "")
-    except Exception as _e:
-        print(f"[pdf] Parse error: {_e}")
-    parser._flush()
-    blocks = parser.blocks
+    parser = _P()
+    try: parser.feed(html)
+    except Exception as _e: print('[pdf] parse: ' + str(_e))
+    parser._f()
+    raw = parser.blocks
 
-    if not blocks:
-        t = _re.sub(r'<[^>]+>', '', html_body or '').strip()
-        if t:
-            blocks = [('p', t)]
+    # Expand placeholders
+    final = []
+    for bt, bx in raw:
+        if bt == 'p':
+            s = bx.strip()
+            m = _re.match(r'<<(CHART|IMG|BOX)_B_(\d+)>>', s)
+            if m:
+                k = m.group(1).lower(); i = int(m.group(2))
+                if k == 'chart' and i < len(chart_blocks): final.append(('chart', chart_blocks[i]))
+                elif k == 'img' and i < len(img_blocks): final.append(('img', img_blocks[i]))
+                elif k == 'box' and i < len(box_blocks): final.append(('box', box_blocks[i]))
+                continue
+            if s == '<<PAGEBREAK_B>>':
+                final.append(('pagebreak', None))
+                continue
+            m = _re.match(r'<<TABLE_B_(\d+)>>', s)
+            if m:
+                i = int(m.group(1))
+                if i < len(tables): final.append(('table', tables[i]))
+                continue
+        final.append((bt, bx))
 
-    full_text = "\n".join(b[1] for b in blocks)
+    if not final:
+        tt = _re.sub(r'<[^>]+>', '', html).strip()
+        if tt: final = [('p', tt)]
 
-    # Auto-detect theme if not specified
-    if theme == "auto" or theme not in THEMES:
-        tl = (html_body or "").lower()
-        if "premium" in tl or "gold" in tl or "black" in tl or "सुनहर" in tl:
-            theme = "premium"
-        elif "colorful" in tl or "rainbow" in tl or "रंगीन" in tl or "kids" in tl or "बच्च" in tl:
-            theme = "colorful"
-        elif "business" in tl or "report" in tl or "बिज़नेस" in tl or "रिपोर्ट" in tl:
-            theme = "business"
-        elif "book" in tl or "ebook" in tl or "किताब" in tl or "ईबुक" in tl or "कहानी" in tl:
-            theme = "book"
-        else:
-            theme = "auto"
+    full = '\n'.join(str(b[1]) for b in final if isinstance(b[1], str))
 
-    T = THEMES[theme]
-
-    # ── Script detect ──
-    def _detect(s):
-        if _re.search(r'[\u0900-\u097F]', s): return 'devanagari'
-        if _re.search(r'[\u0980-\u09FF]', s): return 'bengali'
-        if _re.search(r'[\u0A00-\u0A7F]', s): return 'gurmukhi'
-        if _re.search(r'[\u0A80-\u0AFF]', s): return 'gujarati'
-        if _re.search(r'[\u0B80-\u0BFF]', s): return 'tamil'
-        if _re.search(r'[\u0C00-\u0C7F]', s): return 'telugu'
-        if _re.search(r'[\u0C80-\u0CFF]', s): return 'kannada'
-        if _re.search(r'[\u0D00-\u0D7F]', s): return 'malayalam'
-        if _re.search(r'[\u0600-\u06FF]', s): return 'arabic'
-        if _re.search(r'[\u4E00-\u9FFF]', s): return 'chinese'
-        if _re.search(r'[\uAC00-\uD7AF]', s): return 'korean'
-        if _re.search(r'[\u3040-\u30FF]', s): return 'japanese'
-        if _re.search(r'[\u0400-\u04FF]', s): return 'cyrillic'
-        if _re.search(r'[\u0E00-\u0E7F]', s): return 'thai'
+    def _det(s):
+        for name, pat in [('devanagari', r'[\u0900-\u097F]'), ('bengali', r'[\u0980-\u09FF]'),
+                          ('gurmukhi', r'[\u0A00-\u0A7F]'), ('gujarati', r'[\u0A80-\u0AFF]'),
+                          ('tamil', r'[\u0B80-\u0BFF]'), ('telugu', r'[\u0C00-\u0C7F]'),
+                          ('kannada', r'[\u0C80-\u0CFF]'), ('malayalam', r'[\u0D00-\u0D7F]'),
+                          ('arabic', r'[\u0600-\u06FF]'), ('chinese', r'[\u4E00-\u9FFF]'),
+                          ('korean', r'[\uAC00-\uD7AF]'), ('japanese', r'[\u3040-\u30FF]'),
+                          ('cyrillic', r'[\u0400-\u04FF]'), ('thai', r'[\u0E00-\u0E7F]')]:
+            if _re.search(pat, s): return name
         return 'latin'
-    script = _detect(full_text)
+    script = _det(full)
 
-    # ── Fonts ──
     _BASE = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/"
-    font_map = {
+    FM = {
         'devanagari': (_BASE + "NotoSansDevanagari/hinted/ttf/NotoSansDevanagari-Regular.ttf", "NotoSansDevanagari-Regular.ttf"),
         'bengali':    (_BASE + "NotoSansBengali/hinted/ttf/NotoSansBengali-Regular.ttf",       "NotoSansBengali-Regular.ttf"),
         'gurmukhi':   (_BASE + "NotoSansGurmukhi/hinted/ttf/NotoSansGurmukhi-Regular.ttf",     "NotoSansGurmukhi-Regular.ttf"),
@@ -212,203 +302,216 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
         'korean':     ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf",            "NotoSansCJKkr-Regular.otf"),
         'japanese':   ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",          "NotoSansCJKjp-Regular.otf"),
     }
+    cd = _os.path.join(_os.getcwd(), ".saathi_fonts_cache")
+    _os.makedirs(cd, exist_ok=True)
 
-    cache_dir = _os.path.join(_os.getcwd(), ".saathi_fonts_cache")
-    _os.makedirs(cache_dir, exist_ok=True)
-
-    def _dl(script_name, bold=False):
-        if script_name not in font_map:
-            script_name = 'latin'
-        url, fname = font_map[script_name]
+    def _dl(sn, bold=False):
+        if sn not in FM: sn = 'latin'
+        u, f = FM[sn]
         if bold:
-            url = url.replace('-Regular', '-Bold')
-            fname = fname.replace('-Regular', '-Bold')
-        path = _os.path.join(cache_dir, fname)
-        if not _os.path.exists(path):
-            try:
-                _url.urlretrieve(url, path)
-            except Exception as e:
-                print(f"[pdf] Font fail ({fname}): {e}")
-                return None
-        return path
+            u = u.replace('-Regular', '-Bold'); f = f.replace('-Regular', '-Bold')
+        p = _os.path.join(cd, f)
+        if not _os.path.exists(p):
+            try: _url.urlretrieve(u, p)
+            except Exception as e: print('[pdf] font ' + str(e)); return None
+        return p
 
-    primary_path = _dl(script, bold=False)
-    bold_path = _dl(script, bold=True) or primary_path
+    pp = _dl(script, False)
+    bp = _dl(script, True) or pp
 
-    # ── PDF Setup ──
     pdf = _FPDF(format='A4')
     pdf.set_auto_page_break(auto=True, margin=22)
     pdf.set_margins(18, 18, 18)
     pdf.add_page()
-    pdf.set_fill_color(*T["bg"])
-    pdf.rect(0, 0, pdf.w, pdf.h, 'F')
-    pdf.set_text_color(*T["text"])
+    pdf.set_fill_color(*T['bg']); pdf.rect(0, 0, pdf.w, pdf.h, 'F')
+    pdf.set_text_color(*T['text'])
 
-    font_family = "Helvetica"
-    if primary_path:
+    ff = 'Helvetica'
+    if pp:
         try:
-            pdf.add_font("MF", "", primary_path)
-            if bold_path and bold_path != primary_path:
-                pdf.add_font("MF", "B", bold_path)
-            else:
-                pdf.add_font("MF", "B", primary_path)
-            font_family = "MF"
-        except Exception as e:
-            print(f"[pdf] Font load fail: {e}")
+            pdf.add_font('MF', '', pp)
+            pdf.add_font('MF', 'B', bp if bp != pp else pp)
+            ff = 'MF'
+        except Exception as e: print('[pdf] fontload ' + str(e))
 
-    def SF(style="", size=11, color=None):
-        try:
-            pdf.set_font(font_family, style, size)
-        except Exception:
-            pdf.set_font("Helvetica", size=size)
-        if color:
-            pdf.set_text_color(*color)
+    def SF(style='', size=11, color=None):
+        try: pdf.set_font(ff, style, size)
+        except Exception: pdf.set_font('Helvetica', size=size)
+        if color: pdf.set_text_color(*color)
 
-    # ── Cover Page Design ──
-    title_text = None
-    for b in blocks:
-        if b[0] in ('h1', 'h2'):
-            title_text = b[1]
-            break
-
-    if title_text:
-        # Full-bleed color band at top (1/3 page)
-        band_h = pdf.h * 0.42
-        pdf.set_fill_color(*T["header_band"])
-        pdf.rect(0, 0, pdf.w, band_h, 'F')
-
-        # Accent line under band
-        pdf.set_fill_color(*T["accent"])
-        pdf.rect(0, band_h, pdf.w, 2, 'F')
-
-        # Title text (large, centered)
-        pdf.set_text_color(*T["header_text"])
-        try:
-            pdf.set_font(font_family, "B", 26)
-        except Exception:
-            pdf.set_font("Helvetica", "B", 26)
-        pdf.set_xy(20, band_h * 0.32)
-        pdf.multi_cell(pdf.w - 40, 12, title_text[:70], align='C')
-
-        # Decorative dots
-        pdf.set_fill_color(*T["accent"])
-        cy = band_h * 0.32 + 30
-        for i in range(3):
-            pdf.ellipse(pdf.w/2 - 12 + i*12, cy, 5, 5, 'F')
-
-        # Subtitle from next h2 or p
-        pdf.set_y(band_h + 20)
-        pdf.set_text_color(*T["text"])
-
-        # Start content below cover
-        pdf.set_y(band_h + 25)
-        first_title_skipped = True
-    else:
-        first_title_skipped = False
-
-    # ── Render Blocks ──
-    for btype, btext in blocks:
-        if not btext.strip() and btype != 'hr':
-            continue
-        if not first_title_skipped and btype in ('h1', 'h2') and btext == title_text:
-            first_title_skipped = True
-            continue
-        first_title_skipped = True
-
-        if pdf.get_y() + 25 > pdf.h - 25:
+    def _np(need=25):
+        if pdf.get_y() + need > pdf.h - 25:
             pdf.add_page()
-            pdf.set_fill_color(*T["bg"])
-            pdf.rect(0, 0, pdf.w, pdf.h, 'F')
+            pdf.set_fill_color(*T['bg']); pdf.rect(0, 0, pdf.w, pdf.h, 'F')
 
-        if btype == 'h1':
-            pdf.ln(4)
-            y = pdf.get_y()
-            # Accent bar left
-            pdf.set_fill_color(*T["accent"])
-            pdf.rect(18, y, 4, 11, 'F')
-            pdf.set_xy(26, y)
-            SF("B", 17, T["accent"])
-            pdf.multi_cell(pdf.w - 44, 10, btext)
-            # Underline
-            pdf.set_draw_color(*T["accent2"])
-            pdf.set_line_width(0.4)
+    title = None
+    for b in final:
+        if b[0] in ('h1','h2') and isinstance(b[1], str):
+            title = b[1]; break
+
+    if title:
+        bh = pdf.h * 0.42
+        pdf.set_fill_color(*T['header_band']); pdf.rect(0, 0, pdf.w, bh, 'F')
+        pdf.set_fill_color(*T['accent']); pdf.rect(0, bh, pdf.w, 2, 'F')
+        pdf.set_text_color(*T['header_text'])
+        try: pdf.set_font(ff, 'B', 26)
+        except Exception: pdf.set_font('Helvetica', 'B', 26)
+        pdf.set_xy(20, bh * 0.32)
+        pdf.multi_cell(pdf.w - 40, 12, title[:70], align='C')
+        pdf.set_fill_color(*T['accent'])
+        cy = bh * 0.32 + 30
+        for i in range(3): pdf.ellipse(pdf.w/2 - 12 + i*12, cy, 5, 5, 'F')
+        pdf.set_y(bh + 25)
+        skipped = True
+    else:
+        skipped = False
+
+    for bt, bd in final:
+        if bt == 'pagebreak':
+            pdf.add_page()
+            pdf.set_fill_color(*T['bg']); pdf.rect(0, 0, pdf.w, pdf.h, 'F')
+            continue
+
+        if bt == 'chart':
+            _np(90)
+            data_json = bd.get('data', '[]')
+            ctype = bd.get('type', 'line')
+            ctitle = bd.get('title', '')
+            entry = bd.get('entry'); stop = bd.get('stop'); target = bd.get('target')
+            png = _generate_chart_png(ctype, ctitle, data_json, entry, stop, target)
+            if png:
+                import tempfile as _tf
+                with _tf.NamedTemporaryFile(suffix='.png', delete=False) as t:
+                    t.write(png); tpath = t.name
+                try:
+                    y = pdf.get_y()
+                    pdf.image(tpath, x=18, y=y, w=pdf.w - 36)
+                    pdf.ln(4)
+                except Exception as e: print('[pdf] chart embed ' + str(e))
+                finally:
+                    try: _os.unlink(tpath)
+                    except Exception: pass
+            continue
+
+        if bt == 'img':
+            src = bd.get('src', '')
+            try: w_img = float(bd.get('w', pdf.w - 36))
+            except Exception: w_img = pdf.w - 36
+            png = _download_image_bytes(src)
+            if png:
+                import tempfile as _tf
+                with _tf.NamedTemporaryFile(suffix='.png', delete=False) as t:
+                    t.write(png); tpath = t.name
+                try:
+                    _np(70)
+                    y = pdf.get_y()
+                    x = (pdf.w - w_img) / 2
+                    pdf.image(tpath, x=x, y=y, w=w_img)
+                    pdf.ln(4)
+                except Exception as e: print('[pdf] img ' + str(e))
+                finally:
+                    try: _os.unlink(tpath)
+                    except Exception: pass
+            continue
+
+        if bt == 'table':
+            rows = bd
+            if not rows: continue
+            _np(20)
+            ncol = max(len(r) for r in rows)
+            cw = (pdf.w - 36) / ncol
+            for ri, row in enumerate(rows):
+                _np(12)
+                if ri == 0:
+                    y = pdf.get_y()
+                    pdf.set_fill_color(*T['accent']); pdf.rect(18, y, pdf.w - 36, 8, 'F')
+                    pdf.set_text_color(*T['header_text']); SF('B', 10, T['header_text'])
+                else:
+                    if ri % 2 == 0:
+                        y = pdf.get_y()
+                        if T['light']:
+                            light = tuple(min(255, int(c*0.15 + 240)) for c in T['accent'])
+                        else:
+                            light = tuple(max(0, c-15) for c in T['bg'])
+                        pdf.set_fill_color(*light); pdf.rect(18, y, pdf.w - 36, 8, 'F')
+                    SF('', 10, T['text'])
+                pdf.set_x(18)
+                for ci in range(ncol):
+                    cell = row[ci] if ci < len(row) else ''
+                    pdf.cell(cw, 8, cell[:40], border=0, align='L')
+                pdf.ln(8)
+            pdf.ln(3)
+            continue
+
+        if bt == 'box':
+            txt = bd.get('text', '') or bd.get('content', '')
+            if txt:
+                _np(20)
+                y = pdf.get_y()
+                pdf.set_fill_color(*T['accent']); pdf.rect(18, y, pdf.w - 36, 2, 'F')
+                pdf.set_xy(22, y + 4)
+                SF('', 11, T['text'])
+                pdf.multi_cell(pdf.w - 44, 6.5, txt)
+                pdf.ln(4)
+            continue
+
+        if not (isinstance(bd, str) and bd.strip()) and bt != 'hr':
+            continue
+        if not skipped and bt in ('h1','h2') and bd == title:
+            skipped = True; continue
+        skipped = True
+        _np(25)
+
+        if bt == 'h1':
+            pdf.ln(4); y = pdf.get_y()
+            pdf.set_fill_color(*T['accent']); pdf.rect(18, y, 4, 11, 'F')
+            pdf.set_xy(26, y); SF('B', 17, T['accent'])
+            pdf.multi_cell(pdf.w - 44, 10, bd)
+            pdf.set_draw_color(*T['accent2']); pdf.set_line_width(0.4)
             pdf.line(18, pdf.get_y() + 1, 60, pdf.get_y() + 1)
             pdf.ln(4)
-
-        elif btype == 'h2':
-            pdf.ln(3)
-            y = pdf.get_y()
-            # Light background box
-            box_color = T["accent"] if not T["light"] else (245, 245, 250)
-            if T["light"]:
-                box_color = tuple(min(255, int(c * 0.15 + 240)) for c in T["accent"])
-            pdf.set_fill_color(*box_color)
-            pdf.rect(18, y, pdf.w - 36, 12, 'F')
-            # Accent line left
-            pdf.set_fill_color(*T["accent"])
-            pdf.rect(18, y, 3, 12, 'F')
+        elif bt == 'h2':
+            pdf.ln(3); y = pdf.get_y()
+            if T['light']:
+                bc = tuple(min(255, int(c*0.15 + 240)) for c in T['accent'])
+            else:
+                bc = T['accent']
+            pdf.set_fill_color(*bc); pdf.rect(18, y, pdf.w - 36, 12, 'F')
+            pdf.set_fill_color(*T['accent']); pdf.rect(18, y, 3, 12, 'F')
             pdf.set_xy(26, y + 3)
-            SF("B", 14, T["accent2"] if T["light"] else T["accent"])
-            pdf.multi_cell(pdf.w - 48, 8, btext)
+            SF('B', 14, T['accent2'] if T['light'] else T['accent'])
+            pdf.multi_cell(pdf.w - 48, 8, bd)
             pdf.ln(4)
-
-        elif btype == 'h3':
-            pdf.ln(2)
-            SF("B", 13, T["text"])
-            pdf.multi_cell(0, 8, btext)
-            pdf.ln(2)
-
-        elif btype == 'h4':
-            SF("B", 11, T["muted"])
-            pdf.multi_cell(0, 7, btext)
-            pdf.ln(2)
-
-        elif btype == 'li':
-            SF("", 11, T["text"])
-            pdf.set_x(24)
-            pdf.set_text_color(*T["accent"])
-            pdf.cell(6, 6, chr(0x25CF), ln=0)
-            pdf.set_text_color(*T["text"])
-            pdf.set_x(30)
-            pdf.multi_cell(pdf.w - 48, 6.5, btext)
-            pdf.ln(0.5)
-
-        elif btype == 'blockquote':
-            pdf.ln(2)
-            y = pdf.get_y()
-            pdf.set_fill_color(*T["accent"])
-            pdf.rect(20, y, 2, 14, 'F')
-            pdf.set_xy(26, y + 2)
-            SF("", 11, T["muted"])
-            pdf.multi_cell(pdf.w - 48, 6.5, btext)
-            pdf.ln(3)
-
-        elif btype == 'hr':
-            pdf.ln(3)
-            pdf.set_draw_color(*T["accent"])
-            pdf.set_line_width(0.5)
-            y = pdf.get_y()
-            mid = pdf.w / 2
-            pdf.line(mid - 30, y, mid + 30, y)
-            pdf.ln(4)
-
+        elif bt == 'h3':
+            pdf.ln(2); SF('B', 13, T['text']); pdf.multi_cell(0, 8, bd); pdf.ln(2)
+        elif bt == 'h4':
+            SF('B', 11, T['muted']); pdf.multi_cell(0, 7, bd); pdf.ln(2)
+        elif bt == 'li':
+            SF('', 11, T['text']); pdf.set_x(24)
+            pdf.set_text_color(*T['accent']); pdf.cell(6, 6, chr(0x25CF), ln=0)
+            pdf.set_text_color(*T['text']); pdf.set_x(30)
+            pdf.multi_cell(pdf.w - 48, 6.5, bd); pdf.ln(0.5)
+        elif bt == 'blockquote':
+            pdf.ln(2); y = pdf.get_y()
+            pdf.set_fill_color(*T['accent']); pdf.rect(20, y, 2, 14, 'F')
+            pdf.set_xy(26, y + 2); SF('', 11, T['muted'])
+            pdf.multi_cell(pdf.w - 48, 6.5, bd); pdf.ln(3)
+        elif bt == 'hr':
+            pdf.ln(3); pdf.set_draw_color(*T['accent']); pdf.set_line_width(0.5)
+            y = pdf.get_y(); mid = pdf.w / 2
+            pdf.line(mid - 30, y, mid + 30, y); pdf.ln(4)
         else:
-            SF("", 11, T["text"])
-            pdf.multi_cell(0, 7, btext)
-            pdf.ln(2.5)
+            SF('', 11, T['text']); pdf.multi_cell(0, 7, bd); pdf.ln(2.5)
 
-    # ── Page numbers (sab pages) ──
-    total = pdf.pages_count if hasattr(pdf, 'pages_count') else pdf.page_no()
-    for i in range(1, pdf.page_no() + 1):
+    total = pdf.page_no()
+    for i in range(1, total + 1):
         pdf.page = i
         pdf.set_y(pdf.h - 15)
-        SF("", 9, T["muted"])
-        pdf.cell(0, 6, f"— {i} —", align='C')
+        SF('', 9, T['muted'])
+        pdf.cell(0, 6, '— ' + str(i) + ' —', align='C')
 
     out = pdf.output()
     return bytes(out) if not isinstance(out, bytes) else out
-
-
 
 
 class GenericRequest(BaseModel):
@@ -598,11 +701,51 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             from io import BytesIO as _BIO
             from xhtml2pdf import pisa as _pisa
             system = (
-                "Tum ek professional document writer ho. User ki request ke hisab se "
-                "ek achha HTML document banao (title, headings, paragraphs, lists). "
-                "Sirf pure HTML return karo — <html> se shuru, </html> par khatam. "
-                "User jis bhasha mein likhe usi bhasha mein content banao. "
-                "Sirf HTML, koi explanation nahi, koi markdown nahi."
+                "Tum ek professional document designer ho. User ki request ke hisab se "
+                "ek RICH, DETAILED, aur SUNDAR HTML document banao jo PDF me convert hoga.\n\n"
+                "═══ OUTPUT FORMAT ═══\n"
+                "Sirf PURE HTML return karo — koi markdown, koi explanation nahi.\n"
+                "<!DOCTYPE html> se shuru karo, </html> par khatam.\n\n"
+                "═══ CONTENT LENGTH (bahut ZAROORI) ═══\n"
+                "CHHOTA content MAT do. Har section me 5-10 detailed lines likho.\n"
+                "Agar user bole 'poori guide', 'detailed', 'complete' — to 5000+ words.\n"
+                "Har point ko samjhao, udaaharan do, table banao, charts banao.\n"
+                "Sirf headings aur 1-line text mat do — YEH GALAT hai.\n\n"
+                "═══ SUPPORTED HTML TAGS ═══\n"
+                "<h1>Main title (ek hi use karo)</h1>\n"
+                "<h2>Section heading</h2>\n"
+                "<h3>Sub-heading</h3>\n"
+                "<p>Paragraph text</p>\n"
+                "<ul><li>Bullet item 1</li><li>Bullet item 2</li></ul>\n"
+                "<blockquote>Quote ya important line</blockquote>\n"
+                "<hr />  (divider line)\n"
+                "<pagebreak />  (naya page)\n"
+                "<table>\n"
+                "  <tr><th>Column 1</th><th>Column 2</th></tr>\n"
+                "  <tr><td>Data 1</td><td>Data 2</td></tr>\n"
+                "</table>\n"
+                "<img src='https://example.com/photo.jpg' w='400' />\n"
+                "<box text='Important tip: yahan kuch zaroori baat likho' />\n\n"
+                "<chart type='candlestick' title='Gold 4H' entry='4183.71' stop='4160' target='4220'\n"
+                "       data='[{\"time\":\"9\",\"open\":4180,\"high\":4200,\"low\":4170,\"close\":4190}, {\"time\":\"10\",\"open\":4190,\"high\":4210,\"low\":4185,\"close\":4205}]' />\n\n"
+                "<chart type='line' title='Sales Trend' data='[{\"x\":\"Jan\",\"y\":100},{\"x\":\"Feb\",\"y\":150}]' />\n"
+                "<chart type='bar' title='Revenue' data='[{\"label\":\"Q1\",\"value\":50},{\"label\":\"Q2\",\"value\":80}]' />\n"
+                "<chart type='pie' title='Market Share' data='[{\"label\":\"A\",\"value\":40},{\"label\":\"B\",\"value\":60}]' />\n\n"
+                "═══ KAB KAUN SA TAG ═══\n"
+                "• Share market / Trading / Candlestick ke liye: <chart type='candlestick'> use karo REAL data ke saath (10-20 candles).\n"
+                "• Business report: <chart type='bar'> aur <table> use karo.\n"
+                "• Recipe / Kahaani: <img> use karo unsplash se (jaise https://source.unsplash.com/800x600/?food).\n"
+                "• Academic / Guide: <table> comparison ke liye.\n"
+                "• Har section ke beech <hr /> ya <pagebreak /> daalo.\n\n"
+                "═══ STYLE RULES ═══\n"
+                "1. User JIS bhasha mein likhe USI mein content banao.\n"
+                "2. H1 ek hi (title), phir H2 sections, H3 subsections.\n"
+                "3. Har 3-4 paragraph ke baad <hr /> ya <pagebreak />.\n"
+                "4. Tables me CLEAN data do — text nahi.\n"
+                "5. Charts me REAL numbers do (fake placeholder nahi).\n"
+                "6. Boxes me TIPS, WARNINGS, IMPORTANT notes do.\n"
+                "7. Aakhir me ek summary/conclusion section zaroor.\n\n"
+                "Chalo shuru karo — POORA detailed HTML banao."
             )
             html_body = _call_groq(body.message, system=system).strip()
             if "```" in html_body:

@@ -5,3 +5,5 @@ pydantic
 requests
 xhtml2pdf
 fpdf2
+matplotlib
+Pillow
