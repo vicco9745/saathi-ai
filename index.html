@@ -1749,9 +1749,11 @@ async function requestTitleFromServer(text, attachments){
 
 function isDesignRequest(text){
   const t = (text || '').toLowerCase().trim();
-  // ═══ PRIORITY: /pdf aur /image commands design ko OVERRIDE karte hain ═══
+  // ═══ PRIORITY 1: /pdf aur /image commands design ko OVERRIDE karte hain ═══
   if(t.startsWith('/pdf') || t.startsWith('/image') || t.startsWith('/website') || t.startsWith('/video') || t.startsWith('/search')) return false;
   if(t.startsWith('/design')) return true;
+  // ═══ PRIORITY 2: Agar message me "pdf" ya "पीडीएफ" word hai, to PDF banao — design NAHI ═══
+  if(/pdf/.test(t) || t.indexOf('पीडीएफ') !== -1 || t.indexOf('पी.डी.एफ') !== -1 || t.indexOf('पीडीएफ़') !== -1) return false;
   const keys = [
     'design','card','poster','banner','invitation','visiting','greeting',
     'flyer','certificate','menu','wedding','birthday','diwali','marriage',
