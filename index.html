@@ -2353,6 +2353,37 @@ t='Maine aapke prompt ke hisaab se video bana diya hai'+(o.prompt?(' — "'+(o.p
 if(cap&&t)t=cap+'\n\n'+t;
 return t||cap;
 }
+function detectLangRequest(msg){
+  try{
+    const m = (msg||'').toLowerCase();
+    const patterns = {
+      'hi': ['hindi','हिंदी','हिन्दी','hindi mein','in hindi','hindi me'],
+      'en': ['english','अंग्रेजी','इंग्लिश','english mein','in english','english me'],
+      'ur': ['urdu','उर्दू','urdu mein'],
+      'ta': ['tamil','तमिल','tamil mein'],
+      'te': ['telugu','तेलुगु','telugu mein'],
+      'bn': ['bengali','बंगाली','bangla','bengali mein'],
+      'mr': ['marathi','मराठी','marathi mein'],
+      'gu': ['gujarati','गुजराती','gujarati mein'],
+      'kn': ['kannada','कन्नड़','kannada mein'],
+      'ml': ['malayalam','मलयालम','malayalam mein'],
+      'pa': ['punjabi','पंजाबी','punjabi mein'],
+      'ar': ['arabic','अरबी','arabic mein'],
+      'zh': ['chinese','चीनी','chinese mein'],
+      'ja': ['japanese','जापानी','japanese mein'],
+      'ko': ['korean','कोरियन','korean mein'],
+      'ru': ['russian','रूसी','russian mein'],
+      'es': ['spanish','स्पेनिश','spanish mein'],
+      'fr': ['french','फ्रेंच','french mein'],
+      'de': ['german','जर्मन','german mein']
+    };
+    for(const lc in patterns){
+      if(patterns[lc].some(kw => m.includes(kw))) return lc;
+    }
+    return null;
+  }catch(_){return null;}
+}
+
 function getChatHistoryForAPI(){
   try{
     const c=getCurrentChat();
@@ -2373,6 +2404,14 @@ let chat=getCurrentChat();
 if(!chat){chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;}
 const attachments=pendingAttachments;
 if(chat.messages.length===0 || isGenericTitle(chat.title)){chat.title=friendlyChatTitle(text, attachments);}
+// ═══ Language preference detect aur save karo ═══
+try{
+  const _detLang = detectLangRequest(text);
+  if(_detLang){
+    chat.langPref = _detLang;
+    console.log('[LANG-PREF] Saved for this chat:', _detLang);
+  }
+}catch(_){}
 chat.messages.push({role:'user',text:text,attachments:attachments});
 if(isGenericTitle(chat.title)){
   const _capturedId = chat.id;
@@ -2428,7 +2467,7 @@ const SAATHI_KEY_STORE='saathi_api_key';
 let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
 if(!SAATHI_KEY){SAATHI_KEY=prompt('Saathi API Key: ');if(SAATHI_KEY)localStorage.setItem(SAATHI_KEY_STORE,SAATHI_KEY.trim());}
 const attPayload=mediaAttachments.map(a=>({kind:a.kind||'file',name:a.name||'',dataUrl:a.dataUrl||null,content:a.content||null}));
-fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:text||'',model:currentModel,memory:memoryNotes,history:getChatHistoryForAPI(),learning:getSmartLearningContext(),allow_web_search:false,attachments:attPayload})}).then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error(data.detail||data.error||'API key invalid');}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{
+fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:text||'',model:currentModel,memory:memoryNotes,history:getChatHistoryForAPI(),lang_pref:(function(){try{const c=getCurrentChat();return c&&c.langPref?c.langPref:null;}catch(_){return null;}})(),learning:getSmartLearningContext(),allow_web_search:false,attachments:attPayload})}).then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error(data.detail||data.error||'API key invalid');}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{
 pendingReply.text=data.reply||'';try{var _c=getCurrentChat();var _ut=(text||'').trim();if(_c&&!_ut&&isGenericTitle(_c.title)){var _t=smartTitleFromAI(data.reply||'');if(_t){_c.title=_t;saveChats();try{renderChatList();}catch(_){}}}}catch(_){}
 const inc=[];
 if(data.html)inc.push({kind:'file',name:data.filename||'index.html',content:data.html,origin:'ai'});
@@ -2462,7 +2501,7 @@ if(videoMatch){const videoPrompt=videoMatch[1].trim();pendingReply.mediaType='vi
 const pdfMatch=/^\/pdf\s+([\s\S]+)/i.exec(combinedText.trim());
 if(pdfMatch){const pdfPrompt=pdfMatch[1].trim();pendingReply.processing='pdf';pendingReply.text='';pendingReply.typing=false;pendingReply.attachments=[];saveChats();renderMessages();fetch(SAATHI_API_BASE+'/v1/pdf',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({prompt:pdfPrompt,model:currentModel,learning:smartCtx})}).then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error((data.detail||data.error||'API key invalid ya expired ho gayi hai'));}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{const pdfSrc=data.pdf_url||(data.pdf_base64?('data:application/pdf;base64,'+data.pdf_base64):null);pendingReply.processing=null;if(pdfSrc){pendingReply.attachments=[{kind:'file',name:data.filename||'generated.pdf',dataUrl:pdfSrc,origin:'ai'}];pendingReply.text=buildGenReply('pdf',{caption:data.caption,prompt:pdfPrompt});}else{pendingReply.attachments=[];pendingReply.text='PDF generate nahi ho paya.';}pendingReply.typing=true;saveChats();renderMessages();}).catch(err=>{pendingReply.processing=null;pendingReply.attachments=[];pendingReply.text='PDF generation error: '+err.message;pendingReply.typing=true;saveChats();renderMessages();});return;}
 const searchMatch=/^\/search\s+([\s\S]+)/i.exec(combinedText.trim());
-fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:searchMatch?searchMatch[1].trim():combinedText,model:currentModel,memory:memoryNotes,history:getChatHistoryForAPI(),learning:smartCtx,allow_web_search:!!searchMatch,attachments:attachments.filter(a=>a.kind!=='text').map(a=>({kind:a.kind,name:a.name,dataUrl:a.dataUrl||null,content:a.content||null}))})}).then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error((data.detail||data.error||'API key invalid ya expired ho gayi hai'));}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{
+fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:searchMatch?searchMatch[1].trim():combinedText,model:currentModel,memory:memoryNotes,history:getChatHistoryForAPI(),lang_pref:(function(){try{const c=getCurrentChat();return c&&c.langPref?c.langPref:null;}catch(_){return null;}})(),learning:smartCtx,allow_web_search:!!searchMatch,attachments:attachments.filter(a=>a.kind!=='text').map(a=>({kind:a.kind,name:a.name,dataUrl:a.dataUrl||null,content:a.content||null}))})}).then(async res=>{const data=await res.json();if(!res.ok){if(res.status===401||res.status===403){localStorage.removeItem(SAATHI_KEY_STORE);throw new Error((data.detail||data.error||'API key invalid ya expired ho gayi hai'));}throw new Error(data.detail||data.error||'API error');}return data;}).then(data=>{
 pendingReply.text=data.reply||data.text||'Saathi से जवाब नहीं मिला।';
 const inc=[];
 if(data.html)inc.push({kind:'file',name:data.filename||'index.html',content:data.html,origin:'ai'});
