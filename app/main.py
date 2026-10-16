@@ -41,6 +41,131 @@ class ChatRequest(BaseModel):
     allow_web_search: Optional[bool] = False
     attachments: Optional[List[ChatAttachment]] = []
 
+# ═══════════════════════════════════════════════════════════════════
+# PDF GENERATION — Multi-language (Hindi, Tamil, Telugu, Bengali, etc.)
+# Uses fpdf2 with Noto Sans fonts (auto-downloaded and cached)
+# ═══════════════════════════════════════════════════════════════════
+def _build_pdf_multilang(html_body: str) -> bytes:
+    """HTML ko clean PDF me convert karo — kisi bhi bhasha me (Unicode)."""
+    import re as _re
+    import os as _os
+    import urllib.request as _url
+    from fpdf import FPDF as _FPDF
+
+    # ── HTML se plain text nikalo (basic structure ke saath) ──
+    t = html_body or ""
+    t = _re.sub(r'<h1[^>]*>', '\n\n', t, flags=_re.I)
+    t = _re.sub(r'</h1>', '\n', t, flags=_re.I)
+    t = _re.sub(r'<h2[^>]*>', '\n\n', t, flags=_re.I)
+    t = _re.sub(r'</h2>', '\n', t, flags=_re.I)
+    t = _re.sub(r'<h3[^>]*>', '\n\n', t, flags=_re.I)
+    t = _re.sub(r'</h3>', '\n', t, flags=_re.I)
+    t = _re.sub(r'<br\s*/?>', '\n', t, flags=_re.I)
+    t = _re.sub(r'<li[^>]*>', '\n• ', t, flags=_re.I)
+    t = _re.sub(r'<p[^>]*>', '\n', t, flags=_re.I)
+    t = _re.sub(r'</p>', '\n', t, flags=_re.I)
+    t = _re.sub(r'<[^>]+>', '', t)
+    t = (t.replace('&nbsp;', ' ').replace('&amp;', '&')
+         .replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"'))
+    t = _re.sub(r'\n\s*\n\s*\n+', '\n\n', t).strip()
+
+    # ── Script detect karo ──
+    def _detect(s):
+        if _re.search(r'[\u0900-\u097F]', s): return 'devanagari'
+        if _re.search(r'[\u0980-\u09FF]', s): return 'bengali'
+        if _re.search(r'[\u0A00-\u0A7F]', s): return 'gurmukhi'
+        if _re.search(r'[\u0A80-\u0AFF]', s): return 'gujarati'
+        if _re.search(r'[\u0B80-\u0BFF]', s): return 'tamil'
+        if _re.search(r'[\u0C00-\u0C7F]', s): return 'telugu'
+        if _re.search(r'[\u0C80-\u0CFF]', s): return 'kannada'
+        if _re.search(r'[\u0D00-\u0D7F]', s): return 'malayalam'
+        if _re.search(r'[\u0600-\u06FF]', s): return 'arabic'
+        if _re.search(r'[\u4E00-\u9FFF]', s): return 'chinese'
+        if _re.search(r'[\uAC00-\uD7AF]', s): return 'korean'
+        if _re.search(r'[\u3040-\u30FF]', s): return 'japanese'
+        if _re.search(r'[\u0400-\u04FF]', s): return 'cyrillic'
+        if _re.search(r'[\u0E00-\u0E7F]', s): return 'thai'
+        return 'latin'
+
+    script = _detect(t)
+
+    # ── Noto fonts (jsDelivr CDN — reliable) ──
+    _BASE = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/"
+    font_map = {
+        'devanagari': (_BASE + "NotoSansDevanagari/hinted/ttf/NotoSansDevanagari-Regular.ttf", "NotoSansDevanagari.ttf"),
+        'bengali':    (_BASE + "NotoSansBengali/hinted/ttf/NotoSansBengali-Regular.ttf",       "NotoSansBengali.ttf"),
+        'gurmukhi':   (_BASE + "NotoSansGurmukhi/hinted/ttf/NotoSansGurmukhi-Regular.ttf",     "NotoSansGurmukhi.ttf"),
+        'gujarati':   (_BASE + "NotoSansGujarati/hinted/ttf/NotoSansGujarati-Regular.ttf",     "NotoSansGujarati.ttf"),
+        'tamil':      (_BASE + "NotoSansTamil/hinted/ttf/NotoSansTamil-Regular.ttf",           "NotoSansTamil.ttf"),
+        'telugu':     (_BASE + "NotoSansTelugu/hinted/ttf/NotoSansTelugu-Regular.ttf",         "NotoSansTelugu.ttf"),
+        'kannada':    (_BASE + "NotoSansKannada/hinted/ttf/NotoSansKannada-Regular.ttf",       "NotoSansKannada.ttf"),
+        'malayalam':  (_BASE + "NotoSansMalayalam/hinted/ttf/NotoSansMalayalam-Regular.ttf",   "NotoSansMalayalam.ttf"),
+        'arabic':     (_BASE + "NotoSansArabic/hinted/ttf/NotoSansArabic-Regular.ttf",         "NotoSansArabic.ttf"),
+        'thai':       (_BASE + "NotoSansThai/hinted/ttf/NotoSansThai-Regular.ttf",             "NotoSansThai.ttf"),
+        'cyrillic':   (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans.ttf"),
+        'latin':      (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans.ttf"),
+        # CJK — larger fonts, use a different repo
+        'chinese':    ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf", "NotoSansCJKsc-Regular.otf"),
+        'korean':     ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf",            "NotoSansCJKkr-Regular.otf"),
+        'japanese':   ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",          "NotoSansCJKjp-Regular.otf"),
+    }
+
+    cache_dir = "/tmp/saathi_fonts"
+    _os.makedirs(cache_dir, exist_ok=True)
+
+    def _get_font(script_name):
+        if script_name not in font_map:
+            script_name = 'latin'
+        url, fname = font_map[script_name]
+        path = _os.path.join(cache_dir, fname)
+        if not _os.path.exists(path):
+            try:
+                print(f"[pdf] Downloading font: {fname}")
+                _url.urlretrieve(url, path)
+            except Exception as e:
+                print(f"[pdf] Font download failed ({script_name}): {e}")
+                return None
+        return path
+
+    primary_path = _get_font(script)
+    # Devanagari me English words bhi aate hain, isliye Latin fallback bhi rakho
+    latin_path = None
+    if script != 'latin':
+        latin_path = _get_font('latin')
+
+    # ── PDF banao ──
+    pdf = _FPDF(format='A4')
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_margins(15, 15, 15)
+    pdf.add_page()
+
+    used_font = None
+    if primary_path:
+        try:
+            pdf.add_font("MainFont", "", primary_path)
+            pdf.set_font("MainFont", size=12)
+            used_font = "MainFont"
+        except Exception as e:
+            print(f"[pdf] Primary font load failed: {e}")
+
+    if not used_font:
+        if latin_path:
+            try:
+                pdf.add_font("LatinFont", "", latin_path)
+                pdf.set_font("LatinFont", size=12)
+                used_font = "LatinFont"
+            except Exception as e:
+                print(f"[pdf] Latin font load failed: {e}")
+
+    if not used_font:
+        # Last resort — built-in Helvetica (only Latin-1)
+        pdf.set_font("Helvetica", size=12)
+
+    pdf.multi_cell(0, 7, t if t else "(No content)")
+    out = pdf.output()
+    return bytes(out) if not isinstance(out, bytes) else out
+
+
 class GenericRequest(BaseModel):
     prompt: str
     width: int = 1024
@@ -237,11 +362,8 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             html_body = _call_groq(body.message, system=system).strip()
             if "```" in html_body:
                 html_body = html_body.replace("```html", "").replace("```", "").strip()
-            full_html = "<html><head><meta charset='utf-8'></head><body>" + html_body + "</body></html>"
-            buf = _BIO()
-            _pisa.CreatePDF(full_html, dest=buf, encoding="utf-8")
-            pdf_b64 = _b64.b64encode(buf.getvalue()).decode("utf-8")
-            buf.close()
+            pdf_bytes = _build_pdf_multilang(html_body)
+            pdf_b64 = _b64.b64encode(pdf_bytes).decode("utf-8")
             return {
                 "service": "chat",
                 "reply": "Yeh raha aapka PDF.",
@@ -463,13 +585,7 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
     if "```" in html_body:
         html_body = html_body.replace("```html", "").replace("```", "").strip()
 
-    full_html = "<html><head><meta charset=\'utf-8\'></head><body>" + html_body + "</body></html>"
-
-    pdf_buffer = BytesIO()
-    pisa.CreatePDF(full_html, dest=pdf_buffer, encoding="utf-8")
-    pdf_bytes = pdf_buffer.getvalue()
-    pdf_buffer.close()
-
+    pdf_bytes = _build_pdf_multilang(html_body)
     pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
     return {
         "pdf_base64": pdf_b64,
