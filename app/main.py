@@ -46,30 +46,65 @@ class ChatRequest(BaseModel):
 # Uses fpdf2 with Noto Sans fonts (auto-downloaded and cached)
 # ═══════════════════════════════════════════════════════════════════
 def _build_pdf_multilang(html_body: str) -> bytes:
-    """HTML ko clean PDF me convert karo — kisi bhi bhasha me (Unicode)."""
+    """HTML ko professional designed PDF me convert karo — kisi bhi bhasha me."""
     import re as _re
     import os as _os
     import urllib.request as _url
     from fpdf import FPDF as _FPDF
+    from html.parser import HTMLParser as _HP
 
-    # ── HTML se plain text nikalo (basic structure ke saath) ──
-    t = html_body or ""
-    t = _re.sub(r'<h1[^>]*>', '\n\n', t, flags=_re.I)
-    t = _re.sub(r'</h1>', '\n', t, flags=_re.I)
-    t = _re.sub(r'<h2[^>]*>', '\n\n', t, flags=_re.I)
-    t = _re.sub(r'</h2>', '\n', t, flags=_re.I)
-    t = _re.sub(r'<h3[^>]*>', '\n\n', t, flags=_re.I)
-    t = _re.sub(r'</h3>', '\n', t, flags=_re.I)
-    t = _re.sub(r'<br\s*/?>', '\n', t, flags=_re.I)
-    t = _re.sub(r'<li[^>]*>', '\n• ', t, flags=_re.I)
-    t = _re.sub(r'<p[^>]*>', '\n', t, flags=_re.I)
-    t = _re.sub(r'</p>', '\n', t, flags=_re.I)
-    t = _re.sub(r'<[^>]+>', '', t)
-    t = (t.replace('&nbsp;', ' ').replace('&amp;', '&')
-         .replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"'))
-    t = _re.sub(r'\n\s*\n\s*\n+', '\n\n', t).strip()
+    # ── HTML Parser ──
+    class _PDFParser(_HP):
+        def __init__(self):
+            super().__init__()
+            self.blocks = []
+            self.current_tag = None
+            self.current_text = []
+        def _flush(self):
+            if self.current_tag:
+                txt = ''.join(self.current_text).strip()
+                if txt:
+                    self.blocks.append((self.current_tag, txt))
+            self.current_tag = None
+            self.current_text = []
+        def handle_starttag(self, tag, attrs):
+            tag = tag.lower()
+            if tag in ('h1','h2','h3','h4','p','blockquote'):
+                self._flush()
+                self.current_tag = tag
+            elif tag == 'li':
+                self._flush()
+                self.current_tag = 'li'
+            elif tag == 'br':
+                if self.current_tag:
+                    self.current_text.append('\n')
+            elif tag == 'hr':
+                self._flush()
+                self.blocks.append(('hr', ''))
+        def handle_endtag(self, tag):
+            tag = tag.lower()
+            if tag in ('h1','h2','h3','h4','p','blockquote','li'):
+                self._flush()
+        def handle_data(self, data):
+            if self.current_tag:
+                self.current_text.append(data)
 
-    # ── Script detect karo ──
+    parser = _PDFParser()
+    try:
+        parser.feed(html_body or "")
+    except Exception as _e:
+        print(f"[pdf] HTML parse error: {_e}")
+    parser._flush()
+    blocks = parser.blocks
+
+    if not blocks:
+        t = _re.sub(r'<[^>]+>', '', html_body or '').strip()
+        if t:
+            blocks = [('p', t)]
+
+    full_text = "\n".join(b[1] for b in blocks)
+
+    # ── Script detect ──
     def _detect(s):
         if _re.search(r'[\u0900-\u097F]', s): return 'devanagari'
         if _re.search(r'[\u0980-\u09FF]', s): return 'bengali'
@@ -86,10 +121,9 @@ def _build_pdf_multilang(html_body: str) -> bytes:
         if _re.search(r'[\u0400-\u04FF]', s): return 'cyrillic'
         if _re.search(r'[\u0E00-\u0E7F]', s): return 'thai'
         return 'latin'
+    script = _detect(full_text)
 
-    script = _detect(t)
-
-    # ── Noto fonts (jsDelivr CDN — reliable) ──
+    # ── Fonts ──
     _BASE = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/"
     font_map = {
         'devanagari': (_BASE + "NotoSansDevanagari/hinted/ttf/NotoSansDevanagari-Regular.ttf", "NotoSansDevanagari.ttf"),
@@ -104,64 +138,165 @@ def _build_pdf_multilang(html_body: str) -> bytes:
         'thai':       (_BASE + "NotoSansThai/hinted/ttf/NotoSansThai-Regular.ttf",             "NotoSansThai.ttf"),
         'cyrillic':   (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans.ttf"),
         'latin':      (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans.ttf"),
-        # CJK — larger fonts, use a different repo
         'chinese':    ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf", "NotoSansCJKsc-Regular.otf"),
         'korean':     ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf",            "NotoSansCJKkr-Regular.otf"),
         'japanese':   ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",          "NotoSansCJKjp-Regular.otf"),
     }
 
-    cache_dir = "/tmp/saathi_fonts"
+    cache_dir = _os.path.join(_os.getcwd(), ".saathi_fonts_cache")
     _os.makedirs(cache_dir, exist_ok=True)
 
-    def _get_font(script_name):
+    def _download_font(script_name, bold=False):
         if script_name not in font_map:
             script_name = 'latin'
         url, fname = font_map[script_name]
+        if bold:
+            url = url.replace('-Regular', '-Bold')
+            fname = fname.replace('-Regular', '-Bold')
         path = _os.path.join(cache_dir, fname)
         if not _os.path.exists(path):
             try:
-                print(f"[pdf] Downloading font: {fname}")
                 _url.urlretrieve(url, path)
             except Exception as e:
-                print(f"[pdf] Font download failed ({script_name}): {e}")
+                print(f"[pdf] Font download failed ({fname}): {e}")
                 return None
         return path
 
-    primary_path = _get_font(script)
-    # Devanagari me English words bhi aate hain, isliye Latin fallback bhi rakho
-    latin_path = None
-    if script != 'latin':
-        latin_path = _get_font('latin')
+    primary_path = _download_font(script, bold=False)
+    bold_path = _download_font(script, bold=True)
+    if not bold_path:
+        bold_path = primary_path
 
-    # ── PDF banao ──
+    # ── PDF Setup ──
     pdf = _FPDF(format='A4')
-    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_auto_page_break(auto=True, margin=20)
     pdf.set_margins(15, 15, 15)
     pdf.add_page()
 
-    used_font = None
+    font_family = "Helvetica"
     if primary_path:
         try:
             pdf.add_font("MainFont", "", primary_path)
-            pdf.set_font("MainFont", size=12)
-            used_font = "MainFont"
+            if bold_path and bold_path != primary_path:
+                pdf.add_font("MainFont", "B", bold_path)
+            else:
+                pdf.add_font("MainFont", "B", primary_path)
+            font_family = "MainFont"
         except Exception as e:
-            print(f"[pdf] Primary font load failed: {e}")
+            print(f"[pdf] Font load failed: {e}")
 
-    if not used_font:
-        if latin_path:
-            try:
-                pdf.add_font("LatinFont", "", latin_path)
-                pdf.set_font("LatinFont", size=12)
-                used_font = "LatinFont"
-            except Exception as e:
-                print(f"[pdf] Latin font load failed: {e}")
+    # ── Colors ──
+    ACCENT = (16, 163, 127)
+    ACCENT_DARK = (13, 139, 108)
+    DARK = (26, 26, 46)
+    GRAY = (110, 110, 130)
+    LIGHT_BG = (235, 250, 244)
+    BORDER = (220, 225, 230)
 
-    if not used_font:
-        # Last resort — built-in Helvetica (only Latin-1)
-        pdf.set_font("Helvetica", size=12)
+    def _set_font(style="", size=11, color=None):
+        try:
+            pdf.set_font(font_family, style, size)
+        except Exception:
+            pdf.set_font("Helvetica", size=size)
+        if color:
+            pdf.set_text_color(*color)
 
-    pdf.multi_cell(0, 7, t if t else "(No content)")
+    def _check_break(needed=25):
+        if pdf.get_y() + needed > pdf.h - 25:
+            pdf.add_page()
+
+    # ── Title Band ──
+    title_text = None
+    for b in blocks:
+        if b[0] in ('h1', 'h2'):
+            title_text = b[1]
+            break
+
+    if title_text:
+        pdf.set_fill_color(*ACCENT)
+        pdf.rect(0, 0, pdf.w, 35, 'F')
+        pdf.set_text_color(255, 255, 255)
+        try:
+            pdf.set_font(font_family, "B", 17)
+        except Exception:
+            pdf.set_font("Helvetica", "B", 17)
+        pdf.set_xy(15, 10)
+        pdf.multi_cell(pdf.w - 30, 9, title_text[:90])
+        pdf.set_y(42)
+        pdf.set_text_color(*DARK)
+
+    # ── Render Blocks ──
+    first_title_skipped = False
+    for btype, btext in blocks:
+        if not btext.strip() and btype != 'hr':
+            continue
+        if btype in ('h1', 'h2') and not first_title_skipped and btext == title_text:
+            first_title_skipped = True
+            continue
+
+        _check_break(20)
+
+        if btype == 'h1':
+            pdf.ln(3)
+            y = pdf.get_y()
+            pdf.set_fill_color(*ACCENT)
+            pdf.rect(15, y, 3, 9, 'F')
+            pdf.set_xy(20, y)
+            _set_font("B", 15, DARK)
+            pdf.multi_cell(pdf.w - 35, 9, btext)
+            pdf.ln(2)
+
+        elif btype == 'h2':
+            pdf.ln(2)
+            y = pdf.get_y()
+            pdf.set_fill_color(*LIGHT_BG)
+            pdf.rect(15, y, pdf.w - 30, 11, 'F')
+            pdf.set_fill_color(*ACCENT)
+            pdf.rect(15, y, 2.5, 11, 'F')
+            pdf.set_xy(20, y + 2.5)
+            _set_font("B", 13, ACCENT_DARK)
+            pdf.multi_cell(pdf.w - 40, 7, btext)
+            pdf.ln(3)
+
+        elif btype == 'h3':
+            pdf.ln(1)
+            _set_font("B", 12, DARK)
+            pdf.multi_cell(0, 7, btext)
+            pdf.ln(1)
+
+        elif btype == 'h4':
+            _set_font("B", 11, GRAY)
+            pdf.multi_cell(0, 6, btext)
+            pdf.ln(1)
+
+        elif btype == 'li':
+            _set_font("", 11, DARK)
+            pdf.set_x(20)
+            pdf.set_text_color(*ACCENT)
+            pdf.cell(6, 6, chr(0x2022), ln=0)
+            pdf.set_text_color(*DARK)
+            pdf.set_x(26)
+            pdf.multi_cell(pdf.w - 41, 6, btext)
+
+        elif btype == 'blockquote':
+            _set_font("", 10, GRAY)
+            pdf.set_x(20)
+            pdf.multi_cell(pdf.w - 40, 6, '"' + btext + '"')
+            pdf.ln(2)
+
+        elif btype == 'hr':
+            pdf.ln(2)
+            pdf.set_draw_color(*BORDER)
+            pdf.set_line_width(0.3)
+            y = pdf.get_y()
+            pdf.line(15, y, pdf.w - 15, y)
+            pdf.ln(3)
+
+        else:
+            _set_font("", 11, DARK)
+            pdf.multi_cell(0, 6.5, btext)
+            pdf.ln(2)
+
     out = pdf.output()
     return bytes(out) if not isinstance(out, bytes) else out
 
