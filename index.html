@@ -1749,6 +1749,8 @@ async function requestTitleFromServer(text, attachments){
 
 function isDesignRequest(text){
   const t = (text || '').toLowerCase().trim();
+  // ═══ PRIORITY: /pdf aur /image commands design ko OVERRIDE karte hain ═══
+  if(t.startsWith('/pdf') || t.startsWith('/image') || t.startsWith('/website') || t.startsWith('/video') || t.startsWith('/search')) return false;
   if(t.startsWith('/design')) return true;
   const keys = [
     'design','card','poster','banner','invitation','visiting','greeting',
