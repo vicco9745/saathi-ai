@@ -45,15 +45,69 @@ class ChatRequest(BaseModel):
 # PDF GENERATION — Multi-language (Hindi, Tamil, Telugu, Bengali, etc.)
 # Uses fpdf2 with Noto Sans fonts (auto-downloaded and cached)
 # ═══════════════════════════════════════════════════════════════════
-def _build_pdf_multilang(html_body: str) -> bytes:
-    """HTML ko professional designed PDF me convert karo — kisi bhi bhasha me."""
+def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
+    """HTML ko premium designed PDF me convert karo — multi-language, multi-theme."""
     import re as _re
     import os as _os
     import urllib.request as _url
     from fpdf import FPDF as _FPDF
     from html.parser import HTMLParser as _HP
 
-    # ── HTML Parser ──
+    # ── Theme colors define ──
+    THEMES = {
+        "premium": {
+            "bg": (15, 23, 42),
+            "text": (230, 230, 240),
+            "accent": (212, 175, 55),
+            "accent2": (245, 215, 110),
+            "muted": (150, 160, 180),
+            "header_band": (15, 23, 42),
+            "header_text": (212, 175, 55),
+            "light": False,
+        },
+        "colorful": {
+            "bg": (255, 255, 255),
+            "text": (30, 30, 50),
+            "accent": (255, 87, 87),
+            "accent2": (255, 152, 0),
+            "muted": (130, 130, 150),
+            "header_band": (255, 87, 87),
+            "header_text": (255, 255, 255),
+            "light": True,
+        },
+        "business": {
+            "bg": (255, 255, 255),
+            "text": (26, 26, 46),
+            "accent": (30, 58, 138),
+            "accent2": (59, 130, 246),
+            "muted": (110, 110, 130),
+            "header_band": (30, 58, 138),
+            "header_text": (255, 255, 255),
+            "light": True,
+        },
+        "book": {
+            "bg": (253, 248, 240),
+            "text": (60, 40, 20),
+            "accent": (139, 69, 19),
+            "accent2": (160, 82, 45),
+            "muted": (140, 120, 100),
+            "header_band": (253, 248, 240),
+            "header_text": (139, 69, 19),
+            "light": True,
+        },
+        "auto": {
+            "bg": (255, 255, 255),
+            "text": (26, 26, 46),
+            "accent": (16, 163, 127),
+            "accent2": (13, 139, 108),
+            "muted": (110, 110, 130),
+            "header_band": (16, 163, 127),
+            "header_text": (255, 255, 255),
+            "light": True,
+        },
+    }
+
+    # ── HTML Parse ──
     class _PDFParser(_HP):
         def __init__(self):
             super().__init__()
@@ -93,7 +147,7 @@ def _build_pdf_multilang(html_body: str) -> bytes:
     try:
         parser.feed(html_body or "")
     except Exception as _e:
-        print(f"[pdf] HTML parse error: {_e}")
+        print(f"[pdf] Parse error: {_e}")
     parser._flush()
     blocks = parser.blocks
 
@@ -103,6 +157,22 @@ def _build_pdf_multilang(html_body: str) -> bytes:
             blocks = [('p', t)]
 
     full_text = "\n".join(b[1] for b in blocks)
+
+    # Auto-detect theme if not specified
+    if theme == "auto" or theme not in THEMES:
+        tl = (html_body or "").lower()
+        if "premium" in tl or "gold" in tl or "black" in tl or "सुनहर" in tl:
+            theme = "premium"
+        elif "colorful" in tl or "rainbow" in tl or "रंगीन" in tl or "kids" in tl or "बच्च" in tl:
+            theme = "colorful"
+        elif "business" in tl or "report" in tl or "बिज़नेस" in tl or "रिपोर्ट" in tl:
+            theme = "business"
+        elif "book" in tl or "ebook" in tl or "किताब" in tl or "ईबुक" in tl or "कहानी" in tl:
+            theme = "book"
+        else:
+            theme = "auto"
+
+    T = THEMES[theme]
 
     # ── Script detect ──
     def _detect(s):
@@ -126,18 +196,18 @@ def _build_pdf_multilang(html_body: str) -> bytes:
     # ── Fonts ──
     _BASE = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/"
     font_map = {
-        'devanagari': (_BASE + "NotoSansDevanagari/hinted/ttf/NotoSansDevanagari-Regular.ttf", "NotoSansDevanagari.ttf"),
-        'bengali':    (_BASE + "NotoSansBengali/hinted/ttf/NotoSansBengali-Regular.ttf",       "NotoSansBengali.ttf"),
-        'gurmukhi':   (_BASE + "NotoSansGurmukhi/hinted/ttf/NotoSansGurmukhi-Regular.ttf",     "NotoSansGurmukhi.ttf"),
-        'gujarati':   (_BASE + "NotoSansGujarati/hinted/ttf/NotoSansGujarati-Regular.ttf",     "NotoSansGujarati.ttf"),
-        'tamil':      (_BASE + "NotoSansTamil/hinted/ttf/NotoSansTamil-Regular.ttf",           "NotoSansTamil.ttf"),
-        'telugu':     (_BASE + "NotoSansTelugu/hinted/ttf/NotoSansTelugu-Regular.ttf",         "NotoSansTelugu.ttf"),
-        'kannada':    (_BASE + "NotoSansKannada/hinted/ttf/NotoSansKannada-Regular.ttf",       "NotoSansKannada.ttf"),
-        'malayalam':  (_BASE + "NotoSansMalayalam/hinted/ttf/NotoSansMalayalam-Regular.ttf",   "NotoSansMalayalam.ttf"),
-        'arabic':     (_BASE + "NotoSansArabic/hinted/ttf/NotoSansArabic-Regular.ttf",         "NotoSansArabic.ttf"),
-        'thai':       (_BASE + "NotoSansThai/hinted/ttf/NotoSansThai-Regular.ttf",             "NotoSansThai.ttf"),
-        'cyrillic':   (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans.ttf"),
-        'latin':      (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans.ttf"),
+        'devanagari': (_BASE + "NotoSansDevanagari/hinted/ttf/NotoSansDevanagari-Regular.ttf", "NotoSansDevanagari-Regular.ttf"),
+        'bengali':    (_BASE + "NotoSansBengali/hinted/ttf/NotoSansBengali-Regular.ttf",       "NotoSansBengali-Regular.ttf"),
+        'gurmukhi':   (_BASE + "NotoSansGurmukhi/hinted/ttf/NotoSansGurmukhi-Regular.ttf",     "NotoSansGurmukhi-Regular.ttf"),
+        'gujarati':   (_BASE + "NotoSansGujarati/hinted/ttf/NotoSansGujarati-Regular.ttf",     "NotoSansGujarati-Regular.ttf"),
+        'tamil':      (_BASE + "NotoSansTamil/hinted/ttf/NotoSansTamil-Regular.ttf",           "NotoSansTamil-Regular.ttf"),
+        'telugu':     (_BASE + "NotoSansTelugu/hinted/ttf/NotoSansTelugu-Regular.ttf",         "NotoSansTelugu-Regular.ttf"),
+        'kannada':    (_BASE + "NotoSansKannada/hinted/ttf/NotoSansKannada-Regular.ttf",       "NotoSansKannada-Regular.ttf"),
+        'malayalam':  (_BASE + "NotoSansMalayalam/hinted/ttf/NotoSansMalayalam-Regular.ttf",   "NotoSansMalayalam-Regular.ttf"),
+        'arabic':     (_BASE + "NotoSansArabic/hinted/ttf/NotoSansArabic-Regular.ttf",         "NotoSansArabic-Regular.ttf"),
+        'thai':       (_BASE + "NotoSansThai/hinted/ttf/NotoSansThai-Regular.ttf",             "NotoSansThai-Regular.ttf"),
+        'cyrillic':   (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans-Regular.ttf"),
+        'latin':      (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans-Regular.ttf"),
         'chinese':    ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf", "NotoSansCJKsc-Regular.otf"),
         'korean':     ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf",            "NotoSansCJKkr-Regular.otf"),
         'japanese':   ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",          "NotoSansCJKjp-Regular.otf"),
@@ -146,7 +216,7 @@ def _build_pdf_multilang(html_body: str) -> bytes:
     cache_dir = _os.path.join(_os.getcwd(), ".saathi_fonts_cache")
     _os.makedirs(cache_dir, exist_ok=True)
 
-    def _download_font(script_name, bold=False):
+    def _dl(script_name, bold=False):
         if script_name not in font_map:
             script_name = 'latin'
         url, fname = font_map[script_name]
@@ -158,42 +228,35 @@ def _build_pdf_multilang(html_body: str) -> bytes:
             try:
                 _url.urlretrieve(url, path)
             except Exception as e:
-                print(f"[pdf] Font download failed ({fname}): {e}")
+                print(f"[pdf] Font fail ({fname}): {e}")
                 return None
         return path
 
-    primary_path = _download_font(script, bold=False)
-    bold_path = _download_font(script, bold=True)
-    if not bold_path:
-        bold_path = primary_path
+    primary_path = _dl(script, bold=False)
+    bold_path = _dl(script, bold=True) or primary_path
 
     # ── PDF Setup ──
     pdf = _FPDF(format='A4')
-    pdf.set_auto_page_break(auto=True, margin=20)
-    pdf.set_margins(15, 15, 15)
+    pdf.set_auto_page_break(auto=True, margin=22)
+    pdf.set_margins(18, 18, 18)
     pdf.add_page()
+    pdf.set_fill_color(*T["bg"])
+    pdf.rect(0, 0, pdf.w, pdf.h, 'F')
+    pdf.set_text_color(*T["text"])
 
     font_family = "Helvetica"
     if primary_path:
         try:
-            pdf.add_font("MainFont", "", primary_path)
+            pdf.add_font("MF", "", primary_path)
             if bold_path and bold_path != primary_path:
-                pdf.add_font("MainFont", "B", bold_path)
+                pdf.add_font("MF", "B", bold_path)
             else:
-                pdf.add_font("MainFont", "B", primary_path)
-            font_family = "MainFont"
+                pdf.add_font("MF", "B", primary_path)
+            font_family = "MF"
         except Exception as e:
-            print(f"[pdf] Font load failed: {e}")
+            print(f"[pdf] Font load fail: {e}")
 
-    # ── Colors ──
-    ACCENT = (16, 163, 127)
-    ACCENT_DARK = (13, 139, 108)
-    DARK = (26, 26, 46)
-    GRAY = (110, 110, 130)
-    LIGHT_BG = (235, 250, 244)
-    BORDER = (220, 225, 230)
-
-    def _set_font(style="", size=11, color=None):
+    def SF(style="", size=11, color=None):
         try:
             pdf.set_font(font_family, style, size)
         except Exception:
@@ -201,11 +264,7 @@ def _build_pdf_multilang(html_body: str) -> bytes:
         if color:
             pdf.set_text_color(*color)
 
-    def _check_break(needed=25):
-        if pdf.get_y() + needed > pdf.h - 25:
-            pdf.add_page()
-
-    # ── Title Band ──
+    # ── Cover Page Design ──
     title_text = None
     for b in blocks:
         if b[0] in ('h1', 'h2'):
@@ -213,92 +272,143 @@ def _build_pdf_multilang(html_body: str) -> bytes:
             break
 
     if title_text:
-        pdf.set_fill_color(*ACCENT)
-        pdf.rect(0, 0, pdf.w, 35, 'F')
-        pdf.set_text_color(255, 255, 255)
+        # Full-bleed color band at top (1/3 page)
+        band_h = pdf.h * 0.42
+        pdf.set_fill_color(*T["header_band"])
+        pdf.rect(0, 0, pdf.w, band_h, 'F')
+
+        # Accent line under band
+        pdf.set_fill_color(*T["accent"])
+        pdf.rect(0, band_h, pdf.w, 2, 'F')
+
+        # Title text (large, centered)
+        pdf.set_text_color(*T["header_text"])
         try:
-            pdf.set_font(font_family, "B", 17)
+            pdf.set_font(font_family, "B", 26)
         except Exception:
-            pdf.set_font("Helvetica", "B", 17)
-        pdf.set_xy(15, 10)
-        pdf.multi_cell(pdf.w - 30, 9, title_text[:90])
-        pdf.set_y(42)
-        pdf.set_text_color(*DARK)
+            pdf.set_font("Helvetica", "B", 26)
+        pdf.set_xy(20, band_h * 0.32)
+        pdf.multi_cell(pdf.w - 40, 12, title_text[:70], align='C')
+
+        # Decorative dots
+        pdf.set_fill_color(*T["accent"])
+        cy = band_h * 0.32 + 30
+        for i in range(3):
+            pdf.ellipse(pdf.w/2 - 12 + i*12, cy, 5, 5, 'F')
+
+        # Subtitle from next h2 or p
+        pdf.set_y(band_h + 20)
+        pdf.set_text_color(*T["text"])
+
+        # Start content below cover
+        pdf.set_y(band_h + 25)
+        first_title_skipped = True
+    else:
+        first_title_skipped = False
 
     # ── Render Blocks ──
-    first_title_skipped = False
     for btype, btext in blocks:
         if not btext.strip() and btype != 'hr':
             continue
-        if btype in ('h1', 'h2') and not first_title_skipped and btext == title_text:
+        if not first_title_skipped and btype in ('h1', 'h2') and btext == title_text:
             first_title_skipped = True
             continue
+        first_title_skipped = True
 
-        _check_break(20)
+        if pdf.get_y() + 25 > pdf.h - 25:
+            pdf.add_page()
+            pdf.set_fill_color(*T["bg"])
+            pdf.rect(0, 0, pdf.w, pdf.h, 'F')
 
         if btype == 'h1':
-            pdf.ln(3)
+            pdf.ln(4)
             y = pdf.get_y()
-            pdf.set_fill_color(*ACCENT)
-            pdf.rect(15, y, 3, 9, 'F')
-            pdf.set_xy(20, y)
-            _set_font("B", 15, DARK)
-            pdf.multi_cell(pdf.w - 35, 9, btext)
-            pdf.ln(2)
+            # Accent bar left
+            pdf.set_fill_color(*T["accent"])
+            pdf.rect(18, y, 4, 11, 'F')
+            pdf.set_xy(26, y)
+            SF("B", 17, T["accent"])
+            pdf.multi_cell(pdf.w - 44, 10, btext)
+            # Underline
+            pdf.set_draw_color(*T["accent2"])
+            pdf.set_line_width(0.4)
+            pdf.line(18, pdf.get_y() + 1, 60, pdf.get_y() + 1)
+            pdf.ln(4)
 
         elif btype == 'h2':
-            pdf.ln(2)
-            y = pdf.get_y()
-            pdf.set_fill_color(*LIGHT_BG)
-            pdf.rect(15, y, pdf.w - 30, 11, 'F')
-            pdf.set_fill_color(*ACCENT)
-            pdf.rect(15, y, 2.5, 11, 'F')
-            pdf.set_xy(20, y + 2.5)
-            _set_font("B", 13, ACCENT_DARK)
-            pdf.multi_cell(pdf.w - 40, 7, btext)
             pdf.ln(3)
+            y = pdf.get_y()
+            # Light background box
+            box_color = T["accent"] if not T["light"] else (245, 245, 250)
+            if T["light"]:
+                box_color = tuple(min(255, int(c * 0.15 + 240)) for c in T["accent"])
+            pdf.set_fill_color(*box_color)
+            pdf.rect(18, y, pdf.w - 36, 12, 'F')
+            # Accent line left
+            pdf.set_fill_color(*T["accent"])
+            pdf.rect(18, y, 3, 12, 'F')
+            pdf.set_xy(26, y + 3)
+            SF("B", 14, T["accent2"] if T["light"] else T["accent"])
+            pdf.multi_cell(pdf.w - 48, 8, btext)
+            pdf.ln(4)
 
         elif btype == 'h3':
-            pdf.ln(1)
-            _set_font("B", 12, DARK)
-            pdf.multi_cell(0, 7, btext)
-            pdf.ln(1)
+            pdf.ln(2)
+            SF("B", 13, T["text"])
+            pdf.multi_cell(0, 8, btext)
+            pdf.ln(2)
 
         elif btype == 'h4':
-            _set_font("B", 11, GRAY)
-            pdf.multi_cell(0, 6, btext)
-            pdf.ln(1)
+            SF("B", 11, T["muted"])
+            pdf.multi_cell(0, 7, btext)
+            pdf.ln(2)
 
         elif btype == 'li':
-            _set_font("", 11, DARK)
-            pdf.set_x(20)
-            pdf.set_text_color(*ACCENT)
-            pdf.cell(6, 6, chr(0x2022), ln=0)
-            pdf.set_text_color(*DARK)
-            pdf.set_x(26)
-            pdf.multi_cell(pdf.w - 41, 6, btext)
+            SF("", 11, T["text"])
+            pdf.set_x(24)
+            pdf.set_text_color(*T["accent"])
+            pdf.cell(6, 6, chr(0x25CF), ln=0)
+            pdf.set_text_color(*T["text"])
+            pdf.set_x(30)
+            pdf.multi_cell(pdf.w - 48, 6.5, btext)
+            pdf.ln(0.5)
 
         elif btype == 'blockquote':
-            _set_font("", 10, GRAY)
-            pdf.set_x(20)
-            pdf.multi_cell(pdf.w - 40, 6, '"' + btext + '"')
             pdf.ln(2)
-
-        elif btype == 'hr':
-            pdf.ln(2)
-            pdf.set_draw_color(*BORDER)
-            pdf.set_line_width(0.3)
             y = pdf.get_y()
-            pdf.line(15, y, pdf.w - 15, y)
+            pdf.set_fill_color(*T["accent"])
+            pdf.rect(20, y, 2, 14, 'F')
+            pdf.set_xy(26, y + 2)
+            SF("", 11, T["muted"])
+            pdf.multi_cell(pdf.w - 48, 6.5, btext)
             pdf.ln(3)
 
+        elif btype == 'hr':
+            pdf.ln(3)
+            pdf.set_draw_color(*T["accent"])
+            pdf.set_line_width(0.5)
+            y = pdf.get_y()
+            mid = pdf.w / 2
+            pdf.line(mid - 30, y, mid + 30, y)
+            pdf.ln(4)
+
         else:
-            _set_font("", 11, DARK)
-            pdf.multi_cell(0, 6.5, btext)
-            pdf.ln(2)
+            SF("", 11, T["text"])
+            pdf.multi_cell(0, 7, btext)
+            pdf.ln(2.5)
+
+    # ── Page numbers (sab pages) ──
+    total = pdf.pages_count if hasattr(pdf, 'pages_count') else pdf.page_no()
+    for i in range(1, pdf.page_no() + 1):
+        pdf.page = i
+        pdf.set_y(pdf.h - 15)
+        SF("", 9, T["muted"])
+        pdf.cell(0, 6, f"— {i} —", align='C')
 
     out = pdf.output()
     return bytes(out) if not isinstance(out, bytes) else out
+
+
 
 
 class GenericRequest(BaseModel):
