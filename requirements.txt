@@ -3,4 +3,4 @@ uvicorn[standard]
 python-dotenv
 pydantic
 requests
-playwright
+playwright==1.40.0
