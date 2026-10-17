@@ -4,8 +4,8 @@ from typing import List, Optional
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from .db import init_db
-from .auth import require_api_key, record_usage
+from app.db import init_db
+from app.auth import require_api_key, record_usage
 from ichat_ai.response_engine import get_response
 
 app = FastAPI(
