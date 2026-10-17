@@ -49,85 +49,86 @@ class ChatRequest(BaseModel):
 # ═══════════════════════════════════════════════════════════════
 # UNIVERSAL PDF — Chart & Image Helpers (matplotlib + Pillow)
 # ═══════════════════════════════════════════════════════════════
-def _generate_chart_png(chart_type, title, data, entry=None, stop=None, target=None, width=7, height=4):
-    """matplotlib se chart PNG banao. Returns bytes ya None."""
-    try:
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        import io as _io
-        import json as _json
+def _draw_native_chart(pdf, data, x, y, w, h, chart_type="candlestick", title="", entry=None, stop=None, target=None):
+    """Direct PDF me chart draw karo (bina matplotlib ke, pure python)."""
+    import json as _json
+    if isinstance(data, str):
+        try: data = _json.loads(data)
+        except Exception: data = []
+    if not data: return
 
-        if isinstance(data, str):
-            try:
-                data = _json.loads(data)
-            except Exception:
-                data = []
-        if not data:
-            return None
+    # Background box
+    pdf.set_fill_color(250, 250, 252)
+    pdf.rect(x, y, w, h, 'F')
+    pdf.set_draw_color(200, 200, 210)
+    pdf.rect(x, y, w, h, 'D')
 
-        fig, ax = plt.subplots(figsize=(width, height), dpi=120)
-        try:
-            if chart_type == "candlestick":
-                for i, c in enumerate(data):
-                    o = float(c.get('open', 0))
-                    h = float(c.get('high', 0))
-                    l = float(c.get('low', 0))
-                    cl = float(c.get('close', 0))
-                    color = '#26a69a' if cl >= o else '#ef5350'
-                    ax.plot([i, i], [l, h], color='#333', linewidth=1, zorder=1)
-                    ax.bar(i, abs(cl - o) or 0.001, bottom=min(o, cl), color=color, width=0.6, zorder=2, edgecolor=color)
-                if entry:
-                    ax.axhline(float(entry), color='blue', linestyle='--', linewidth=1.5, label='Entry ' + str(entry))
-                if stop:
-                    ax.axhline(float(stop), color='red', linestyle='--', linewidth=1.5, label='Stop ' + str(stop))
-                if target:
-                    ax.axhline(float(target), color='green', linestyle='--', linewidth=1.5, label='Target ' + str(target))
-                if entry or stop or target:
-                    ax.legend(loc='upper left', fontsize=8)
-                ax.set_xticks(range(len(data)))
-                ax.set_xticklabels([str(c.get('time', '')) for c in data], fontsize=7)
-            elif chart_type == "line":
-                xs = [d.get('x', i) for i, d in enumerate(data)]
-                ys = [float(d.get('y', d.get('value', 0))) for d in data]
-                ax.plot(xs, ys, color='#10a37f', linewidth=2, marker='o', markersize=5)
-            elif chart_type == "bar":
-                labels = [str(d.get('label', d.get('x', ''))) for d in data]
-                values = [float(d.get('value', d.get('y', 0))) for d in data]
-                ax.bar(labels, values, color='#3b82f6', width=0.6)
-            elif chart_type == "pie":
-                labels = [str(d.get('label', '')) for d in data]
-                values = [float(d.get('value', 0)) for d in data]
-                ax.pie(values, labels=labels, autopct='%1.1f%%', startangle=90)
-                ax.axis('equal')
+    # Title
+    if title:
+        pdf.set_xy(x, y + 2)
+        pdf.set_text_color(50, 50, 60)
+        try: pdf.set_font(pdf.font_family, "B", 10)
+        except Exception: pdf.set_font("Helvetica", "B", 10)
+        pdf.cell(w, 6, title, align='C')
+
+    if chart_type == "candlestick":
+        closes = [float(d.get('close', 0)) for d in data]
+        highs = [float(d.get('high', 0)) for d in data]
+        lows = [float(d.get('low', 0)) for d in data]
+        if not closes: return
+        
+        min_p, max_p = min(lows), max(highs)
+        if max_p == min_p: max_p += 1
+        range_p = max_p - min_p
+
+        chart_y = y + 10
+        chart_h = h - 15
+        chart_x = x + 10
+        chart_w = w - 20
+
+        candle_w = chart_w / len(data)
+        body_w = candle_w * 0.6
+
+        for i, d in enumerate(data):
+            o = float(d.get('open', 0))
+            c = float(d.get('close', 0))
+            hi = float(d.get('high', 0))
+            lo = float(d.get('low', 0))
+            
+            def to_y(p): return chart_y + chart_h - ((p - min_p) / range_p * chart_h)
+            
+            y_hi = to_y(hi); y_lo = to_y(lo); y_o = to_y(o); y_c = to_y(c)
+            cx = chart_x + (i * candle_w) + (candle_w / 2)
+            
+            if c >= o:
+                pdf.set_draw_color(38, 166, 154)
+                pdf.set_fill_color(38, 166, 154)
             else:
-                xs = list(range(len(data)))
-                ys = [float(d.get('value', 0)) for d in data]
-                ax.plot(xs, ys, color='#10a37f', linewidth=2)
+                pdf.set_draw_color(239, 83, 80)
+                pdf.set_fill_color(239, 83, 80)
 
-            if title and chart_type != "pie":
-                ax.set_title(title, fontsize=11, fontweight='bold')
-            if chart_type != "pie":
-                ax.grid(True, alpha=0.3)
-                ax.spines['top'].set_visible(False)
-                ax.spines['right'].set_visible(False)
+            pdf.line(cx, y_hi, cx, y_lo)
+            body_top = min(y_o, y_c)
+            body_h = abs(y_o - y_c)
+            if body_h < 1: body_h = 1
+            pdf.rect(cx - body_w/2, body_top, body_w, body_h, 'F')
 
-            plt.tight_layout()
-            buf = _io.BytesIO()
-            plt.savefig(buf, format='png', dpi=120, bbox_inches='tight', facecolor='white')
-            plt.close(fig)
-            buf.seek(0)
-            return buf.getvalue()
-        except Exception as _e:
-            print("[chart] inner error: " + str(_e))
-            try:
-                plt.close(fig)
-            except Exception:
-                pass
-            return None
-    except Exception as _e:
-        print("[chart] matplotlib error: " + str(_e))
-        return None
+        def draw_line(price, color, label):
+            if not price: return
+            try: p_y = to_y(float(price))
+            except: return
+            pdf.set_draw_color(*color)
+            pdf.set_line_width(0.5)
+            pdf.line(chart_x, p_y, chart_x + chart_w, p_y)
+            pdf.set_xy(chart_x + chart_w + 2, p_y - 3)
+            pdf.set_text_color(*color)
+            pdf.set_font("Helvetica", "", 8)
+            pdf.cell(20, 6, label)
+
+        draw_line(entry, (30, 100, 200), "Entry")
+        draw_line(stop, (200, 50, 50), "Stop")
+        draw_line(target, (50, 150, 50), "Target")
+
 
 
 def _download_image_bytes(url, timeout=8):
@@ -188,7 +189,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
             attrs = dict(_re.findall(r'(\w+)\s*=\s*"([^"]*)"', a))
             attrs.update(dict(_re.findall(r"(\w+)\s*=\s*'([^']*)'", a)))
             store.append(attrs)
-            return '\n\n<<' + name.upper() + '_B_' + str(len(store)-1) + '>>\n\n'
+            return '\n\n<p>&lt;&lt;' + name.upper() + '_B_' + str(len(store)-1) + '&gt;&gt;</p>\n\n'
         html = _re.sub(pat, _r, html, flags=_re.I|_re.S)
 
     _extract('chart', chart_blocks)
@@ -196,7 +197,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
     _extract('box', box_blocks)
 
     # Extract pagebreak
-    html = _re.sub(r'<pagebreak\s*/?>', '\n\n<<PAGEBREAK_B>>\n\n', html, flags=_re.I)
+    html = _re.sub(r'<pagebreak\s*/?>', '<p>&lt;&lt;PAGEBREAK_B&gt;&gt;</p>', html, flags=_re.I)
 
     # Extract tables
     tables = []
@@ -209,7 +210,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
             cells = [_re.sub(r'<[^>]+>', '', c).strip() for c in cells]
             if cells: parsed.append(cells)
         tables.append(parsed)
-        return '\n\n<<TABLE_B_' + str(len(tables)-1) + '>>\n\n'
+        return '\n\n<p>&lt;&lt;TABLE_B_' + str(len(tables)-1) + '&gt;&gt;</p>\n\n'
     html = _re.sub(r'<table[^>]*>(.*?)</table>', _tbl, html, flags=_re.I|_re.S)
 
     # Parse text
@@ -378,19 +379,11 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
             ctype = bd.get('type', 'line')
             ctitle = bd.get('title', '')
             entry = bd.get('entry'); stop = bd.get('stop'); target = bd.get('target')
-            png = _generate_chart_png(ctype, ctitle, data_json, entry, stop, target)
-            if png:
-                import tempfile as _tf
-                with _tf.NamedTemporaryFile(suffix='.png', delete=False) as t:
-                    t.write(png); tpath = t.name
-                try:
-                    y = pdf.get_y()
-                    pdf.image(tpath, x=18, y=y, w=pdf.w - 36)
-                    pdf.ln(4)
-                except Exception as e: print('[pdf] chart embed ' + str(e))
-                finally:
-                    try: _os.unlink(tpath)
-                    except Exception: pass
+            try:
+                _draw_native_chart(pdf, data_json, x=18, y=pdf.get_y(), w=pdf.w-36, h=85, chart_type=ctype, title=ctitle, entry=entry, stop=stop, target=target)
+                pdf.ln(90)
+            except Exception as e:
+                print(f"[pdf] native chart error: {e}")
             continue
 
         if bt == 'img':
@@ -653,6 +646,33 @@ def _detect_action(msg: str) -> str:
     return "chat"
 
 
+
+def _generate_pdf_playwright(html_content: str) -> bytes:
+    """Playwright (Chromium) se HTML ko PDF me convert karo."""
+    from playwright.sync_api import sync_playwright
+    
+    with sync_playwright() as p:
+        # Chromium launch karo (Render Docker ke liye no-sandbox zaroori hai)
+        browser = p.chromium.launch(args=["--no-sandbox", "--disable-dev-shm-usage"])
+        page = browser.new_page()
+        
+        # Agar AI ne adhoora HTML diya hai, to use complete karo
+        if "<!doctype" not in html_content.lower() and "<html" not in html_content.lower():
+            html_content = f"<html><head><meta charset='utf-8'></head><body>{html_content}</body></html>"
+            
+        # HTML load karo
+        page.set_content(html_content, wait_until="networkidle")
+        
+        # PDF generate karo (A4 size, background colors ke saath)
+        pdf_bytes = page.pdf(
+            format="A4",
+            print_background=True,
+            margin={"top": "30px", "bottom": "30px", "left": "30px", "right": "30px"}
+        )
+        browser.close()
+        return pdf_bytes
+
+
 @app.post("/v1/chat")
 def chat(body: ChatRequest, key=Depends(require_api_key)):
     record_usage(key, "chat")
@@ -763,7 +783,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             html_body = _call_groq(body.message, system=system).strip()
             if "```" in html_body:
                 html_body = html_body.replace("```html", "").replace("```", "").strip()
-            pdf_bytes = _build_pdf_multilang(html_body)
+            pdf_bytes = _generate_pdf_playwright(html_body)
             pdf_b64 = _b64.b64encode(pdf_bytes).decode("utf-8")
             return {
                 "service": "chat",
@@ -986,7 +1006,7 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
     if "```" in html_body:
         html_body = html_body.replace("```html", "").replace("```", "").strip()
 
-    pdf_bytes = _build_pdf_multilang(html_body)
+    pdf_bytes = _generate_pdf_playwright(html_body)
     pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
     return {
         "pdf_base64": pdf_b64,

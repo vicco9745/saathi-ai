@@ -3,7 +3,4 @@ uvicorn[standard]
 python-dotenv
 pydantic
 requests
-xhtml2pdf
-fpdf2
-matplotlib
-Pillow
+playwright
