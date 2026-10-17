@@ -731,60 +731,30 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     if action == "pdf":
         try:
             import base64 as _b64
-            from io import BytesIO as _BIO
-            from xhtml2pdf import pisa as _pisa
             system = (
-                "Tum ek professional document designer ho. User ki request ke hisab se "
-                "ek RICH, DETAILED, aur SUNDAR HTML document banao jo PDF me convert hoga.\n\n"
+                "Tum ek WORLD-CLASS web designer ho. User ki request ke hisab se ek MASSIVE aur COMPLETE HTML document banao.\n\n"
+                "🚨 ULTRA-STRICT RULES (Inko todne par tum FAIL ho jaoge):\n"
+                "1. 'Below is a chart' ya 'Here is a table' KABHI MAT LIKHNA. Tumhe ASLI HTML CODE dena hai.\n"
+                "2. HAR 2-3 PARAGRAPH KE BAAD ek chart ya table ka code zaroor dalna hai. Bina chart/table ke text mat chhodo.\n"
+                "3. Page break ke liye HAMESHA <div style='page-break-before: always;'></div> use karo. Heading me 'Page 1' ya 'Page 2' KABHI MAT LIKHNA.\n"
+                "4. CHART KE LIYE ye exact format copy karo (Data change kar sakte ho):\n"
+                "   <img src=\"https://quickchart.io/chart?c={type:%27bar%27,data:{labels:[%27Q1%27,%27Q2%27],datasets:[{label:%27Sales%27,data:[50,60]}]}}\" style=\"width:100%; max-width:600px; margin: 20px 0; border-radius: 8px;\" />\n"
+                "5. TABLE KE LIYE ye exact format copy karo:\n"
+                "   <table style=\"width:100%; border-collapse: collapse; margin: 20px 0; background: #2a2a34; color: #ececf0;\"><tr style=\"background: #3a3a46;\"><th style=\"padding:12px; border:1px solid #444;\">Strategy</th><th style=\"padding:12px; border:1px solid #444;\">Risk</th></tr><tr><td style=\"padding:12px; border:1px solid #444;\">Scalping</td><td style=\"padding:12px; border:1px solid #444;\">High</td></tr></table>\n"
+                "6. DARK THEME (Agar user bole): Body tag aisa hona chahiye -> <body style='background-color: #121216; color: #ececf0; font-family: Arial, sans-serif; padding: 40px; line-height: 1.6;'>\n"
+                "7. Headings ko style do: <h1 style='color: #10a37f; border-bottom: 2px solid #10a37f; padding-bottom: 10px;'>Title</h1>\n\n"
                 "═══ OUTPUT FORMAT ═══\n"
-                "Sirf PURE HTML return karo — koi markdown, koi explanation nahi.\n"
-                "<!DOCTYPE html> se shuru karo, </html> par khatam.\n\n"
-                "═══ CONTENT LENGTH (bahut ZAROORI) ═══\n"
-                "CHHOTA content MAT do. Har section me 5-10 detailed lines likho.\n"
-                "Agar user bole 'poori guide', 'detailed', 'complete' — to 5000+ words.\n"
-                "Har point ko samjhao, udaaharan do, table banao, charts banao.\n"
-                "Sirf headings aur 1-line text mat do — YEH GALAT hai.\n\n"
-                "═══ SUPPORTED HTML TAGS ═══\n"
-                "<h1>Main title (ek hi use karo)</h1>\n"
-                "<h2>Section heading</h2>\n"
-                "<h3>Sub-heading</h3>\n"
-                "<p>Paragraph text</p>\n"
-                "<ul><li>Bullet item 1</li><li>Bullet item 2</li></ul>\n"
-                "<blockquote>Quote ya important line</blockquote>\n"
-                "<hr />  (divider line)\n"
-                "<pagebreak />  (naya page)\n"
-                "<table>\n"
-                "  <tr><th>Column 1</th><th>Column 2</th></tr>\n"
-                "  <tr><td>Data 1</td><td>Data 2</td></tr>\n"
-                "</table>\n"
-                "<img src='https://example.com/photo.jpg' w='400' />\n"
-                "<box text='Important tip: yahan kuch zaroori baat likho' />\n\n"
-                "<chart type='candlestick' title='Gold 4H' entry='4183.71' stop='4160' target='4220'\n"
-                "       data='[{\"time\":\"9\",\"open\":4180,\"high\":4200,\"low\":4170,\"close\":4190}, {\"time\":\"10\",\"open\":4190,\"high\":4210,\"low\":4185,\"close\":4205}]' />\n\n"
-                "<chart type='line' title='Sales Trend' data='[{\"x\":\"Jan\",\"y\":100},{\"x\":\"Feb\",\"y\":150}]' />\n"
-                "<chart type='bar' title='Revenue' data='[{\"label\":\"Q1\",\"value\":50},{\"label\":\"Q2\",\"value\":80}]' />\n"
-                "<chart type='pie' title='Market Share' data='[{\"label\":\"A\",\"value\":40},{\"label\":\"B\",\"value\":60}]' />\n\n"
-                "═══ KAB KAUN SA TAG ═══\n"
-                "• Share market / Trading / Candlestick ke liye: <chart type='candlestick'> use karo REAL data ke saath (10-20 candles).\n"
-                "• Business report: <chart type='bar'> aur <table> use karo.\n"
-                "• Recipe / Kahaani: <img> use karo unsplash se (jaise https://source.unsplash.com/800x600/?food).\n"
-                "• Academic / Guide: <table> comparison ke liye.\n"
-                "• Har section ke beech <hr /> ya <pagebreak /> daalo.\n\n"
-                "═══ STYLE RULES ═══\n"
-                "1. User JIS bhasha mein likhe USI mein content banao.\n"
-                "2. H1 ek hi (title), phir H2 sections, H3 subsections.\n"
-                "3. Har 3-4 paragraph ke baad <hr /> ya <pagebreak />.\n"
-                "4. Tables me CLEAN data do — text nahi.\n"
-                "5. Charts me REAL numbers do (fake placeholder nahi).\n"
-                "6. Boxes me TIPS, WARNINGS, IMPORTANT notes do.\n"
-                "7. Aakhir me ek summary/conclusion section zaroor.\n\n"
-                "Chalo shuru karo — POORA detailed HTML banao."
+                "Sirf PURE HTML return karo. <!DOCTYPE html> se shuru karo, </html> par khatam. Koi markdown (```) nahi.\n"
+                "Chalo shuru karo — POORA 10 page ka detailed HTML banao, aur har page par chart ya table zaroor dalo."
             )
+            
             html_body = _call_groq(body.message, system=system).strip()
             if "```" in html_body:
                 html_body = html_body.replace("```html", "").replace("```", "").strip()
+            
             pdf_bytes = _generate_pdf_playwright(html_body)
             pdf_b64 = _b64.b64encode(pdf_bytes).decode("utf-8")
+            
             return {
                 "service": "chat",
                 "reply": "Yeh raha aapka PDF.",
@@ -794,6 +764,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
                 "kind": "pdf",
             }
         except Exception as e:
+            print(f"[pdf] error: {e}")
             return {"service": "chat", "reply": f"PDF banane mein problem aayi: {e}", "model": "saathi"}
 
     if action == "website":
