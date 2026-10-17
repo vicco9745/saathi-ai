@@ -1,5 +1,5 @@
 from fastapi import Header, HTTPException
-from .db import get_key_record, log_usage
+from app.db import get_key_record, log_usage
 
 async def require_api_key(
     x_api_key: str | None = Header(default=None),
