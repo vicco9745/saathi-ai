@@ -4,4 +4,3 @@ python-dotenv
 pydantic
 requests
 playwright==1.49.0
-greenlet==3.2.4
