@@ -969,8 +969,15 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
     system = (
         "Tum ek professional document writer ho. User ki request ke hisab se "
         "ek achha HTML document banao (title, headings, paragraphs). "
-        "Sirf pure HTML return karo — <html> se shuru, </html> par khatam. "
-        "Sirf HTML content, koi CSS, koi markdown, koi explanation nahi."
+        "Sirf complete HTML document return karo, "
+        "<!DOCTYPE html> se shuru aur </html> par khatam. "
+        "HTML ke andar inline CSS aur zaroori JavaScript allowed hai. "
+        "Professional print-ready PDF design banao. "
+        "User ke topic ke hisab se colors, cover page, headings, "
+        "tables, charts aur page breaks use karo. "
+        "Long documents mein consistent layout rakho. "
+        "CSS ko <style> tag ke andar likho. "
+        "Markdown fences ya HTML ke bahar explanation mat dena."
     )
     html_body = _call_groq(body.prompt, system=system)
     html_body = html_body.strip()
