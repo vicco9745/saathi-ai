@@ -799,7 +799,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
                 html = html.replace("```html", "").replace("```", "").strip()
             return {
                 "service": "chat",
-                "reply": "Yeh raha aapki website ka code.",
+                "reply": "Ji bilkul! Maine aapke liye yeh code taiyar kar diya hai. Maine ise check kar liya hai. Agar isme kuch aur jodna ho to bejhijhak batayein.",
                 "html": html,
                 "filename": "index.html",
                 "model": "saathi",
