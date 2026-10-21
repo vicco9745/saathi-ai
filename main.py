@@ -9,8 +9,7 @@ Abhi isme yeh features hain:
                     aur AI ko jawab nahi pata, toh DuckDuckGo se search karke
                     jawab banata hai (free, koi API key nahi chahiye).
 2. /v1/image     -> Abhi tak koi real image-generation AI connect nahi hai.
-                    Ready hai, bas API key/provider daalna hai (neeche dekhein).
-3. /v1/website   -> Abhi tak koi real LLM connect nahi hai. Ready hai.
+3. /v1/website   -> Ready hai.
 4. /v1/video     -> Abhi tak koi real video-generation AI connect nahi hai.
 
 IMPORTANT — jab bhi aap koi LLM (Gemini/OpenAI/Claude) connect karna chahein,
@@ -37,11 +36,7 @@ app.add_middleware(
 )
 
 # ── API KEY ──────────────────────────────────────────────────────────────
-# Render.com par Environment Variable "SAATHI_API_KEY" set karna.
-# Agar set nahi hai, toh yeh default sirf testing ke liye hai — production
-# mein hamesha environment variable use karna, isko hardcode mat rakhna.
 VALID_API_KEY = os.environ.get("SAATHI_API_KEY", "test-key-123")
-
 
 def check_api_key(x_api_key: Optional[str]):
     if not x_api_key or x_api_key.strip() != VALID_API_KEY:
@@ -50,24 +45,20 @@ def check_api_key(x_api_key: Optional[str]):
             detail="API key invalid ya missing hai."
         )
 
-
-# ── Request models (frontend jo bhejta hai, uska shape) ────────────────
+# ── Request models ────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     message: str
     model: Optional[str] = "Default"
     memory: Optional[List[str]] = []
     allow_web_search: Optional[bool] = False
 
-
 class ImageRequest(BaseModel):
     prompt: str
     model: Optional[str] = "Default"
 
-
 class WebsiteRequest(BaseModel):
     prompt: str
     model: Optional[str] = "Default"
-
 
 class VideoRequest(BaseModel):
     prompt: str
@@ -75,24 +66,12 @@ class VideoRequest(BaseModel):
     include_voice: Optional[bool] = False
     voice_lang: Optional[str] = "hi-IN"
 
-
 class PdfRequest(BaseModel):
     prompt: str
     model: Optional[str] = "Default"
 
-
-# ── Free web search: DuckDuckGo Instant Answer API (no API key needed) ──
+# ── Free web search: DuckDuckGo ──────────────────────────────────────────
 def search_duckduckgo(query: str):
-    """
-    DuckDuckGo ka free Instant Answer API use karta hai.
-    Yeh factual/simple sawalon ke liye kaam karta hai (jaise "capital of X",
-    "who is Y", etc). Complex/current-events sawalon ke liye itna bharosemand
-    nahi hai — aage chal kar Google/Bing Search API se upgrade kiya ja sakta hai.
-
-    Return karta hai: (answer_text, sources_list). sources_list mein har item
-    {"title": ..., "url": ...} hota hai — yeh frontend ke "Sources" button
-    mein dikhta hai.
-    """
     try:
         resp = requests.get(
             "https://api.duckduckgo.com/",
@@ -118,7 +97,6 @@ def search_duckduckgo(query: str):
             if len(sources) >= 10:
                 break
 
-        # DuckDuckGo kabhi seedha answer deta hai, kabhi abstract text
         answer = data.get("Answer") or data.get("AbstractText")
         if answer:
             return answer.strip(), sources
@@ -131,17 +109,8 @@ def search_duckduckgo(query: str):
     except Exception:
         return None, []
 
-
-# ── Free News API — Google News RSS (no API key needed) ───────────────
+# ── Free News API — Google News RSS ──────────────────────────────────────
 def fetch_news(query: str = None, lang: str = "hi", country: str = "IN"):
-    """
-    Google News RSS se latest khabar laata hai.
-    - query: khaas topic (jaise "cricket", "bollywood", "delhi")
-    - lang: "hi" (Hindi) ya "en" (English)
-    - country: "IN" (India) ya "US", "GB", etc.
-
-    Return: (news_text, sources_list)
-    """
     import xml.etree.ElementTree as ET
     try:
         if query:
@@ -163,7 +132,6 @@ def fetch_news(query: str = None, lang: str = "hi", country: str = "IN"):
         for i, item in enumerate(items[:7]):
             title = item.findtext("title", "").strip()
             link = item.findtext("link", "").strip()
-            pub_date = item.findtext("pubDate", "").strip()
             if title:
                 news_lines.append(f"{i+1}. {title}")
                 sources.append({"title": title[:80], "url": link})
@@ -178,18 +146,8 @@ def fetch_news(query: str = None, lang: str = "hi", country: str = "IN"):
         print(f"[news] CRASHED: {e}")
         return None, []
 
-
-# ── LLM placeholder — jab aap LLM connect karo, isme call daal dena ─────
+# ── LLM placeholder ──────────────────────────────────────────────────────
 def generate_reply_from_llm(message: str, memory: List[str], search_context: Optional[str]) -> str:
-    """
-    Abhi yahan koi real LLM (Gemini/OpenAI/Claude) connect nahi hai.
-    Jab connect karna ho, is function ke andar apne LLM provider ka
-    API call daal dena — memory aur search_context ko prompt/system-message
-    mein context ki tarah bhej dena.
-
-    Filhaal, agar search se kuch mila hai toh wahi seedha jawab ki tarah
-    de diya jata hai (bina LLM ke bhi kaam chalta rahe, isliye).
-    """
     if search_context:
         return search_context
 
@@ -203,8 +161,7 @@ def generate_reply_from_llm(message: str, memory: List[str], search_context: Opt
         + memory_note
     )
 
-
-# ── Endpoints ─────────────────────────────────────────────────────────
+# ── Endpoints ────────────────────────────────────────────────────────────
 @app.post("/v1/chat")
 def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
     check_api_key(x_api_key)
@@ -213,7 +170,7 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
     sources = []
     msg_lower = (req.message or "").lower()
 
-    # News detection — kya user news maang raha hai?
+    # News detection
     news_keywords = [
         "news", "khabar", "khabrein", "samachar", "samachaar",
         "आज की खबर", "आज की ख़बर", "ताज़ा खबर", "ताजा खबर", "समाचार", "न्यूज़", "न्यूज",
@@ -221,37 +178,39 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
         "aaj ki", "taja", "taaza"
     ]
     is_news_request = any(kw in msg_lower for kw in news_keywords)
-    print(f"[NEWS-CHECK] msg='{req.message[:50]}', is_news_request={is_news_request}")
-
+    
     if is_news_request:
-        # Language detect
         dev_count = sum(1 for c in req.message if '\u0900' <= c <= '\u097F')
         news_lang = "hi" if dev_count > 3 else "en"
-        # Topic detect (agar user ne koi topic bola ho)
         topic = None
         for t in ["cricket", "bollywood", "politics", "sports", "business", "technology", "world"]:
             if t in msg_lower:
                 topic = t
                 break
-        print(f"[NEWS-DEBUG] is_news_request=True, topic={topic}, lang={news_lang}")
         news_text, news_sources = fetch_news(query=topic, lang=news_lang)
-        print(f"[NEWS-DEBUG] news_text={'MILA (' + str(len(news_text)) + ' chars)' if news_text else 'NAHI MILA (None)'}")
         if news_text:
             search_context = news_text
             sources = news_sources
-
     elif req.allow_web_search:
         search_context, sources = search_duckduckgo(req.message)
 
+    # 🚨 NAYA SMART SYSTEM PROMPT 🚨
     system = (
-        "Tum Saathi ho - ek friendly, helpful AI assistant. "
-        "Hindi/Hinglish mein natural baat karo. "
-        "Agar user kahani, kavita, ya creative cheez maange to KHUD se likho, "
-        "web search ka result use mat karo. "
-        "Sirf facts, news, ya current info ke liye diya gaya context use karo. "
-        "Agar news context diya gaya hai, to usse achchhe se Hindi mein summary bana kar do — "
-        "har khabar ka chhota point do, aur sources bhi mention karo."
+        "Aap 'Saathi-AI' hain. Aapko hamesha ek bahut hi sharif, izzatdar aur samajhdar insaan ki tarah baat karni hai. "
+        "Aapko har baar ek jaisa (rata-rataya) jawab nahi dena hai. Jawab hamesha user ke sawal ke hisab se aur us kaam ke hisab se hona chahiye.\n\n"
+        
+        "Jab bhi aap user ko koi cheez (code, website, jankari, image aadi) dein, to in baaton ka dhyan rakhein:\n"
+        "1. Izzat aur Swagat: Hamesha vinamrata se baat shuru karein. Jaise: 'Ji bilkul! Aapke liye yeh taiyar hai.'\n"
+        "2. Kya-kya joda (agar code ho): Agar code de rahe hain, to saaf batayein ki usme kya-kya naya joda hai.\n"
+        "3. Kaam ki cheezein: User jo maange, use bilkul saaf-suthre tareeke se dein.\n"
+        "4. Khud ki jaanch: Batayein ki 'Maine ise check kar liya hai, yeh sahi hai.'\n"
+        "5. Vinamrata se poochein: Aakhir mein pyaar se poochein: 'Agar isme kuch aur jodna ho ya badlav karna ho, to bejhijhak batayein.'\n\n"
+        
+        "Niyam: 'Yeh raha aapka code' jaisa chhota ya khokhla jawab kabhi mat dena. Hamesha kaam ke hisab se poora aur achha jawab dena. "
+        "Agar user kahani, kavita, ya creative cheez maange to KHUD se likho, web search ka result use mat karo. "
+        "Sirf facts, news, ya current info ke liye diya gaya context use karo."
     )
+    
     if search_context:
         system += "\n\nContext:\n" + search_context
 
@@ -261,14 +220,12 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
         if search_context:
             reply = search_context
         else:
-            reply = "Sorry, abhi AI se connect nahi ho pa raha."
+            reply = "Maaf kijiyega, abhi AI se connect nahi ho pa raha. Kripya thodi der baad koshish karein."
 
     response = {"reply": reply}
     if sources:
         response["sources"] = sources
     return response
-
-
 
 
 def call_groq(prompt: str, system: str = "") -> str:
@@ -303,8 +260,6 @@ def call_groq(prompt: str, system: str = "") -> str:
 @app.post("/v1/image")
 def generate_image(req: ImageRequest, x_api_key: Optional[str] = Header(None)):
     check_api_key(x_api_key)
-    # TODO: Yahan kisi image-generation API (Stability AI / DALL-E / Gemini
-    # Image) ka call daalna hai jab woh ready ho.
     raise HTTPException(
         status_code=503,
         detail="Image generation abhi backend mein connect nahi hai. Koi image-gen API jodni hogi."
@@ -323,7 +278,6 @@ def generate_website(req: WebsiteRequest, x_api_key: Optional[str] = Header(None
         "Hindi/English content user ki request ke hisab se daalo."
     )
     html = call_groq(req.prompt, system=system)
-    # Agar model ne ```html fence lagaya to hata do
     html = html.strip()
     if html.startswith("```"):
         html = html.split("\n", 1)[1] if "\n" in html else html
@@ -332,14 +286,12 @@ def generate_website(req: WebsiteRequest, x_api_key: Optional[str] = Header(None
         html = html.strip()
     if "```" in html:
         html = html.replace("```html", "").replace("```", "").strip()
-    return {"html": html, "filename": "index.html" }
+    return {"html": html, "filename": "index.html"}
 
 
 @app.post("/v1/video")
 def generate_video(req: VideoRequest, x_api_key: Optional[str] = Header(None)):
     check_api_key(x_api_key)
-    # TODO: Yahan kisi video-generation API (Runway / Pika / Google Veo)
-    # ka call daalna hai jab woh ready ho.
     raise HTTPException(
         status_code=503,
         detail="Video generation abhi backend mein connect nahi hai. Koi video-gen API jodni hogi."
@@ -349,14 +301,6 @@ def generate_video(req: VideoRequest, x_api_key: Optional[str] = Header(None)):
 @app.post("/v1/pdf")
 def generate_pdf(req: PdfRequest, x_api_key: Optional[str] = Header(None)):
     check_api_key(x_api_key)
-    # TODO: Professional-dikhne-wala PDF banane ke liye yeh tarika achha rahega:
-    #   1. LLM se prompt ke content ka HTML+CSS banwao (headings, colors, icons,
-    #      layout — jaisa reference design mein tha)
-    #   2. Us HTML ko WeasyPrint (pip install weasyprint) se PDF mein convert karo:
-    #        from weasyprint import HTML
-    #        pdf_bytes = HTML(string=html_content).write_pdf()
-    #   3. pdf_bytes ko base64 karke "pdf_base64" field mein bhej do
-    # Filhaal koi LLM/PDF-render library connect nahi hai, isliye abhi error.
     raise HTTPException(
         status_code=503,
         detail="PDF generation abhi backend mein connect nahi hai. LLM + WeasyPrint jaisi library jodni hogi."
