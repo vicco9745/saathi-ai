@@ -26,6 +26,13 @@ def init_db():
         service TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )""")
+    owner_key = os.getenv("OWNER_API_KEY")
+    if owner_key:
+        conn.execute(
+            "INSERT OR IGNORE INTO api_keys(name,key,owner,active,plan) VALUES(?,?,?,?,?)",
+            ("Owner", owner_key, 1, 1, "owner")
+        )
+
     conn.commit()
     conn.close()
 
