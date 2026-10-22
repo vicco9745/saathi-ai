@@ -1387,7 +1387,15 @@ def make_design(body: DesignRequest, key=Depends(require_api_key)):
             raise HTTPException(500, "Design generate nahi hua")
         return {
             "service": "design",
-            "reply": "Yeh raha aapka design.",
+            "reply": (
+                "Aapka design taiyar hai! Maine aapke request ke mutabik "
+                "HTML/CSS design banaya hai. Ismein rang, layout aur text "
+                "aapki demand ke hisaab se rakhe gaye hain. "
+                "File upar di gayi hai. Agar kisi khaas cheez—jaise rang, "
+                "naam, text, size ya layout—mein badlav chahiye, to bataiye; "
+                "main usi hisse ko update karunga. "
+                "Note: design ko browser mein alag se test nahi kiya gaya hai."
+            ),
             "html": html,
             "filename": "design.html",
             "kind": "design",
