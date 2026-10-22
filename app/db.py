@@ -29,7 +29,10 @@ def init_db():
     owner_key = os.getenv("OWNER_API_KEY")
     if owner_key:
         conn.execute(
-            "INSERT OR IGNORE INTO api_keys(name,key,owner,active,plan) VALUES(?,?,?,?,?)",
+            """INSERT INTO api_keys(name,key,owner,active,plan)
+               VALUES(?,?,?,?,?)
+               ON CONFLICT(key) DO UPDATE SET
+               owner=1, active=1, plan='owner'""",
             ("Owner", owner_key, 1, 1, "owner")
         )
 
