@@ -3219,7 +3219,6 @@ procSchedule(pendingReply,active);}})();
 chat.messages.push(pendingReply);
 msgInput.value='';autoResizeInput();pendingAttachments=[];
 renderPendingAttachments();updateActionButton();saveChats();renderChatList();renderMessages();
-<<<<<<< HEAD
 const SAATHI_KEY_STORE='saathi_api_key';
 let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
 SAATHI_KEY = 'test-key-123';
@@ -3248,13 +3247,10 @@ if(isDesignRequest(text)){
   return;
 }
 
-=======
->>>>>>> 65b37d72a2a081e74bebee91142073f9c93b50f8
 const mediaAttachments=attachments.filter(a=>a.kind!=='text');
 const textAttachments=attachments.filter(a=>a.kind==='text');
 const analyzableFiles=attachments.filter(a=>a.kind==='file'&&a.content&&String(a.content).trim().length>0);
 if(mediaAttachments.length>0&&analyzableFiles.length===0){
-<<<<<<< HEAD
 const SAATHI_KEY_STORE='saathi_api_key';
 let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
 SAATHI_KEY = 'test-key-123';
@@ -3269,10 +3265,8 @@ if(inc.length)pendingReply.attachments=inc;
 if(Array.isArray(data.sources)&&data.sources.length>0)pendingReply.sources=data.sources.slice(0,10);
 saveChats();renderMessages();
 }).catch(err=>{pendingReply.text='Error: '+err.message;saveChats();renderMessages();});
-=======
 const isPhotoOnly=mediaAttachments.length===1&&mediaAttachments[0].kind==='photo';
 {setTimeout(()=>{let replyText;if(mediaAttachments.length===1){const a=mediaAttachments[0];if(a.kind==='video')replyText='Video mil gaya: "'+a.name+'" ('+formatSize(a.size)+').';else if(a.kind==='photo')replyText='Image mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';else replyText='File mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';}else{replyText=mediaAttachments.length+' items mil gaye.';}pendingReply.text=replyText;saveChats();renderMessages();},500);}
->>>>>>> 65b37d72a2a081e74bebee91142073f9c93b50f8
 }else{
 let combinedText;
 if(analyzableFiles.length>0){
