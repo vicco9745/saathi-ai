@@ -724,7 +724,6 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             "- [3-4 suggestions]\n\n"
             "## 🌟 Rating: X/10\n\n"
             "Chhota rakho. User ki bhasha mein."
-        )
         try:
             reply = _call_groq(body.message, system=system)
             return {"service": "chat", "reply": reply, "model": "saathi", "kind": "analysis"}
