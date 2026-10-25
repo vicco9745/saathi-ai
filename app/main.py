@@ -716,19 +716,6 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             "Code dene ke baad zaroor batayein: 'Maine is code ko check kar liya hai, yeh sahi chalega. Agar isme kuch aur jodna ho to batayein.' "
             "Kabhi bhi adhoora ya galat code mat dein. Hamesha apne hisab se naya text likhein, ek hi jaisa rata-rataya text baar-baar mat likhein."
         )
-            "## ✅ Achhi Baatein\n"
-            "- [3-4 points]\n\n"
-            "## ⚠️ Kamiyan\n"
-            "- [3-4 points]\n\n"
-            "## 🔧 Improvements\n"
-            "- [3-4 suggestions]\n\n"
-            "## 🌟 Rating: X/10\n\n"
-            "Chhota rakho. User ki bhasha mein."
-        try:
-            reply = _call_groq(body.message, system=system)
-            return {"service": "chat", "reply": reply, "model": "saathi", "kind": "analysis"}
-        except Exception as e:
-            return {"service": "chat", "reply": f"Analysis mein problem: {e}", "model": "saathi"}
 
     if action == "pdf":
         try:
