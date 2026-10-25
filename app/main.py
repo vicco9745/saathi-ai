@@ -715,7 +715,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             "Uske baad aapko poora aur 100% sahi code dena hai. Code dene se pehle use khud check karein ki saare tags band hain ya nahi, CSS sahi hai ya nahi. "
             "Code dene ke baad zaroor batayein: 'Maine is code ko check kar liya hai, yeh sahi chalega. Agar isme kuch aur jodna ho to batayein.' "
             "Kabhi bhi adhoora ya galat code mat dein. Hamesha apne hisab se naya text likhein, ek hi jaisa rata-rataya text baar-baar mat likhein."
-        )            "- [4-6 main points]\n\n"
+        )
             "## ✅ Achhi Baatein\n"
             "- [3-4 points]\n\n"
             "## ⚠️ Kamiyan\n"
