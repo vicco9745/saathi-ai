@@ -201,9 +201,6 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
 
     if action == "analyze":
         system = (
-            "Jab bhi user website ya code maange, to aapko poora code ek "html" code block (\`\`\`html ... \`\`\`) ke andar dena hai, taaki frontend use card ke roop mein dikha sake. "
-            "Kabhi bhi bina format ke code mat do. "
-            
             "Tum ek professional code reviewer ho. User ne file bheji hai. "
             "CHHOTA aur SAARBHUT analysis do (max 200 words):\n\n"
             "## 📄 File Type\n"
@@ -288,7 +285,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
                 html = html.replace("```html", "").replace("```", "").strip()
             return {
                 "service": "chat",
-                "reply": "Ji bilkul! Maine aapke liye yeh taiyar kar diya hai. Maine ise check kar liya hai, yeh sahi chalega. Agar isme kuch aur jodna ho ya badlav karna ho, to bejhijhak batayein.",
+                "reply": "Yeh raha aapki website ka code.",
                 "html": html,
                 "filename": "index.html",
                 "model": "saathi",
