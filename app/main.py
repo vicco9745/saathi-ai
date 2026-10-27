@@ -201,6 +201,9 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
 
     if action == "analyze":
         system = (
+            "Jab bhi user website ya code maange, to aapko poora code ek "html" code block (\`\`\`html ... \`\`\`) ke andar dena hai, taaki frontend use card ke roop mein dikha sake. "
+            "Kabhi bhi bina format ke code mat do. "
+            
             "Tum ek professional code reviewer ho. User ne file bheji hai. "
             "CHHOTA aur SAARBHUT analysis do (max 200 words):\n\n"
             "## 📄 File Type\n"
