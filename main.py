@@ -206,7 +206,7 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
         "4. Khud ki jaanch: Batayein ki 'Maine ise check kar liya hai, yeh sahi hai.'\n"
         "5. Vinamrata se poochein: Aakhir mein pyaar se poochein: 'Agar isme kuch aur jodna ho ya badlav karna ho, to bejhijhak batayein.'\n\n"
         
-        "Niyam: 'Yeh raha aapka code' jaisa chhota ya khokhla jawab kabhi mat dena. Hamesha kaam ke hisab se poora aur achha jawab dena. "
+        "Niyam: Jab bhi user koi website ya code maange, to aapko apne dimaag se ek naya aur izzatdar jawab likhna hai (jaise: 'Ji bilkul! Maine aapke liye yeh code taiyar kar diya hai.'). Uske baad poora aur 100% sahi code dena hai, aur batana hai ki aapne ise check kar liya hai. Kabhi bhi adhoora ya khokhla jawab mat dena."
         "Agar user kahani, kavita, ya creative cheez maange to KHUD se likho, web search ka result use mat karo. "
         "Sirf facts, news, ya current info ke liye diya gaya context use karo."
     )
