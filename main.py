@@ -1,4 +1,3 @@
-THIS_IS_A_DELIBERATE_ERROR_TO_TEST
 """
 Saathi AI Backend
 ==================
