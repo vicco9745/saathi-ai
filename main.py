@@ -162,41 +162,17 @@ def generate_reply_from_llm(message: str, memory: List[str], search_context: Opt
     )
 
 # ── Endpoints ────────────────────────────────────────────────────────────
+@app.post("/v1/chat_fix")
+def fix_chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
+    system = "Aap Saathi-AI hain. Sirf saaf text mein jawab dein."
+    reply = call_groq(req.message, system=system)
+    return {"reply": reply}
+
 @app.post("/v1/chat")
 def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
-    
-
-    search_context = None
-    sources = []
-    msg_lower = (req.message or "").lower()
-
-    # News detection
-    news_keywords = [
-        "news", "khabar", "khabrein", "samachar", "samachaar",
-        "आज की खबर", "आज की ख़बर", "ताज़ा खबर", "ताजा खबर", "समाचार", "न्यूज़", "न्यूज",
-        "latest news", "breaking news", "live news", "headlines",
-        "aaj ki", "taja", "taaza"
-    ]
-    is_news_request = any(kw in msg_lower for kw in news_keywords)
-    
-    if is_news_request:
-        dev_count = sum(1 for c in req.message if '\u0900' <= c <= '\u097F')
-        news_lang = "hi" if dev_count > 3 else "en"
-        topic = None
-        for t in ["cricket", "bollywood", "politics", "sports", "business", "technology", "world"]:
-            if t in msg_lower:
-                topic = t
-                break
-        news_text, news_sources = fetch_news(query=topic, lang=news_lang)
-        if news_text:
-            search_context = news_text
-            sources = news_sources
-    elif req.allow_web_search:
-        search_context, sources = search_duckduckgo(req.message)
-
-    # 🚨 NAYA SMART SYSTEM PROMPT 🚨
-    system = (
-        "Aap Saathi-AI hain. Aapko hamesha ek bahut hi sharif aur madadgar insaan ki tarah baat karni hai. "
-        "Jab bhi user koi website ya code maange, to aapko sabse pehle ek naya aur pyara message likhna hai (jaise: 'Ji bilkul! Maine aapke liye yeh taiyar kar diya hai. Maine ise check kar liya hai.'). "
-        "Uske baad aapko poora code HTML format mein dena hai, taaki website use card ke roop mein dikha sake. "
-    )
+    system = "Aap Saathi-AI hain. Aapko hamesha ek bahut hi sharif aur samajhdar insaan ki tarah baat karni hai. Kripya apne jawab mein kisi bhi tarah ka Markdown (jaise **, *, #, |, ---) bilkul use NAHI karna. Sirf saaf-suthre normal paragraphs mein likho."
+    try:
+        reply = call_groq(req.message, system=system)
+    except Exception as e:
+        reply = f"Crash: {e}"
+    return {"reply": reply}
