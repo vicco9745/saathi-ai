@@ -1,0 +1,22 @@
+/* Saathi Premium Engine Fonts & Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;750&family=Noto+Sans+Devanagari:wght@400;500;700&family=Noto+Nastaliq+Urdu&display=swap');
+
+.saathi-premium-md {
+    font-family: 'Inter', 'Noto Sans Devanagari', sans-serif !important;
+    line-height: 1.85; font-size: 16px; overflow-wrap: anywhere;
+}
+[dir="rtl"] { font-family: 'Noto Nastaliq Urdu', sans-serif !important; direction: rtl; text-align: right; }
+.saathi-premium-md h1, .saathi-premium-md h2, .saathi-premium-md h3 { line-height: 1.35; margin: 20px 0 10px; font-weight: 750; }
+.saathi-premium-md h1 { font-size: 24px; } .saathi-premium-md h2 { font-size: 20px; } .saathi-premium-md h3 { font-size: 18px; }
+.saathi-premium-md p { margin: 10px 0; }
+.saathi-premium-md strong { font-weight: 750; }
+.saathi-premium-md ul, .saathi-premium-md ol { padding-left: 24px; margin: 12px 0; }
+.saathi-premium-md blockquote { border-left: 4px solid #16a36a; background: #f7f7f8; padding: 10px 15px; margin: 15px 0; border-radius: 0 8px 8px 0; color: #555; }
+.saathi-premium-md table { border-collapse: collapse; width: 100%; min-width: 400px; font-size: 14px; margin: 15px 0; }
+.saathi-premium-md th, .saathi-premium-md td { border: 1px solid #e8e8e8; padding: 10px 12px; text-align: left; }
+.saathi-premium-md th { background: #f7f7f8; font-weight: 700; }
+.saathi-premium-md .table-wrap { overflow-x: auto; border-radius: 10px; }
+.saathi-premium-md .code-card { margin: 15px 0; border-radius: 10px; background: #15171b; color: #eee; overflow: hidden; }
+.saathi-premium-md .code-head { display: flex; justify-content: space-between; background: #22252b; padding: 8px 12px; font-size: 12px; color: #ccc; }
+.saathi-premium-md .code-card pre { margin: 0; padding: 15px; overflow-x: auto; font-size: 13px; }
+.saathi-premium-md :not(pre) > code { background: #f5f5f5; border: 1px solid #e8e8e8; border-radius: 5px; padding: 2px 6px; font-size: 0.9em; }
