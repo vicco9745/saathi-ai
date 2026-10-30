@@ -3046,7 +3046,7 @@ if(k==='html')return hlHtml(code);
 if(k==='css')return hlCss(code);
 return hlGeneric(code,k);}catch(_){return escapeHtml(code);}}
 const MSG_CARD_LANGS=['message','msg','draft','sms','whatsapp'];
-function renderRichText(text){text=String(text==null?'':text);const re=/```([^\n`]*)\n?([\s\S]*?)(?:```|$)/g;let out='',last=0,m;
+function renderRichText(text){text=String(text==null?'':text);if(typeof marked!=='undefined'){try{text=marked.parse(text);}catch(e){}};const re=/```([^\n`]*)\n?([\s\S]*?)(?:```|$)/g;let out='',last=0,m;
 while((m=re.exec(text))!==null){if(m.index===re.lastIndex){re.lastIndex++;continue;}
 let before=text.slice(last,m.index);if(before)out+=linkifyText(before.replace(/\n$/,''));
 const lang=(m[1]||'').trim().split(/\s+/)[0];let code=m[2].replace(/\n+$/,'');
