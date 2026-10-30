@@ -164,7 +164,7 @@ def generate_reply_from_llm(message: str, memory: List[str], search_context: Opt
 # ── Endpoints ────────────────────────────────────────────────────────────
 @app.post("/v1/chat")
 def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
-    check_api_key(x_api_key)
+    
 
     search_context = None
     sources = []
