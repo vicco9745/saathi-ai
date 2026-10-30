@@ -4,10 +4,6 @@
   "favorite_color": "नीला",
   "conversation_history": [
     {
-      "user": "और बताओ",
-      "assistant": "मैं अभी यह जवाब सीख रहा हूँ।"
-    },
-    {
       "user": "तुम कौन हो",
       "assistant": "मैं Saathi हूँ।"
     },
@@ -42,6 +38,10 @@
     {
       "user": "Eiffel Tower height",
       "assistant": "The OFFICIAL Eiffel Tower website: tickets, news, info...\n\nWondering what there is to see at the Eiffel Tower and what you’ll find on each floor? From its bustling esplanade to its dizzying 276 …\n\n(Source: https://www.toureiffel.paris/en)"
+    },
+    {
+      "user": "Namaste, tum kaun ho?",
+      "assistant": "My name is Saathi. I'm your AI assistant. How can I help you?"
     }
   ]
 }
