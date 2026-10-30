@@ -1,3 +1,26 @@
+
+
+def call_groq(prompt: str, system: str = "") -> str:
+    key = os.environ.get("GROQ_API_KEY", "os.environ.get("GROQ_API_KEY", "")")
+    try:
+        r = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+            json={
+                "model": "openai/gpt-oss-20b",
+                "messages": (
+                    ([{"role": "system", "content": system}] if system else []) +
+                    [{"role": "user", "content": prompt}]
+                ),
+            },
+            timeout=60,
+        )
+        if r.status_code != 200:
+            return f"Groq error: {r.status_code} - {r.text}"
+        data = r.json()
+        return (data["choices"][0]["message"]["content"] or "").strip()
+    except Exception as e:
+        return f"Crash: {e}"
 """
 Saathi AI Backend
 ==================
