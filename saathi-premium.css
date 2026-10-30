@@ -1,0 +1,10 @@
+.saathi-premium-md { font-family: 'Inter', 'Noto Sans Devanagari', sans-serif; line-height: 1.8; font-size: 16px; }
+.saathi-premium-md h1, .saathi-premium-md h2, .saathi-premium-md h3 { font-weight: 700; margin: 20px 0 10px; }
+.saathi-premium-md p { margin: 10px 0; }
+.saathi-premium-md table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+.saathi-premium-md th, .saathi-premium-md td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+.saathi-premium-md th { background: #f5f5f5; }
+.saathi-premium-md pre { background: #1e1e1e; color: #fff; padding: 15px; border-radius: 8px; overflow-x: auto; }
+.saathi-premium-md code { font-family: monospace; }
+.saathi-premium-md blockquote { border-left: 4px solid #16a36a; padding-left: 15px; color: #555; }
+[dir="rtl"] { direction: rtl; text-align: right; }

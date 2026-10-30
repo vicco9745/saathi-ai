@@ -1327,6 +1327,8 @@ button:focus:not(:focus-visible),[role="button"]:focus:not(:focus-visible){outli
 .gal-search{position:relative}
 .gal-search>.gal-live{position:absolute;left:0;right:0;bottom:calc(100% + 10px);padding:0 8px;max-height:34vh;font-style:italic;background:none;border:none;border-radius:0;box-shadow:none;text-shadow:0 0 8px var(--page-bg),0 0 8px var(--page-bg);z-index:5}
 </style>
+<link rel="stylesheet" href="saathi-premium.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -3772,5 +3774,28 @@ document.addEventListener('contextmenu',function(e){var t=e.target&&e.target.clo
 document.addEventListener('pointerdown',function(e){if(e.target&&e.target.closest&&e.target.closest(q)){var sel=window.getSelection&&getSelection();if(sel&&sel.rangeCount&&!sel.isCollapsed&&!e.target.closest('input,textarea'))sel.removeAllRanges();}},true);
 })();
 </script>
+
+<script>
+// SAATHI PREMIUM OBSERVER
+document.addEventListener("DOMContentLoaded", function() {
+    const observer = new MutationObserver(function() {
+        document.querySelectorAll(".msg-row.ai .bubble").forEach(bubble => {
+            if (bubble.dataset.premium) return;
+            if (bubble.closest(".msg-row.user")) return;
+            let text = bubble.innerText;
+            if (!text || text.trim() === "") return;
+            if (typeof marked !== "undefined") {
+                try {
+                    bubble.innerHTML = marked.parse(text);
+                    bubble.classList.add("saathi-premium-md");
+                    bubble.dataset.premium = "true";
+                } catch(e) {}
+            }
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+});
+</script>
+
 </body>
 </html>
