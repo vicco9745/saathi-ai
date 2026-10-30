@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<title>Saathi Smart Text Engine</title>
+
+<!-- Fonts & Markdown & Security -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;750&family=Noto+Sans+Devanagari:wght@400;500;700&family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f7f7f8;
+  --text: #252525;
+  --muted: #777;
+  --border: #e8e8e8;
+  --accent: #16a36a;
+  --code: #f5f5f5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+  line-height: 1.75;
+}
+
+.app { width: 100%; max-width: 900px; margin: auto; padding: 20px 22px 130px; }
+
+.header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 25px;
+}
+
+.logo {
+  width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 13px; background: #e8f8ef; color: var(--accent);
+  font-weight: 800; font-size: 20px;
+}
+
+.brand { font-weight: 750; font-size: 19px; }
+.brand small { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
+
+.message { margin-bottom: 35px; animation: appear .35s ease; }
+@keyframes appear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* RTL Support */
+[dir="rtl"] { font-family: 'Noto Nastaliq Urdu', 'Noto Sans Devanagari', sans-serif; direction: rtl; text-align: right; }
+
+.answer { font-size: 16px; line-height: 1.85; overflow-wrap: anywhere; }
+.answer h1, .answer h2, .answer h3 { line-height: 1.35; letter-spacing: -.35px; margin: 27px 0 13px; font-weight: 750; }
+.answer h1 { font-size: 27px; }
+.answer h2 { font-size: 22px; }
+.answer h3 { font-size: 18px; }
+.answer p { margin: 12px 0; }
+.answer strong { font-weight: 750; }
+.answer a { color: #087cba; text-decoration: underline; overflow-wrap: anywhere; }
+.answer ul, .answer ol { padding-left: 26px; margin: 14px 0; }
+.answer li { margin: 7px 0; padding-left: 3px; }
+.answer blockquote { border-left: 4px solid var(--accent); background: var(--surface); padding: 12px 17px; margin: 18px 0; border-radius: 0 10px 10px 0; color: #555; }
+.answer hr { border: 0; border-top: 1px solid var(--border); margin: 24px 0; }
+
+.table-wrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--border); border-radius: 12px; }
+.answer table { border-collapse: collapse; width: 100%; min-width: 400px; font-size: 14px; }
+.answer th, .answer td { text-align: left; padding: 12px 15px; border-bottom: 1px solid var(--border); }
+.answer th { background: var(--surface); font-weight: 700; }
+.answer tr:last-child td { border-bottom: 0; }
+
+.code-card { margin: 18px 0; overflow: hidden; border: 1px solid var(--border); border-radius: 13px; background: #15171b; color: #eee; }
+.code-head { display: flex; justify-content: space-between; align-items: center; background: #22252b; padding: 10px 14px; font-size: 12px; color: #ccc; }
+.copy-code { border: 1px solid #555; background: transparent; color: white; border-radius: 7px; padding: 5px 11px; cursor: pointer; }
+.code-card pre { margin: 0; padding: 17px; overflow-x: auto; line-height: 1.65; font-size: 13px; white-space: pre; }
+.code-card code { font-family: Consolas, monospace; }
+.answer :not(pre) > code { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; font-size: .9em; }
+
+.actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.action-btn { border: 1px solid var(--border); background: white; color: #666; border-radius: 8px; padding: 7px 11px; font-size: 12px; cursor: pointer; transition: .2s; }
+.action-btn:hover { background: var(--surface); color: var(--accent); }
+.action-btn.active { color: var(--accent); border-color: var(--accent); }
+
+.composer { position: fixed; bottom: 0; left: 0; right: 0; padding: 13px 16px 18px; background: rgba(255,255,255,.96); border-top: 1px solid var(--border); backdrop-filter: blur(15px); }
+.composer-inner { max-width: 850px; margin: auto; display: flex; align-items: flex-end; gap: 10px; border: 1px solid #ddd; border-radius: 17px; padding: 10px 12px; box-shadow: 0 3px 15px #00000008; }
+#prompt { flex: 1; border: none; outline: none; resize: none; font: inherit; font-size: 15px; max-height: 120px; background: transparent; color: var(--text); }
+.send { border: none; background: var(--accent); color: white; width: 39px; height: 39px; border-radius: 11px; cursor: pointer; font-size: 18px; }
+.send:disabled { opacity: .5; cursor: wait; }
+
+.empty { text-align: center; color: var(--muted); padding: 70px 10px; }
+
+@media(max-width:600px) {
+  .app { padding: 14px 16px 120px; }
+  .answer { font-size: 15px; }
+  .answer h1 { font-size: 23px; }
+  .answer h2 { font-size: 20px; }
+  .answer h3 { font-size: 17px; }
+}
+
+@media(prefers-color-scheme:dark) {
+  body.auto-dark { --bg: #171717; --surface: #252525; --text: #ededed; --muted: #aaa; --border: #363636; }
+  body.auto-dark .composer { background: rgba(23,23,23,.96); }
+  body.auto-dark .action-btn { background: #222; color: #ccc; }
+}
+</style>
+</head>
+
+<body class="auto-dark">
+<div class="app">
+  <header class="header">
+    <div class="logo">S</div>
+    <div class="brand">Saathi AI<small>Smart Response Engine</small></div>
+  </header>
+  <main id="chat">
+    <div class="empty">
+      <h2>Welcome to Saathi AI</h2>
+      <p>Your intelligent response experience.</p>
+    </div>
+  </main>
+</div>
+
+<div class="composer">
+  <div class="composer-inner">
+    <textarea id="prompt" rows="1" placeholder="Message Saathi..."></textarea>
+    <button class="send" id="send">↑</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const chat = document.getElementById("chat");
+  const prompt = document.getElementById("prompt");
+  const send = document.getElementById("send");
+  
+  // यहाँ आपका असली सर्वर जुड़ा है
+  const API_URL = "https://saathi-ai-y48j.onrender.com/v1/chat";
+  const API_KEY = "test-key-123";
+
+  marked.setOptions({ gfm: true, breaks: true });
+
+  function safeRender(markdown) {
+    const html = marked.parse(String(markdown ?? ""));
+    return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+  }
+
+  function detectRTL(text) {
+    const rtlChars = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
+    return rtlChars.test(text);
+  }
+
+  function prepareContent(element) {
+    element.querySelectorAll("table").forEach(table => {
+      if (table.parentElement.classList.contains("table-wrap")) return;
+      const wrap = document.createElement("div");
+      wrap.className = "table-wrap";
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+
+    element.querySelectorAll("pre").forEach(pre => {
+      if (pre.parentElement.classList.contains("code-card")) return;
+      const card = document.createElement("div");
+      card.className = "code-card";
+      const code = pre.querySelector("code");
+      const language = code?.className.match(/language-([\w-]+)/)?.[1] || "code";
+      const head = document.createElement("div");
+      head.className = "code-head";
+      const name = document.createElement("span");
+      name.textContent = language;
+      const button = document.createElement("button");
+      button.className = "copy-code";
+      button.textContent = "Copy";
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(code?.textContent || pre.textContent);
+          button.textContent = "Copied!";
+          setTimeout(() => button.textContent = "Copy", 1500);
+        } catch { button.textContent = "Copy unavailable"; }
+      });
+      head.append(name, button);
+      pre.parentNode.insertBefore(card, pre);
+      card.append(head, pre);
+    });
+  }
+
+  function createMessage(markdown, options = {}) {
+    const message = document.createElement("article");
+    message.className = "message";
+    const content = document.createElement("div");
+    content.className = "answer";
+    content.innerHTML = safeRender(markdown);
+    
+    if (detectRTL(markdown)) content.setAttribute('dir', 'rtl');
+    
+    message.appendChild(content);
+    prepareContent(content);
+    
+    // Add Math support
+    renderMathInElement(content, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}] });
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const buttons = [
+      ["Copy", async () => { await navigator.clipboard.writeText(content.innerText); }],
+      ["Listen", () => speak(content.innerText)]
+    ];
+
+    buttons.forEach(([label, callback]) => {
+      const button = document.createElement("button");
+      button.className = "action-btn";
+      button.textContent = label;
+      button.addEventListener("click", callback);
+      actions.appendChild(button);
+    });
+
+    message.appendChild(actions);
+    chat.appendChild(message);
+
+    if (!options.noScroll) {
+      message.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    return { message, content };
+  }
+
+  function speak(text) {
+    if (!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(utterance);
+  }
+
+  async function typeMessage(markdown, speed = 8) {
+    const { content, message } = createMessage("", { noScroll: true });
+    const full = String(markdown ?? "");
+    let position = 0;
+    while (position < full.length) {
+      position = Math.min(position + 12, full.length);
+      content.innerHTML = safeRender(full.slice(0, position));
+      prepareContent(content);
+      if (position % 120 === 0 || position === full.length) {
+        message.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      await new Promise(resolve => setTimeout(resolve, speed));
+    }
+    content.innerHTML = safeRender(full);
+    prepareContent(content);
+    return message;
+  }
+
+  async function realSend() {
+    const value = prompt.value.trim();
+    if (!value) return;
+
+    prompt.value = "";
+    prompt.style.height = "auto";
+
+    if (chat.querySelector(".empty")) chat.innerHTML = "";
+
+    const user = document.createElement("article");
+    user.className = "message";
+    user.innerHTML = "<strong>You</strong>";
+    const userText = document.createElement("p");
+    userText.textContent = value;
+    user.appendChild(userText);
+    chat.appendChild(user);
+    
+    // Auto-detect RTL for user
+    if (detectRTL(value)) user.setAttribute('dir', 'rtl');
+
+    send.disabled = true;
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
+        body: JSON.stringify({ message: value })
+      });
+      const data = await response.json();
+      if (data.reply) {
+        await typeMessage(data.reply);
+      } else {
+        await typeMessage("**Error:** Koi jawab nahi mila.");
+      }
+    } catch (error) {
+      await typeMessage("**Error:** Server se connect nahi ho pa raha.");
+    } finally {
+      send.disabled = false;
+      prompt.focus();
+    }
+  }
+
+  send.addEventListener("click", realSend);
+  prompt.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      realSend();
+    }
+  });
+  prompt.addEventListener("input", () => {
+    prompt.style.height = "auto";
+    prompt.style.height = Math.min(prompt.scrollHeight, 120) + "px";
+  });
+})();
+</script>
+</body>
+</html>
