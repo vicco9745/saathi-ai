@@ -1327,13 +1327,6 @@ button:focus:not(:focus-visible),[role="button"]:focus:not(:focus-visible){outli
 .gal-search{position:relative}
 .gal-search>.gal-live{position:absolute;left:0;right:0;bottom:calc(100% + 10px);padding:0 8px;max-height:34vh;font-style:italic;background:none;border:none;border-radius:0;box-shadow:none;text-shadow:0 0 8px var(--page-bg),0 0 8px var(--page-bg);z-index:5}
 </style>
-<link rel="stylesheet" href="saathi-engine.css">
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-<script src="saathi-engine.js"></script>
 </head>
 <body>
 
@@ -3046,7 +3039,7 @@ if(k==='html')return hlHtml(code);
 if(k==='css')return hlCss(code);
 return hlGeneric(code,k);}catch(_){return escapeHtml(code);}}
 const MSG_CARD_LANGS=['message','msg','draft','sms','whatsapp'];
-function renderRichText(text){text=String(text==null?'':text);if(typeof marked!=='undefined'){try{text=marked.parse(text);}catch(e){}};const re=/```([^\n`]*)\n?([\s\S]*?)(?:```|$)/g;let out='',last=0,m;
+function renderRichText(text){text=String(text==null?'':text);const re=/```([^\n`]*)\n?([\s\S]*?)(?:```|$)/g;let out='',last=0,m;
 while((m=re.exec(text))!==null){if(m.index===re.lastIndex){re.lastIndex++;continue;}
 let before=text.slice(last,m.index);if(before)out+=linkifyText(before.replace(/\n$/,''));
 const lang=(m[1]||'').trim().split(/\s+/)[0];let code=m[2].replace(/\n+$/,'');
