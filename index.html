@@ -2317,7 +2317,7 @@ function speakPage(text, btnEl){
   }
 }
 // Generic TTS with optional green button (message listen)
-function speakText(text, onEnd, btnEl){
+function speakText(text, onEnd, btnEl){ text = text.replace(/\*\*/g, '');
   if(!isSpeechSupported() || !text){ if(onEnd) onEnd(); return; }
   const synth = window.speechSynthesis;
 
