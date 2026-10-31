@@ -37,6 +37,8 @@ class ChatRequest(BaseModel):
 
 @app.post("/v1/chat")
 def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
+    global system
+    system = " SABSE ZAROORI: Jab bhi aap koi heading dein, toh use hamesha do star (**Heading**) ke beech mein likhein. Har naye paragraph se pehle ek khali line (\n\n) chhodein." + (system if 'system' in globals() else "")
     system = "Aap Saathi-AI hain. Kripya apne jawab mein kisi bhi tarah ka Markdown (jaise **, *, #, |, ---) bilkul use NAHI karna. Sirf saaf-suthre normal paragraphs mein likho."
     reply = call_groq(req.message, system=system)
     return {"reply": reply}
