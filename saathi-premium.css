@@ -1,92 +1,12 @@
-/* ===== SAATHI PREMIUM TEXT SYSTEM ===== */
-
-/* 1. मुख्य फॉन्ट और टेक्स्ट */
-.saathi-premium-md { 
-    font-family: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif; 
-    line-height: 1.6; 
-    font-size: 16px; 
-    color: #1a1a1a;
-    font-weight: 400; /* सामान्य टेक्स्ट */
-}
-
-/* 2. हेडिंग (एकदम मोटी और सुंदर) */
-.saathi-premium-md h1, 
-.saathi-premium-md h2, 
-.saathi-premium-md h3, 
-.saathi-premium-md h4 { 
-    font-size: 22px !important; 
-    font-weight: 900 !important; 
-    margin: 24px 0 12px; 
-    color: #000;
-    letter-spacing: -0.3px;
-    line-height: 1.4;
-}
-
-/* 3. पैराग्राफ */
-.saathi-premium-md p { 
-    margin: 10px 0; 
-}
-
-/* 4. लिस्ट (नंबर और बुलेट) */
-.saathi-premium-md ul, .saathi-premium-md ol { 
-    padding-left: 24px; 
-    margin: 12px 0; 
-}
-.saathi-premium-md li { 
-    margin-bottom: 8px; 
-    padding-left: 4px;
-}
-
-/* 5. इनलाइन कोड (जैसे `index.html`) */
-.saathi-premium-md code { 
-    font-family: Consolas, monospace; 
-    background: #f4f4f5; 
-    padding: 3px 6px; 
-    border-radius: 6px; 
-    font-size: 14px; 
-    color: #eb5757;
-    font-weight: 600;
-}
-
-/* 6. बड़ा कोड ब्लॉक */
-.saathi-premium-md pre { 
-    background: #1e1e1e; 
-    color: #fff; 
-    padding: 16px; 
-    border-radius: 10px; 
-    overflow-x: auto; 
-    margin: 16px 0;
-}
-.saathi-premium-md pre code { 
-    background: transparent; 
-    color: inherit; 
-    padding: 0; 
-}
-
-/* 7. टेबल */
-.saathi-premium-md table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    margin: 16px 0; 
-}
-.saathi-premium-md th, .saathi-premium-md td { 
-    border: 1px solid #e0e0e0; 
-    padding: 12px 16px; 
-    text-align: left; 
-}
-.saathi-premium-md th { 
-    background: #f9f9f9; 
-    font-weight: 900 !important; 
-}
-
-/* 8. मोटा टेक्स्ट (Bold) */
-.saathi-premium-md strong { 
-    font-weight: 900 !important; 
-    color: #000;
-}
-
-/* 9. उर्दू और अरबी के लिए (RTL) */
-[dir="rtl"] { 
-    direction: rtl; 
-    text-align: right; 
-}
+.saathi-premium-md { display: block; font-family: 'Inter', sans-serif; line-height: 1.6; font-size: 16px; color: #1a1a1a; }
+.saathi-premium-md h1, .saathi-premium-md h2, .saathi-premium-md h3 { font-size: 22px; font-weight: 900; margin: 24px 0 12px; color: #000; letter-spacing: -0.3px; }
+.saathi-premium-md p { margin: 10px 0; }
+.saathi-premium-md ul, .saathi-premium-md ol { padding-left: 24px; margin: 12px 0; }
+.saathi-premium-md li { margin-bottom: 8px; }
+.saathi-premium-md code { font-family: monospace; background: #f4f4f5; padding: 3px 6px; border-radius: 6px; font-size: 14px; color: #eb5757; font-weight: 600; }
+.saathi-premium-md pre { background: #1e1e1e; color: #fff; padding: 16px; border-radius: 10px; overflow-x: auto; margin: 16px 0; }
+.saathi-premium-md table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.saathi-premium-md th, .saathi-premium-md td { border: 1px solid #e0e0e0; padding: 12px 16px; text-align: left; }
+.saathi-premium-md th { background: #f9f9f9; font-weight: 900; }
+.saathi-premium-md strong { font-weight: 900; color: #000; }
+[dir="rtl"] { direction: rtl; text-align: right; }
