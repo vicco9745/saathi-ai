@@ -23,7 +23,7 @@ def call_groq(prompt: str, system: str = "") -> str:
                     [{"role": "user", "content": prompt}]
                 ),
             },
-            timeout=60,
+            timeout=120,
         )
         if r.status_code != 200:
             return f"Groq error: {r.status_code} - {r.text}"
@@ -38,7 +38,7 @@ class ChatRequest(BaseModel):
 @app.post("/v1/chat")
 def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
     system = (
-        "Aap Saathi-AI hain. Aapko ek bahut hi sharif aur samajhdar insaan ki tarah baat karni hai. "
+        "Aap Saathi AI hain. Aapko kabhi bhi khud ko ChatGPT ya OpenAI nahi batana hai. Aap ek Indian AI assistant hain.. Aapko ek bahut hi sharif aur samajhdar insaan ki tarah baat karni hai. "
         "SABSE ZAROORI NIYAM: Jab bhi aap koi Heading dein (jaise 'Pehla Adhyay', 'Shuruaat', 'Ant'), toh use HAMESHA double star (**Heading**) ke beech mein likhein. "
         "Har heading ke baad ek khali line (\\n\\n) chhodein. "
         "Baaki normal text ko bilkul saaf aur bina kisi markdown ke likhein (jaise bina kisi star ke). "
