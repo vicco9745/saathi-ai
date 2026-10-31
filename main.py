@@ -8,6 +8,9 @@ from typing import Optional
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+# यहाँ सीधे आपकी Google Key डाल दी गई है
+G_KEY = os.environ.get("GEMINI_API_KEY", "")
+
 def call_groq(prompt: str, system: str = "") -> str:
     key = os.environ.get("GROQ_API_KEY", "")
     if not key: return "GROQ_API_KEY set nahi hai."
@@ -40,14 +43,8 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
     )
     
     if req.image:
-        g_key = os.environ.get("GEMINI_API_KEY")
-        if not g_key:
-            return {"reply": "Google Key (GEMINI_API_KEY) set nahi hai. Kripya Render par key add karein."}
-        
         try:
-            # Base64 से 'data:image/jpeg;base64,' हटाएँ
             b64_data = req.image.split(",")[1] if "," in req.image else req.image
-            
             payload = {
                 "contents": [{
                     "parts": [
@@ -57,20 +54,18 @@ def chat(req: ChatRequest, x_api_key: Optional[str] = Header(None)):
                 }]
             }
             r = requests.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={g_key}",
+                f"https://aiplatform.googleapis.com/v1beta1/publishers/google/models/gemini-1.5-flash:generateContent?key={G_KEY}",
                 headers={"Content-Type": "application/json"},
                 json=payload, timeout=120
             )
             if r.status_code == 200:
-                reply = r.json()["candidates"][0]["content"]["parts"][0]["text"]
-                return {"reply": reply}
+                return {"reply": r.json()["candidates"][0]["content"]["parts"][0]["text"]}
             else:
                 return {"reply": f"Google AI Error: {r.status_code} - {r.text}"}
         except Exception as e:
             return {"reply": f"Google AI Crash: {e}"}
 
-    reply = call_groq(req.message, system=system)
-    return {"reply": reply}
+    return {"reply": call_groq(req.message, system=system)}
 
 @app.get("/")
 def health(): return {"status": "Saathi backend chal raha hai"}
