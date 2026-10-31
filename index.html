@@ -3799,5 +3799,19 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
+<!-- SAATHI COPY FIX -->
+
+<script>
+document.addEventListener("copy", function(e) {
+    var selection = document.getSelection();
+    if (!selection || !selection.toString()) return;
+    var text = selection.toString();
+    if (text.includes("**")) {
+        e.clipboardData.setData("text/plain", text.replace(/\*\*/g, ""));
+        e.preventDefault();
+    }
+});
+</script>
+
 </body>
 </html>
