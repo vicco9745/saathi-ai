@@ -8,49 +8,62 @@
     color: #1a1a1a;
 }
 
-/* 2. हेडिंग (जैसे "मेरी तरफ से 5 जरुरी सावधानियाँ") */
+/* 2. हेडिंग (स्क्रीनशॉट जैसी मोटी और बड़ी) */
 .saathi-premium-md h1 { 
-    font-size: 26px; font-weight: 700; margin: 24px 0 12px; color: #000;
+    font-size: 28px; 
+    font-weight: 800; /* एकदम मोटा */
+    margin: 28px 0 16px; 
+    color: #000;
+    letter-spacing: -0.5px; /* अक्षरों को थोड़ा पास लाने के लिए */
 }
 .saathi-premium-md h2 { 
-    font-size: 22px; font-weight: 700; margin: 20px 0 10px; color: #000;
+    font-size: 24px; 
+    font-weight: 800; 
+    margin: 24px 0 14px; 
+    color: #000;
+    letter-spacing: -0.3px;
 }
 .saathi-premium-md h3 { 
-    font-size: 18px; font-weight: 600; margin: 18px 0 8px; color: #222;
+    font-size: 20px; 
+    font-weight: 700; 
+    margin: 20px 0 10px; 
+    color: #111;
 }
 
 /* 3. पैराग्राफ */
 .saathi-premium-md p { 
-    margin: 10px 0; 
-}
-
-/* 4. नंबर और बुलेट वाली लिस्ट (जैसे 1. पहले Backup...) */
-.saathi-premium-md ul, .saathi-premium-md ol { 
-    padding-left: 24px; 
     margin: 12px 0; 
 }
+
+/* 4. नंबर और बुलेट वाली लिस्ट */
+.saathi-premium-md ul, .saathi-premium-md ol { 
+    padding-left: 26px; 
+    margin: 14px 0; 
+}
 .saathi-premium-md li { 
-    margin-bottom: 8px; 
-    padding-left: 4px;
+    margin-bottom: 10px; 
+    padding-left: 6px;
 }
 
 /* 5. इनलाइन कोड (जैसे `index.html` का बैकग्राउंड) */
 .saathi-premium-md code { 
     font-family: Consolas, monospace; 
     background: #f4f4f5; 
-    padding: 2px 6px; 
-    border-radius: 4px; 
+    padding: 3px 8px; 
+    border-radius: 6px; 
     font-size: 14px; 
     color: #eb5757;
+    font-weight: 600;
 }
 
 /* 6. बड़ा कोड ब्लॉक */
 .saathi-premium-md pre { 
     background: #1e1e1e; 
     color: #fff; 
-    padding: 15px; 
-    border-radius: 8px; 
+    padding: 16px; 
+    border-radius: 10px; 
     overflow-x: auto; 
+    margin: 16px 0;
 }
 .saathi-premium-md pre code { 
     background: transparent; 
@@ -62,21 +75,21 @@
 .saathi-premium-md table { 
     width: 100%; 
     border-collapse: collapse; 
-    margin: 15px 0; 
+    margin: 18px 0; 
 }
 .saathi-premium-md th, .saathi-premium-md td { 
     border: 1px solid #e0e0e0; 
-    padding: 10px 14px; 
+    padding: 12px 16px; 
     text-align: left; 
 }
 .saathi-premium-md th { 
     background: #f9f9f9; 
-    font-weight: 600; 
+    font-weight: 700; /* टेबल हेडिंग मोटी */
 }
 
 /* 8. बोल्ड टेक्स्ट */
 .saathi-premium-md strong { 
-    font-weight: 700; 
+    font-weight: 800; 
     color: #000;
 }
 
