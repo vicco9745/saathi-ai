@@ -3546,7 +3546,35 @@ const textAttachments=attachments.filter(a=>a.kind==='text');
 const analyzableFiles=attachments.filter(a=>a.kind==='file'&&a.content&&String(a.content).trim().length>0);
 if(mediaAttachments.length>0&&analyzableFiles.length===0){
 const isPhotoOnly=mediaAttachments.length===1&&mediaAttachments[0].kind==='photo';
-{setTimeout(()=>{let replyText;if(mediaAttachments.length===1){const a=mediaAttachments[0];if(a.kind==='video')replyText='Video mil gaya: "'+a.name+'" ('+formatSize(a.size)+').';else if(a.kind==='photo')replyText='Image mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';else replyText='File mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';}else{replyText=mediaAttachments.length+' items mil gaye.';}pendingReply.text=replyText;saveChats();renderMessages();},500);}
+{
+setTimeout(async()=>{
+    if(mediaAttachments.length > 0 && mediaAttachments[0].kind === 'photo') {
+        const a = mediaAttachments[0];
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64Str = e.target.result;
+            pendingReply.text = 'Image padh raha hoon...'; saveChats(); renderMessages();
+            try {
+                const res = await fetch(SAATHI_API_BASE+'/v1/chat', {
+                    method: 'POST', headers: {'Content-Type': 'application/json', 'X-API-Key': SAATHI_KEY},
+                    body: JSON.stringify({ message: 'Is image mein kya likha hai? Detail mein batao.', image: base64Str })
+                });
+                const data = await res.json();
+                pendingReply.text = data.reply || 'Image padhne mein error aayi.';
+                saveChats(); renderMessages();
+            } catch(err) {
+                pendingReply.text = 'Server error: ' + err.message;
+                saveChats(); renderMessages();
+            }
+        };
+        reader.readAsDataURL(a.file);
+    } else {
+        let replyText;
+        if(mediaAttachments.length===1){const a=mediaAttachments[0];if(a.kind==='video')replyText='Video mil gaya: "'+a.name+'" ('+formatSize(a.size)+').';else replyText='File mil gaya: "'+a.name+'" ('+formatSize(a.size)+').';}else{replyText=mediaAttachments.length+' items mil gaye.';}
+        pendingReply.text=replyText; saveChats(); renderMessages();
+    }
+},500);
+}
 }else{
 let combinedText;
 if(analyzableFiles.length>0){
