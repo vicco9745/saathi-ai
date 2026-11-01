@@ -1,10 +1,12 @@
 (function(){
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function inl(s){return s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*([^*\n]+)\*/g,'<em>$1</em>').replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*/g,'');}
+function odd(r){var c=(r.match(/\*\*/g)||[]).length;return c%2?r+'**':r;}
 function fmt(t){
 var out=[],list=null;
 function close(){if(list){out.push('</'+list+'>');list=null;}}
 t.split('\n').forEach(function(raw){
+raw=odd(raw);
 var l=esc(raw),m;
 if(/^\s*(-{3,}|\*{3,})\s*$/.test(raw)){close();out.push('<hr class="fmt-hr">');}
 else if(/^\s*#{1,6}\s*$/.test(raw)){close();}
@@ -20,6 +22,27 @@ close();return out.join('');
 var st=document.createElement('style');
 st.textContent='.fmt-h{font-weight:700;font-size:1.1em;margin:12px 0 4px}.fmt-sp{height:8px}.fmt-hr{border:0;border-top:1px solid rgba(128,128,128,.3);margin:10px 0}.fmt-l{margin:4px 0;padding-left:22px}.fmt-q{border-left:3px solid rgba(128,128,128,.4);padding-left:10px;margin:6px 0}.fmt-done{white-space:normal!important}.fmt-done code{background:rgba(128,128,128,.15);padding:1px 5px;border-radius:4px}';
 document.head.appendChild(st);
+try{
+if(typeof typeAIMessage==='function'){
+window.typeAIMessage=function(element,text,message){
+element.textContent='';element.classList.add('fmt-done');
+var i=0,speed=35;
+aiIsTyping=true;activeTypingMessage=message;message.fullText=text;updateActionButton();
+function typeNext(){
+if(i<text.length){
+i++;
+element.innerHTML=fmt(text.slice(0,i));
+if(message&&message.proc)procTick(message,text.slice(0,i));
+messagesEl.scrollTop=messagesEl.scrollHeight;
+activeTypingTimeout=setTimeout(typeNext,speed);
+}else{
+message.typing=false;message.interrupted=false;activeTypingTimeout=null;activeTypingMessage=null;aiIsTyping=false;saveChats();updateActionButton();renderMessages();
+}
+}
+typeNext();
+};
+}
+}catch(e){}
 var re=/\*|^\s*#{1,6}(\s|$)|^\s*-{3,}\s*$|^\s*>/m;
 function scan(){
 var root=document.querySelector('.messages-list')||document.querySelector('.messages');
