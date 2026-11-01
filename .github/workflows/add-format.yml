@@ -1,0 +1,20 @@
+name: add-format
+on:
+  push:
+    paths:
+      - 'index.html'
+permissions:
+  contents: write
+jobs:
+  add:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 add_format.py
+      - run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "bot"
+            git config user.email "bot@users.noreply.github.com"
+            git commit -am "auto add format.js"
+            git push
+          fi
