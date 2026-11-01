@@ -48,3 +48,4 @@ var wait=false;
 new MutationObserver(function(){if(wait)return;wait=true;setTimeout(function(){wait=false;scan();},40);}).observe(document.body,{childList:true,subtree:true,characterData:true});
 setTimeout(scan,300);
 })();
+(function(){var o=window.setTimeout,c=0,last=0;window.setTimeout=function(f,m){if(typeof f==='function'&&f.name==='typeNext'&&m===35){if(++c%10){last=0;f();return last;}last=o(f,16);return last;}return o.apply(window,arguments);};})();
