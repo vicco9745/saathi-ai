@@ -26,11 +26,11 @@ try{
 if(typeof typeAIMessage==='function'){
 window.typeAIMessage=function(element,text,message){
 element.textContent='';element.classList.add('fmt-done');
-var i=0,speed=35;
+var i=0,speed=15;
 aiIsTyping=true;activeTypingMessage=message;message.fullText=text;updateActionButton();
 function typeNext(){
 if(i<text.length){
-i++;
+i=Math.min(i+3,text.length);
 element.innerHTML=fmt(text.slice(0,i));
 if(message&&message.proc)procTick(message,text.slice(0,i));
 messagesEl.scrollTop=messagesEl.scrollHeight;
