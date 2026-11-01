@@ -49,3 +49,14 @@ new MutationObserver(function(){if(wait)return;wait=true;setTimeout(function(){w
 setTimeout(scan,300);
 })();
 (function(){var o=window.setTimeout,c=0,last=0;window.setTimeout=function(f,m){if(typeof f==='function'&&f.name==='typeNext'&&m===35){if(++c%10){last=0;f();return last;}last=o(f,16);return last;}return o.apply(window,arguments);};})();
+(function(){
+function clean(t){return String(t).replace(/^\s*(-{3,}|\*{3,})\s*$/gm,'').replace(/^\s*#{1,6}\s*/gm,'').replace(/^\s*>\s?/gm,'').replace(/^\s*[-*]\s+/gm,'\u2022 ').replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*([^*\n]+)\*/g,'$1').replace(/\*/g,'').replace(/`([^`\n]+)`/g,'$1').replace(/[ \t]+$/gm,'').replace(/\n{3,}/g,'\n\n').trim();}
+var bad=/\*|^\s*#{1,6}\s|^\s*-{3,}\s*$|^\s*>/m;
+try{if(window.Clipboard&&Clipboard.prototype.writeText){var w=Clipboard.prototype.writeText;Clipboard.prototype.writeText=function(t){return w.call(this,typeof t==='string'&&bad.test(t)?clean(t):t);};}}catch(e){}
+document.addEventListener('copy',function(e){
+try{var s='',a=document.activeElement;
+if(a&&a.value!==undefined&&a.selectionStart!=null&&a.selectionEnd>a.selectionStart)s=a.value.slice(a.selectionStart,a.selectionEnd);
+else s=String(window.getSelection());
+if(s&&bad.test(s)&&e.clipboardData){e.clipboardData.setData('text/plain',clean(s));e.preventDefault();}}catch(x){}
+},true);
+})();
