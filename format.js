@@ -117,3 +117,16 @@ if(t&&t!=='Photo message'&&!isFileName(t)){c.title=t;try{saveChats();}catch(e){}
 }
 setInterval(tick,2000);
 })();
+(function(){
+var last='';
+function say(m){if(m!==last){last=m;try{console.log('[title] '+m);}catch(e){}}}
+window.__titleDebug=function(){
+var r={};
+try{r.chats=(typeof chats!=='undefined')?chats.length:'undefined';}catch(e){r.chats='err';}
+try{r.api=(typeof SAATHI_API_BASE!=='undefined')?'ok':'undefined';}catch(e){r.api='err';}
+try{r.key=(typeof SAATHI_KEY!=='undefined'&&SAATHI_KEY)?'ok':'missing';}catch(e){r.key='err';}
+try{r.fileTitles=chats.filter(function(c){return /\.(png|jpe?g|webp|gif|heic)$/i.test(String(c.title||''));}).length;}catch(e){r.fileTitles='err';}
+try{r.withPhoto=chats.filter(function(c){return (c.messages||[]).some(function(m){return (m.attachments||[]).some(function(a){return a&&a.kind==='photo'&&a.dataUrl;});});}).length;}catch(e){r.withPhoto='err';}
+alert(JSON.stringify(r));
+};
+})();
