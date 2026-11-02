@@ -85,3 +85,35 @@ try{if(snap.length&&typeof u==='string'&&/\/v1\/chat$/.test(u.split('?')[0])&&o&
 return of.call(this,u,o);
 };
 })();
+(function(){
+var busy={},done={};
+function isFileName(t){return /\.(png|jpe?g|webp|gif|heic)$/i.test(String(t||'').trim());}
+function photoOf(c){
+var ms=(c&&c.messages)||[];
+for(var i=0;i<ms.length;i++){
+var at=ms[i].attachments||[];
+for(var j=0;j<at.length;j++){if(at[j]&&at[j].kind==='photo'&&at[j].dataUrl&&String(at[j].dataUrl).indexOf('data:image')===0)return at[j].dataUrl;}
+}
+return null;
+}
+function tick(){
+try{
+if(typeof chats==='undefined'||!Array.isArray(chats)||typeof SAATHI_API_BASE==='undefined'||typeof SAATHI_KEY==='undefined')return;
+var key=localStorage.getItem(typeof SAATHI_KEY_STORE!=='undefined'?SAATHI_KEY_STORE:'')||'';
+chats.forEach(function(c){
+if(!c||!c.id||busy[c.id]||done[c.id]||!isFileName(c.title))return;
+var img=photoOf(c);if(!img)return;
+busy[c.id]=true;
+fetch(SAATHI_API_BASE+'/v1/title',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:'',image:img})})
+.then(function(r){return r.ok?r.json():null;})
+.then(function(d){
+busy[c.id]=false;done[c.id]=true;
+var t=d&&d.title?String(d.title).trim():'';
+if(t&&t!=='Photo message'&&!isFileName(t)){c.title=t;try{saveChats();}catch(e){}try{renderChatList();}catch(e){}}
+})
+.catch(function(){busy[c.id]=false;done[c.id]=true;});
+});
+}catch(e){}
+}
+setInterval(tick,2000);
+})();
