@@ -189,7 +189,8 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
 
     if images:
         raw = _call_vision_v2(body.message, images)
-        reply = _polish_vision_reply(raw, body.message)
+        raw = __import__("re").sub(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+", "", raw)
+        reply = __import__("re").sub(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+", "", _polish_vision_reply(raw, body.message))
         return {
             "service": "chat",
             "reply": reply,
@@ -606,6 +607,13 @@ def _polish_vision_reply(vision_text: str, user_message: str) -> str:
         "Barcode ko dastavez asli hone ka saboot mat batao."
     )
 
+    system += (
+        "\n\nHisse 2 mein sirf wahi galat ya adhoora likho jo dastavez mein saaf dikhta hai, jaise kata, dhundhla ya mita hua. "
+        "Agar raw text mein koi shabd ya number tumhe unclear lage, use dastavez ki galti mat kaho; use jaisa hai waisa hi likho. "
+        "Date ke format, barcode ya dikhne ke dhang par tippani mat karo. Sirf Hindi, English ya Roman Hindi mein likho, koi Chinese akshar nahi. "
+        "Phone number mein bindu ya colon label ka hissa hai, number ka nahi; number ko adhoora mat kaho."
+    )
+
     user_prompt = (
         "USER KA MESSAGE:\n" + (user_message or "(kuch nahi likha, sirf file bheji)") + "\n\n"
         "VISION AI KA RAW OUTPUT (ise saaf karke dobara likho):\n" + vision_text
@@ -671,6 +679,9 @@ VISION_RULES = """Photo ko bahut dhyaan se padho. Niyam:
 - Jo saaf nahi padha jaata, wahan likho: saaf nahi dikh raha.
 - Phone ki screen ke hisse (status bar, battery, buttons, page number jaise 3/3, menu) dastavez ka hissa nahi hain. Unhe ignore karo.
 - Dastavez adhoora ya kata hua sirf tab kaho jab photo mein saaf kata hua dikhe.
+- Sirf Hindi (Devanagari), English ya Roman Hindi mein likho. Chinese, Japanese ya Korean akshar kabhi mat likho.
+- Phone number ya tareekh ke aage ka bindu ya colon (jaise TEL. NO.:) label ka hissa hai, number ka nahi. Pura number likho jaisa dikh raha hai.
+- Address ki line ka ek shabd do hisson mein mat todo (jaise LAMAHI ek hi shabd hai).
 - Apni taraf se koi baat mat jodo."""
 
 def _call_vision_v2(prompt: str, images: list) -> str:
