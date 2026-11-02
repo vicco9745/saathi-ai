@@ -588,9 +588,9 @@ def _polish_vision_reply(vision_text: str, user_message: str) -> str:
         "═══ BHASHA ═══\n"
         "User jis bhasha mein likhe usi mein jawab do. Agar user ne kuch nahi likha to Hindi mein likho. Saaf, aam bolchaal ki bhasha.\n\n"
         "═══ JAWAB KA DHANCHA ═══\n"
-        "Teen hisse, har ek ka chhota saaf heading:\n"
-        "1. Photo mein kya likha hai: jo cheez hai usi ke baare mein, mukhya baatein points mein.\n"
-        "2. Kya sahi hai aur kya galat ya adhoora: dono alag-alag batao, kaaran ke saath. Agar kuch galat nahi dikha to saaf likho ki kuch galat nahi dikha.\n"
+        "Teen hisse, har ek ka chhota saaf heading (heading bhi usi bhasha mein jisme jawab likh rahe ho):\n"
+        "1. Photo mein kya likha hai: mukhya baatein points mein. Photo mein jo bhi naam, pata, phone number, form number, tareekh, reference number aur ID hai, ek bhi mat chhodo.\n"
+        "2. Kya sahi hai aur kya galat ya adhoora: yeh us dastavez ke baare mein batao jo photo mein hai (kya theek lagta hai, kya adhoora ya shak wala hai). Apne hi jawab ke shabdon ki vartani par tippani mat karo aur bina aadhaar galtiyan mat nikalo. Agar kuch galat nahi dikha to saaf likho. Yeh pakka mat kaho ki dastavez asli hai; sirf itna kaho ki jaanch aadhikarik jagah par karni chahiye.\n"
         "3. Kya karna chahiye: saaf salah. Jaana chahiye ya nahi, aage ke kadam kya hain, koi khatra ho to uska upay.\n\n"
         "Lambaai: jitna vishay maange utna. Koi bhumika nahi, koi bekaar line nahi."
     )
