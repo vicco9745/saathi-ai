@@ -3555,6 +3555,7 @@ combinedText=textAttachments.length>0?textAttachments.map(a=>a.content).join('\n
 }
 const SAATHI_KEY_STORE='saathi_api_key';
 let SAATHI_KEY=localStorage.getItem(SAATHI_KEY_STORE);
+window.__sc={chats:function(){return chats;},key:function(){return SAATHI_KEY;},api:function(){return SAATHI_API_BASE;},save:function(){saveChats();},render:function(){renderChatList();}};
 if(!SAATHI_KEY){SAATHI_KEY=prompt('Saathi API Key डालें:');if(SAATHI_KEY)localStorage.setItem(SAATHI_KEY_STORE,SAATHI_KEY.trim());}
 const smartCtx=getSmartLearningContext();
 const imageMatch=/^\/image\s+([\s\S]+)/i.exec(combinedText.trim());
@@ -3772,6 +3773,6 @@ document.addEventListener('contextmenu',function(e){var t=e.target&&e.target.clo
 document.addEventListener('pointerdown',function(e){if(e.target&&e.target.closest&&e.target.closest(q)){var sel=window.getSelection&&getSelection();if(sel&&sel.rangeCount&&!sel.isCollapsed&&!e.target.closest('input,textarea'))sel.removeAllRanges();}},true);
 })();
 </script>
-<script src="format.js?v=11"></script>
+<script src="format.js?v=12"></script>
 </body>
 </html>
