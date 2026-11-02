@@ -595,6 +595,10 @@ def _polish_vision_reply(vision_text: str, user_message: str) -> str:
         "Lambaai: jitna vishay maange utna. Koi bhumika nahi, koi bekaar line nahi."
     )
 
+    system += ("\n\nAaj ki tareekh: " + __import__("datetime").date.today().strftime("%d %B %Y") + ". "
+        "Isse pehle ki tareekh beet chuki hai; use bhavishya ki, sample ya typo mat kaho. "
+        "Tareekh mein mahina aur saal poora likho. Aise shabd mat likho jinka matlab pakka na ho; seedhi aam bhasha mein likho.")
+
     user_prompt = (
         "USER KA MESSAGE:\n" + (user_message or "(kuch nahi likha, sirf file bheji)") + "\n\n"
         "VISION AI KA RAW OUTPUT (ise saaf karke dobara likho):\n" + vision_text
