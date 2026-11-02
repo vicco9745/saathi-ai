@@ -130,3 +130,14 @@ try{r.withPhoto=chats.filter(function(c){return (c.messages||[]).some(function(m
 alert(JSON.stringify(r));
 };
 })();
+(function(){
+function mk(){
+if(document.getElementById('ttlDbgBtn'))return;
+var b=document.createElement('button');
+b.id='ttlDbgBtn';b.textContent='?';
+b.style.cssText='position:fixed;left:8px;bottom:90px;width:32px;height:32px;border-radius:50%;border:0;background:#222;color:#fff;font-size:16px;z-index:99999;opacity:.6';
+b.onclick=function(){try{window.__titleDebug();}catch(e){alert('debug error: '+e.message);}};
+document.body.appendChild(b);
+}
+if(document.body)mk();else document.addEventListener('DOMContentLoaded',mk);
+})();
