@@ -60,3 +60,13 @@ else s=String(window.getSelection());
 if(s&&bad.test(s)&&e.clipboardData){e.clipboardData.setData('text/plain',clean(s));e.preventDefault();}}catch(x){}
 },true);
 })();
+(function(){
+function sc(t){return String(t).replace(/^\s*(-{3,}|\*{3,})\s*$/gm,' ').replace(/^\s*#{1,6}\s*/gm,'').replace(/^\s*>\s?/gm,'').replace(/^\s*[-*]\s+/gm,'').replace(/\*+/g,'').replace(/#+/g,' ').replace(/`/g,'').replace(/_{2,}/g,' ').replace(/\s{2,}/g,' ').trim();}
+try{
+var ss=window.speechSynthesis;
+if(ss&&ss.speak){
+var sp=ss.speak.bind(ss);
+ss.speak=function(u){try{if(u&&typeof u.text==='string')u.text=sc(u.text);}catch(e){}return sp(u);};
+}
+}catch(e){}
+})();
