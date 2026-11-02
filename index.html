@@ -3540,7 +3540,7 @@ renderPendingAttachments();updateActionButton();saveChats();renderChatList();ren
 const mediaAttachments=attachments.filter(a=>a.kind!=='text');
 const textAttachments=attachments.filter(a=>a.kind==='text');
 const analyzableFiles=attachments.filter(a=>a.kind==='file'&&a.content&&String(a.content).trim().length>0);
-if(mediaAttachments.length>0&&analyzableFiles.length===0){
+if(mediaAttachments.length>0&&analyzableFiles.length===0&&!mediaAttachments.some(a=>a.kind==='photo')){
 const isPhotoOnly=mediaAttachments.length===1&&mediaAttachments[0].kind==='photo';
 {setTimeout(()=>{let replyText;if(mediaAttachments.length===1){const a=mediaAttachments[0];if(a.kind==='video')replyText='Video mil gaya: "'+a.name+'" ('+formatSize(a.size)+').';else if(a.kind==='photo')replyText='Image mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';else replyText='File mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';}else{replyText=mediaAttachments.length+' items mil gaye.';}pendingReply.text=replyText;saveChats();renderMessages();},500);}
 }else{
@@ -3772,6 +3772,6 @@ document.addEventListener('contextmenu',function(e){var t=e.target&&e.target.clo
 document.addEventListener('pointerdown',function(e){if(e.target&&e.target.closest&&e.target.closest(q)){var sel=window.getSelection&&getSelection();if(sel&&sel.rangeCount&&!sel.isCollapsed&&!e.target.closest('input,textarea'))sel.removeAllRanges();}},true);
 })();
 </script>
-<script src="format.js?v=7"></script>
+<script src="format.js?v=8"></script>
 </body>
 </html>
