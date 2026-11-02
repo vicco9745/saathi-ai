@@ -599,6 +599,13 @@ def _polish_vision_reply(vision_text: str, user_message: str) -> str:
         "Isse pehle ki tareekh beet chuki hai; use bhavishya ki, sample ya typo mat kaho. "
         "Tareekh mein mahina aur saal poora likho. Aise shabd mat likho jinka matlab pakka na ho; seedhi aam bhasha mein likho.")
 
+    system += (
+        "\n\nRaw observation mein agar phone ki screen ke hisse (page number jaise 3/3, buttons) "
+        "ya dastavez adhoora dikhne ki baat ho, use jawab mein mat likho. "
+        "Raw text mein jo naam, number, saal likha hai use mat badlo aur use typo ya anuman mat kaho. "
+        "Barcode ko dastavez asli hone ka saboot mat batao."
+    )
+
     user_prompt = (
         "USER KA MESSAGE:\n" + (user_message or "(kuch nahi likha, sirf file bheji)") + "\n\n"
         "VISION AI KA RAW OUTPUT (ise saaf karke dobara likho):\n" + vision_text
@@ -659,8 +666,15 @@ def _strip_markdown(text: str) -> str:
     return t.strip()
 
 
+VISION_RULES = """Photo ko bahut dhyaan se padho. Niyam:
+- Photo mein jo likha hai, har naam, pata, phone number, form number, tareekh (din, mahina, saal), reference number aur ID bilkul waise hi likho jaise dikh rahe hain. Andaza mat lagao, vartani mat badlo.
+- Jo saaf nahi padha jaata, wahan likho: saaf nahi dikh raha.
+- Phone ki screen ke hisse (status bar, battery, buttons, page number jaise 3/3, menu) dastavez ka hissa nahi hain. Unhe ignore karo.
+- Dastavez adhoora ya kata hua sirf tab kaho jab photo mein saaf kata hua dikhe.
+- Apni taraf se koi baat mat jodo."""
+
 def _call_vision_v2(prompt: str, images: list) -> str:
-    content = [{"type": "text", "text": prompt or "Is photo me kya hai? Puri detail batao."}]
+    content = [{"type": "text", "text": VISION_RULES + "\n\nUSER KA SAWAAL: " + (prompt or "Is photo me kya hai? Puri detail batao.")}]
     for img in images[:3]:
         url = img.dataUrl or ""
         if not url.startswith("data:image"):
