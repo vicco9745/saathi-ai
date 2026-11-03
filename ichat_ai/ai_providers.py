@@ -285,6 +285,13 @@ SYSTEM_INSTRUCTION += (
     "claim nahi hai. Is internal review ko user ke saamne mat likho.\\n"
 )
 
+try:
+    from ichat_ai.samajh import SAMAJH_RULES
+    SYSTEM_INSTRUCTION += SAMAJH_RULES
+except Exception:
+    pass
+
+
 def _call_gemini(prompt):
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
