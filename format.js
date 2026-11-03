@@ -168,3 +168,30 @@ try{var S=window.__sc;r.khidki=S?'ok':'missing';var ch=S?S.chats():[];r.chats=ch
 alert(JSON.stringify(r));
 };
 })();
+(function(){
+var PH='Naam ban raha hai…';
+var busy={},done={};
+function isFile(t){return /\.(png|jpe?g|webp|gif|heic)$/i.test(String(t||'').trim());}
+function needs(t){return isFile(t)||String(t||'')===PH;}
+function photoOf(c){var ms=(c&&c.messages)||[];for(var i=0;i<ms.length;i++){var at=ms[i].attachments||[];for(var j=0;j<at.length;j++){if(at[j]&&at[j].kind==='photo'&&at[j].dataUrl&&String(at[j].dataUrl).indexOf('data:image')===0)return at[j].dataUrl;}}return null;}
+function tick(){
+try{
+var S=window.__sc;if(!S)return;
+var chats=S.chats();if(!Array.isArray(chats))return;
+var key=S.key(),api=S.api();
+chats.forEach(function(c){
+if(!c||!c.id||done[c.id]||!needs(c.title))return;
+var img=photoOf(c);if(!img)return;
+function setT(t){c.title=t;try{S.save();}catch(e){}try{S.render();}catch(e){}}
+if(c.title!==PH)setT(PH);
+if(busy[c.id]||!key||!api)return;
+busy[c.id]=true;
+fetch(api+'/v1/title',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key},body:JSON.stringify({message:'',image:img})})
+.then(function(r){return r.ok?r.json():null;})
+.then(function(d){busy[c.id]=false;done[c.id]=true;var t=d&&d.title?String(d.title).trim():'';if(!t||t==='Photo message'||isFile(t))t='Photo chat';setT(t);})
+.catch(function(){busy[c.id]=false;done[c.id]=true;setT('Photo chat');});
+});
+}catch(e){}
+}
+setInterval(tick,300);
+})();
