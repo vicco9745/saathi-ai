@@ -14,6 +14,7 @@ jobs:
       - run: python3 patch_photo.py
       - run: python3 patch_expose.py
       - run: python3 patch_regen.py
+      - run: python3 patch_copyfix.py
       - run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "bot"
