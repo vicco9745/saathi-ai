@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from .db import init_db
 from .auth import require_api_key, record_usage
 from ichat_ai.response_engine import get_response
+from ichat_ai.code_fix import fix_code_blocks
 
 app = FastAPI(
     title="iChat API",
@@ -321,13 +322,13 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     if isinstance(result, dict):
         return {
             "service": "chat",
-            "reply": result.get("reply") or "",
+            "reply": fix_code_blocks(result.get("reply") or ""),
             "sources": result.get("sources", []),
             "model": "saathi"
         }
     return {
         "service": "chat",
-        "reply": result if isinstance(result, str) else str(result),
+        "reply": fix_code_blocks(result if isinstance(result, str) else str(result)),
         "model": "saathi"
     }
 
