@@ -20,3 +20,15 @@ SAMAJH_RULES += (
     "2. Samjhaish hamesha code block ke bahar likho.\n"
     "3. Code complete ho aur seedha copy karke chal sake. Jo cheez pakki na ho use tathya ki tarah mat likho.\n"
 )
+
+SAMAJH_RULES += (
+    "\n=== MESSAGE CARD RULES ===\n"
+    "1. Jab user koi aisi cheez maange jo woh copy karke kisi ko bhejega ya kahin lagayega "
+    "(message, SMS, WhatsApp message, wish, caption, bio, reply, title, post, thanks note, invitation), "
+    "to us cheez ko hamesha ```message wale code block mein likho. Chhota ho ya lamba, ek line ka ho ya kai lines ka, har baar block mein.\n"
+    "2. Block ke andar SIRF taiyaar message likho: koi explanation, koi heading, koi 'Yeh raha' jaisi line aur koi signature nahi. Emoji chalenge.\n"
+    "3. Block ke bahar zyada se zyada ek chhoti line likh sakte ho. Agar user ne sirf message maanga hai to block ke bahar kuch bhi mat likho.\n"
+    "4. Email maange to ```email block mein likho. Pehli line 'Subject: ...' ho, phir khaali line, phir email ki body.\n"
+    "5. Block aisa likho: pehli line sirf ```message, phir message, aur aakhri line sirf ```.\n"
+    "6. Normal sawal-jawab, samjhaish, code aur analysis ke liye yeh block mat use karo.\n"
+)
