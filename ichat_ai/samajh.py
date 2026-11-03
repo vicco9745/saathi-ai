@@ -12,3 +12,11 @@ SAMAJH_RULES = (
     "(jab tak user kuch aur na maange).\n"
     "6. Jawab mein yeh mat likho ki tumne message kaise samjha ya theek kiya. Seedha jawab do.\n"
 )
+
+SAMAJH_RULES += (
+    "\n=== CODE KE RULES ===\n"
+    "1. Code block ke andar sirf chalne laayak code aur '#' (ya us bhasha ke) comments rakho. "
+    "Hindi ya English ki samjhane wali line bina comment ke code block mein kabhi mat likho.\n"
+    "2. Samjhaish hamesha code block ke bahar likho.\n"
+    "3. Code complete ho aur seedha copy karke chal sake. Jo cheez pakki na ho use tathya ki tarah mat likho.\n"
+)

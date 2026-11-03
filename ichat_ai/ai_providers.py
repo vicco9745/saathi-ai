@@ -366,6 +366,9 @@ def _call_deepseek(prompt):
         return None
 
 
+from ichat_ai.model_config import GROQ_MODEL, GROQ_TEMPERATURE
+
+
 def _call_groq(prompt, history=None, lang_pref=None):
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
@@ -435,13 +438,13 @@ def _call_groq(prompt, history=None, lang_pref=None):
             ) + SYSTEM_INSTRUCTION
 
         payload = {
-            "model": "openai/gpt-oss-120b",
+            "model": GROQ_MODEL,
             "messages": (
                 [{"role": "system", "content": _sys_content}]
                 + history_messages
                 + [{"role": "user", "content": prompt}]
             ),
-            "temperature": 0.7,
+            "temperature": GROQ_TEMPERATURE,
             "max_tokens": 32000,
             "frequency_penalty": 0.6,
             "presence_penalty": 0.3,
