@@ -29,7 +29,7 @@ if(!root)return;
 root.querySelectorAll('*').forEach(function(el){
 if(el.children.length)return;
 if(el.classList.contains('fmt-view'))return;
-if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|CODE|PRE|BUTTON|SVG|PATH)$/i.test(el.tagName))return;
+if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|CODE|PRE|BUTTON|SVG|PATH)$/i.test(el.tagName))return;if(el.closest&&el.closest('pre,code'))return;
 var sib=el.nextElementSibling;
 if(sib&&!sib.classList.contains('fmt-view'))sib=null;
 var t=el.textContent;
