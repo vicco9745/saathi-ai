@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'index.html'
+      - 'site_patches/**'
 permissions:
   contents: write
 jobs:
@@ -10,16 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 add_format.py
-      - run: python3 patch_photo.py
-      - run: python3 patch_expose.py
-      - run: python3 patch_regen.py
-      - run: python3 patch_copyfix.py
-      - run: python3 patch_md.py
+      - run: python3 apply_all.py
       - run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "bot"
             git config user.email "bot@users.noreply.github.com"
-            git commit -am "auto add format.js and photo patch"
+            git commit -am "auto apply all site patches"
             git push
           fi
