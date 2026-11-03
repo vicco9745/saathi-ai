@@ -131,17 +131,6 @@ alert(JSON.stringify(r));
 };
 })();
 (function(){
-function mk(){
-if(document.getElementById('ttlDbgBtn'))return;
-var b=document.createElement('button');
-b.id='ttlDbgBtn';b.textContent='?';
-b.style.cssText='position:fixed;left:8px;bottom:90px;width:32px;height:32px;border-radius:50%;border:0;background:#222;color:#fff;font-size:16px;z-index:99999;opacity:.6';
-b.onclick=function(){try{window.__titleDebug();}catch(e){alert('debug error: '+e.message);}};
-document.body.appendChild(b);
-}
-if(document.body)mk();else document.addEventListener('DOMContentLoaded',mk);
-})();
-(function(){
 var busy={},done={};
 function isFile(t){return /\.(png|jpe?g|webp|gif|heic)$/i.test(String(t||'').trim());}
 function photoOf(c){var ms=(c&&c.messages)||[];for(var i=0;i<ms.length;i++){var at=ms[i].attachments||[];for(var j=0;j<at.length;j++){if(at[j]&&at[j].kind==='photo'&&at[j].dataUrl&&String(at[j].dataUrl).indexOf('data:image')===0)return at[j].dataUrl;}}return null;}
