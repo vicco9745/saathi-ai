@@ -764,6 +764,16 @@ class TitleRequest(BaseModel):
     image: Optional[str] = None
 
 
+def _fit29(t):
+    t = (t or "").strip()
+    if len(t) <= 29:
+        return t
+    cut = t[:29]
+    if " " in cut and t[29] != " ":
+        cut = cut[:cut.rfind(" ")]
+    return cut.strip()
+
+
 def _title_from_text(text: str) -> str:
     if not text or not text.strip():
         return ""
@@ -778,7 +788,7 @@ def _title_from_text(text: str) -> str:
             json={
                 "model": "openai/gpt-oss-20b",
                 "messages": [
-                    {"role": "system", "content": "User ke message ka 5-8 shabd ka chat title banao. Sirf title likho, koi quote nahi, koi punctuation nahi. User ki bhasha mein hi rakho. Example: 'Gold chart analysis', 'Pizza recipe', 'Python bug fix', 'मौसम की जानकारी'."},
+                    {"role": "system", "content": "User ke message ka 25-29 akshar ka chat title banao. Sirf title likho, koi quote nahi, koi punctuation nahi. User ki bhasha mein hi rakho. Example: 'Gold chart analysis', 'Pizza recipe', 'Python bug fix', 'मौसम की जानकारी'."},
                     {"role": "user", "content": text},
                 ],
                 "max_tokens": 60,
@@ -792,7 +802,7 @@ def _title_from_text(text: str) -> str:
         data = r.json()
         t = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
         t = t.replace("\n", " ").replace('"', '').replace("'", "").strip()
-        return t[:70] if t else text.strip()[:40]
+        return _fit29(t) if t else text.strip()[:40]
     except Exception:
         t = text.strip().replace("\n", " ")
         return t[:40] + ("…" if len(t) > 40 else "")
@@ -812,7 +822,7 @@ def _title_from_image(image_data_url: str) -> str:
                 "model": "qwen/qwen3.8-27b",
                 "messages": [
                     {"role": "user", "content": [
-                        {"type": "text", "text": "Is photo ka 5-8 shabd ka chat title banao. Sirf title likho, koi quote nahi. Jo bhasha user ne likha ho usme, warna Hindi/Hinglish. Example: 'Gold price chart', 'Smartphone photo', 'Restaurant menu'."},
+                        {"type": "text", "text": "Is photo ka 25-29 akshar ka chat title banao. Sirf title likho, koi quote nahi. Jo bhasha user ne likha ho usme, warna Hindi/Hinglish. Example: 'Gold price chart', 'Smartphone photo', 'Restaurant menu'."},
                         {"type": "image_url", "image_url": {"url": image_data_url}},
                     ]},
                 ],
@@ -826,7 +836,7 @@ def _title_from_image(image_data_url: str) -> str:
         data = r.json()
         t = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
         t = t.replace("\n", " ").replace('"', '').replace("'", "").strip()
-        return t[:70] if t else "Photo message"
+        return _fit29(t) if t else "Photo message"
     except Exception:
         return "Photo message"
 
