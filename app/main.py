@@ -157,9 +157,9 @@ _FOREIGN_WORDS = {
 _INTENT_SYSTEM = (
     "You are an intent classifier. The user message can be in ANY language. "
     "Decide if the user is asking you RIGHT NOW to create (a) a WEBSITE / web page / landing page, "
-    "or (b) an IMAGE / picture / photo / drawing / illustration. "
-    "Questions about websites or images, or anything else, are NONE. "
-    "Reply with exactly one line and nothing else: 'website' or "
+    "(b) an IMAGE / picture / photo / drawing / illustration, or (c) a PDF / document / report / letter file. "
+    "Questions about websites, images or PDFs, or anything else, are NONE. "
+    "Reply with exactly one line and nothing else: 'website' or 'pdf' or "
     "'image|<one detailed English description of the picture to generate>' or 'none'."
 )
 
@@ -185,6 +185,8 @@ def _detect_action(msg: str) -> str:
             out = _call_groq(msg.strip()[:600], system=_INTENT_SYSTEM).strip().strip("`'\" ").lower()
             if out.startswith("website"):
                 return "website"
+            if out.startswith("pdf"):
+                return "pdf"
             if out.startswith("image"):
                 hint = out.split("|", 1)[1].strip() if "|" in out else ""
                 if hint:
