@@ -282,7 +282,6 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
         try:
             import base64 as _b64
             from io import BytesIO as _BIO
-            from xhtml2pdf import pisa as _pisa
             system = (
                 "Tum ek professional document writer ho. User ki request ke hisab se "
                 "ek achha HTML document banao (title, headings, paragraphs, lists). "
@@ -294,10 +293,8 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             if "```" in html_body:
                 html_body = html_body.replace("```html", "").replace("```", "").strip()
             full_html = "<html><head><meta charset='utf-8'></head><body>" + html_body + "</body></html>"
-            buf = _BIO()
-            _pisa.CreatePDF(full_html, dest=buf, encoding="utf-8")
-            pdf_b64 = _b64.b64encode(buf.getvalue()).decode("utf-8")
-            buf.close()
+            from app.pdf_multilang import _build_pdf_multilang
+            pdf_b64 = _b64.b64encode(_build_pdf_multilang(html_body)).decode("utf-8")
             return {
                 "service": "chat",
                 "reply": "Yeh raha aapka PDF.",
@@ -506,7 +503,6 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
     record_usage(key, "pdf")
     import base64
     from io import BytesIO
-    from xhtml2pdf import pisa
 
     system = (
         "Tum ek professional document writer ho. User ki request ke hisab se "
@@ -521,10 +517,11 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
 
     full_html = "<html><head><meta charset=\'utf-8\'></head><body>" + html_body + "</body></html>"
 
-    pdf_buffer = BytesIO()
-    pisa.CreatePDF(full_html, dest=pdf_buffer, encoding="utf-8")
-    pdf_bytes = pdf_buffer.getvalue()
-    pdf_buffer.close()
+    try:
+        from app.pdf_multilang import _build_pdf_multilang
+        pdf_bytes = _build_pdf_multilang(html_body)
+    except Exception as e:
+        raise HTTPException(500, "PDF banane mein problem: " + str(e))
 
     pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8")
     return {
