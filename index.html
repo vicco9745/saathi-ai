@@ -3542,6 +3542,7 @@ info.lines=html.split('\n').length;
 return info;
 }
 function __buildGenReplyNew(kind,o){
+if(kind==='pdf'){var _c=((o&&o.caption)||'').trim();if(_c.length>=40)return _c;}
 if(kind!=='website')return __buildGenReplyOld(kind,o);
 o=o||{};const cap=(o.caption||'').trim();if(cap.length>=140)return cap;
 const html=String(o.html||'');const i=describeWebsiteHtml(html)||{};
