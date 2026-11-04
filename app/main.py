@@ -145,7 +145,59 @@ def _call_openrouter_vision(prompt: str, images: list) -> str:
 
 import re as _re
 
+_ACTION_HINT = {}
+_FOREIGN_WORDS = {
+    "para", "pero", "quiero", "crea", "crear", "hazme", "puedes", "una", "los", "las", "del", "sitio",
+    "pour", "une", "les", "des", "je", "mon", "fais", "peux",
+    "und", "ich", "ein", "eine", "mit", "bitte", "erstelle", "mach", "webseite",
+    "crie", "fazer", "fammi", "sito", "per", "con", "che",
+    "yang", "dan", "untuk", "buatkan", "tolong", "saya", "bisa", "situs",
+    "bir", "bana", "een", "het", "voor", "maak", "mij", "dla", "gumawa", "paki",
+}
+_INTENT_SYSTEM = (
+    "You are an intent classifier. The user message can be in ANY language. "
+    "Decide if the user is asking you RIGHT NOW to create (a) a WEBSITE / web page / landing page, "
+    "or (b) an IMAGE / picture / photo / drawing / illustration. "
+    "Questions about websites or images, or anything else, are NONE. "
+    "Reply with exactly one line and nothing else: 'website' or "
+    "'image|<one detailed English description of the picture to generate>' or 'none'."
+)
+
+
+def _needs_lang_check(msg):
+    m = (msg or "").strip()
+    if not m or len(m) > 600:
+        return False
+    for ch in m:
+        if ord(ch) > 127 and ch.isalpha() and not ("\u0900" <= ch <= "\u097f"):
+            return True
+    import re as _re2
+    words = set(_re2.findall(r"[a-z]+", m.lower()))
+    return bool(words & _FOREIGN_WORDS)
+
+
 def _detect_action(msg: str) -> str:
+    base = _detect_action_base(msg)
+    if base in ("analyze", "pdf", "website", "image"):
+        return base
+    try:
+        if _needs_lang_check(msg):
+            out = _call_groq(msg.strip()[:600], system=_INTENT_SYSTEM).strip().strip("`'\" ").lower()
+            if out.startswith("website"):
+                return "website"
+            if out.startswith("image"):
+                hint = out.split("|", 1)[1].strip() if "|" in out else ""
+                if hint:
+                    if len(_ACTION_HINT) > 200:
+                        _ACTION_HINT.clear()
+                    _ACTION_HINT[msg] = hint
+                return "image"
+    except Exception:
+        pass
+    return base
+
+
+def _detect_action_base(msg: str) -> str:
     """User ke message se samjho kya banane ka hai."""
     m = (msg or "").lower()
     # ═══ STEP 1: LAMBA MESSAGE = FILE UPLOAD → हमेशा ANALYZE ═══
@@ -299,7 +351,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     if action == "image":
         try:
             import urllib.parse as _up
-            encoded = _up.quote(body.message)
+            encoded = _up.quote(_ACTION_HINT.pop(body.message, None) or body.message)
             image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024"
             return {
                 "service": "chat",
