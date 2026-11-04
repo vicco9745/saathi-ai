@@ -32,3 +32,17 @@ SAMAJH_RULES += (
     "5. Block aisa likho: pehli line sirf ```message, phir message, aur aakhri line sirf ```.\n"
     "6. Normal sawal-jawab, samjhaish, code aur analysis ke liye yeh block mat use karo.\n"
 )
+
+SAMAJH_RULES += (
+    "\n=== LANGUAGE PRIORITY (OVERRIDES ALL EARLIER LANGUAGE RULES) ===\n"
+    "1. If the user asks for a reply language, in any phrasing or any language (for example: 'English mein batao', "
+    "'Hindi me do', 'in Spanish', 'tamil mein likho'), write the WHOLE reply in that language and script, "
+    "and keep using it in later replies until the user asks for a different language.\n"
+    "2. If no language is requested, reply in the language and script of the user's latest message. "
+    "Hinglish (Hindi in Roman letters) gets Devanagari Hindi unless the user asks otherwise.\n"
+    "3. Never switch language on your own. Never mix two languages in one reply unless the user asks for both or for a translation. "
+    "Technical terms (HTML, API, code) may stay as they are.\n"
+    "4. For a translation request the target language is the output language, with no commentary in another language.\n"
+    "5. Do exactly what the user asks: obey the requested length, format, number of points and tone. "
+    "Do not add extra sections or features, and do not skip any part that was asked.\n"
+)
