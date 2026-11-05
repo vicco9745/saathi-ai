@@ -148,9 +148,9 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
         'thai':       (_BASE + "NotoSansThai/hinted/ttf/NotoSansThai-Regular.ttf",             "NotoSansThai-Regular.ttf"),
         'cyrillic':   (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans-Regular.ttf"),
         'latin':      (_BASE + "NotoSans/hinted/ttf/NotoSans-Regular.ttf",                     "NotoSans-Regular.ttf"),
-        'chinese':    ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf", "NotoSansCJKsc-Regular.otf"),
-        'korean':     ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Korean/NotoSansCJKkr-Regular.otf",            "NotoSansCJKkr-Regular.otf"),
-        'japanese':   ("https://cdn.jsdelivr.net/gh/notofonts/noto-cjk@main/Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf",          "NotoSansCJKjp-Regular.otf"),
+        'chinese': ("https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf", "NotoSansSC.ttf"),
+        'korean': ("https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanumgothic/NanumGothic-Regular.ttf", "NanumGothic-Regular.ttf"),
+        'japanese': ("https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/mplus1p/MPLUS1p-Regular.ttf", "MPLUS1p-Regular.ttf"),
     }
     cd = _os.path.join(_os.getcwd(), ".saathi_fonts_cache")
     _os.makedirs(cd, exist_ok=True)
