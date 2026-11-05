@@ -157,7 +157,10 @@ _FOREIGN_WORDS = {
 _INTENT_SYSTEM = (
     "You are an intent classifier. The user message can be in ANY language. "
     "Decide if the user is asking you RIGHT NOW to create (a) a WEBSITE / web page / landing page, "
-    "(b) an IMAGE / picture / photo / drawing / illustration, or (c) a PDF / document / report / letter file. "
+    "(b) an IMAGE / picture / photo / drawing / illustration, or (c) a PDF file. "
+    "Choose pdf ONLY if the user explicitly asks for a PDF, a downloadable file or a document file. "
+    "Writing an email, letter, message, essay, report text or any answer to read in the chat is NONE, "
+    "even if the user says make, create, banao or bana do. "
     "Questions about websites, images or PDFs, or anything else, are NONE. "
     "Reply with exactly one line and nothing else: 'website' or 'pdf' or "
     "'image|<one detailed English description of the picture to generate>' or 'none'."
