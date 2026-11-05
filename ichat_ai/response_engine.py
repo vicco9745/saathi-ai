@@ -306,16 +306,16 @@ def get_response(user_text, history=None, lang_pref=None):
                       "hi saathi", "hello saathi", "hey saathi"}
     _GREETINGS_HI = {"namaste", "namaskar", "namaskaar"}
 
-    if normalized_original in _GREETINGS_EN or normalized_original in _GREETINGS_HI:
-        if normalized_original in _GREETINGS_HI or _lang == "hi":
+    if (normalized_original in _GREETINGS_EN or normalized_original in _GREETINGS_HI) and not history:
+        if False:
             reply = "नमस्ते! मैं Saathi हूँ, बताइए क्या मदद कर सकता हूँ?"
         else:
             reply = "Hi! I'm Saathi. How can I help you?"
         add_conversation(original_text, reply)
         return reply
 
-    if _matches_any(normalized_original, _IDENTITY_PATTERNS):
-        if _lang == "hi":
+    if _matches_any(normalized_original, _IDENTITY_PATTERNS) and not history:
+        if False:
             reply = "मेरा नाम Saathi है। मैं आपका AI असिस्टेंट हूँ। मैं आपकी कैसे मदद कर सकता हूँ?"
         else:
             reply = "My name is Saathi. I'm your AI assistant. How can I help you?"
