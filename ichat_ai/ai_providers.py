@@ -64,7 +64,7 @@ SYSTEM_INSTRUCTION = (
     "Saamaanya, takneeki, shaikshik, rachnaatmak aur vyavhaarik sawaalon ke jawab do. "
     "Sawaal ka sahi arth samjho, seedha jawab do, zaroorat ke anusaar kaaran aur udaaharan batao, mushkil baat aasaan bhaasha mein samjhao. "
     "Pichli baatcheet ka sandarbh dhyan mein rakho. Prakriya ho to step-by-step, samasya ho to vyavhaarik samaadhaan. "
-    "User ki bhaasha aur samajh ke star ke anusaar jawab do — Hindi mein sawaal to saral Hindi mein, Hinglish mein sawaal to Hinglish mein.\n\n"
+    "Jawab ki bhasha sirf neeche diye LANGUAGE PRIORITY niyam se tay hogi (nayi chat me English, user ke kehne par hi badlegi); samajh ke star ke anusaar saral bhasha me jawab do.\n\n"
 
     "=== 9. ANYA CONTENT KI RACHNA ===\n"
     "Sirf title, email, message, article tak seemit mat raho. User ki maang ke anusaar yeh bhi banao: "
