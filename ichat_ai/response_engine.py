@@ -491,6 +491,16 @@ def get_response(user_text, history=None, lang_pref=None):
         print(f"[get_response] ai_provider_answer CRASHED: {type(e).__name__}: {e}")
         ai_answer = None
 
+    if not ai_answer:
+        try:
+            import time as _t
+            _t.sleep(3)
+            print("[get_response] ai_provider_answer retry")
+            ai_answer = ai_provider_answer(original_text, history=history, lang_pref=lang_pref)
+        except Exception as e:
+            print(f"[get_response] retry failed: {type(e).__name__}: {e}")
+            ai_answer = None
+
     if ai_answer:
         reply = ai_answer
         add_conversation(original_text, reply)
