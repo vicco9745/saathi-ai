@@ -423,7 +423,7 @@ def _call_groq(prompt: str, system: str = "") -> str:
         data = r.json()
         content = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
         finish = data.get("choices", [{}])[0].get("finish_reason", "")
-        if finish == "length" or (content and not content.rstrip().endswith((">", "}", ")", "]", ".", "!", "?", "`"))):
+        if finish == "length" or (len(content) > 200 and not content.rstrip().endswith((">", "}", ")", "]", ".", "!", "?", "`"))):
             print(f"[groq] Response cut ho gaya (finish={finish}), OpenRouter try")
             try:
                 alt = _call_openrouter(prompt, system)
