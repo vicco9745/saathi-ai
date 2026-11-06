@@ -450,6 +450,19 @@ def _call_groq(prompt, history=None, lang_pref=None):
             "presence_penalty": 0.3,
         }
         resp = requests.post(url, headers=headers, json=payload, timeout=30)
+        if resp.status_code == 429:
+            print(f"[groq] HTTP 429 body: {resp.text[:300]}")
+            for _fm in ("llama-3.3-70b-versatile", "llama-3.1-8b-instant"):
+                _p2 = {k: v for k, v in payload.items() if k not in ("frequency_penalty", "presence_penalty")}
+                _p2["model"] = _fm
+                try:
+                    resp = requests.post(url, headers=headers, json=_p2, timeout=30)
+                except Exception as _e2:
+                    print(f"[groq] fallback {_fm} crashed: {_e2}")
+                    continue
+                print(f"[groq] fallback {_fm} -> HTTP {resp.status_code}")
+                if resp.status_code == 200:
+                    break
         if resp.status_code != 200:
             print(f"[groq] HTTP {resp.status_code}")
             return None
