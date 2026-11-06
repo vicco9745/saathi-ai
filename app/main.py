@@ -743,7 +743,7 @@ VISION_RULES = """Photo ko bahut dhyaan se padho. Niyam:
 
 def _call_vision_v2(prompt: str, images: list) -> str:
     content = [{"type": "text", "text": VISION_RULES + "\n\nUSER KA SAWAAL: " + (prompt or "Is photo me kya hai? Puri detail batao.")}]
-    for img in images[:3]:
+    for img in images[:5]:
         url = img.dataUrl or ""
         if not url.startswith("data:image"):
             continue
