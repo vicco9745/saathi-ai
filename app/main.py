@@ -742,9 +742,19 @@ VISION_RULES = """Photo ko bahut dhyaan se padho. Niyam:
 - Apni taraf se koi baat mat jodo."""
 
 def _call_vision_v2(prompt: str, images: list) -> str:
-    content = [{"type": "text", "text": VISION_RULES + "\n\nUSER KA SAWAAL: " + (prompt or "Is photo me kya hai? Puri detail batao.")}]
+    # Check karein ki kya ye video frames hain
+    is_video = any("video-frame" in (getattr(img, 'name', '') or '') for img in images)
+    
+    if is_video:
+        default_prompt = "Yeh ek video ke lagatar frames hain (kram mein). Inhe dekh kar poori video ka vistarit varnan karein aur user ke sawaal ka jawab dein."
+    else:
+        default_prompt = "Is photo me kya hai? Puri detail batao."
+        
+    text_prompt = VISION_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
+    content = [{"type": "text", "text": text_prompt}]
+    
     for img in images[:5]:
-        url = img.dataUrl or ""
+        url = getattr(img, 'dataUrl', '') or (img.get('dataUrl', '') if isinstance(img, dict) else '')
         if not url.startswith("data:image"):
             continue
         content.append({"type": "image_url", "image_url": {"url": url}})
