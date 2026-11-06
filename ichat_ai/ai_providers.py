@@ -387,7 +387,7 @@ def _call_groq(prompt, history=None, lang_pref=None):
             print(f"[groq] FRONTEND HISTORY: {len(history_messages)} msgs")
 
         # Agar frontend se nahi aayi, to backend memory.json se lo
-        if not history_messages:
+        if False and not history_messages:
             try:
                 from ichat_ai.memory.memory import get_conversation_history
                 _history = get_conversation_history()
