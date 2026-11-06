@@ -171,7 +171,7 @@ def web_search_answer(query):
     try:
         from ichat_ai.web_search import search_web
         cleaned_query = _clean_query_for_search(query)
-        results = search_web(cleaned_query, limit=3)
+        results = search_web(cleaned_query, limit=8)
         print(f"[web_search_answer] cleaned query={cleaned_query!r} (original={query!r})")
         print(f"[web_search_answer] query={query!r} got {len(results)} results")
     except Exception as e:
@@ -187,7 +187,7 @@ def web_search_answer(query):
         content = (result.get("content") or "").strip()
         url = (result.get("url") or "").strip()
 
-        if url and title and len(sources) < 3:
+        if url and title and len(sources) < 8:
             sources.append({"title": title, "url": url})
 
         if answer is None:
