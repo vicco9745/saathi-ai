@@ -32,7 +32,16 @@
           var c = document.createElement('canvas');
           c.width = Math.round(w * s); c.height = Math.round(h * s);
           c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
-          out.push(c.toDataURL('image/jpeg', 0.72));
+          var dataUrl = c.toDataURL('image/jpeg', 0.72);
+          
+          // पहले फ्रेम को वीडियो का थंबनेल (प्रीव्यू) बना दें
+          if (out.length === 0) {
+            att.dataUrl = dataUrl;
+            if (typeof renderPendingAttachments === 'function') {
+              renderPendingAttachments(); // UI को तुरंत अपडेट करें
+            }
+          }
+          out.push(dataUrl);
         } catch (e) {}
       }
 
@@ -65,7 +74,7 @@
       }
       v.addEventListener('loadeddata', start);
       v.addEventListener('loadedmetadata', function () { setTimeout(start, 300); });
-      v.src = att.dataUrl;
+      v.src = att.dataUrl; // यहाँ असली वीडियो का URL है
     });
   }
 
