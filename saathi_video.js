@@ -53,14 +53,29 @@
         function next() {
           if (idx >= times.length) { finish(); return; }
           var t = times[idx++], fired = false;
+          var timer = null;
+
           function after() {
-            if (fired) return; fired = true;
+            if (fired) return; 
+            fired = true;
+            if (timer) clearTimeout(timer);
             v.removeEventListener('seeked', after);
-            setTimeout(function () { snap(); next(); }, 120);
+            // फ्रेम निकालने में थोड़ा समय दें ताकि ड्रॉइंग पूरी हो जाए
+            setTimeout(function () { snap(); next(); }, 300);
           }
+
           v.addEventListener('seeked', after);
-          setTimeout(after, 4000);
-          try { v.currentTime = t; } catch (e) { after(); }
+          
+          // अगर 4 सेकंड में seek न हो, तो अगले फ्रेम पर जाएँ
+          timer = setTimeout(after, 4000);
+          
+          try { 
+            v.currentTime = t; 
+            // कुछ फ़ोन में seeked इवेंट नहीं आता, इसलिए थोड़ी देर बाद खुद चेक करें
+            setTimeout(function() {
+               if (Math.abs(v.currentTime - t) < 0.5) after();
+            }, 1000);
+          } catch (e) { after(); }
         }
         next();
       }
