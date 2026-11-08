@@ -19,6 +19,21 @@
       function finish() {
         if (finished) return; finished = true;
         clearTimeout(total);
+        
+        // Fallback: अगर एक भी फ्रेम नहीं निकला, तो 1 सेकंड पर एक फ्रेम निकालने की कोशिश करें
+        if (out.length === 0) {
+          try {
+            var w = v.videoWidth, h = v.videoHeight;
+            if (w && h) {
+              var s = Math.min(1, MAXW / w);
+              var c = document.createElement('canvas');
+              c.width = Math.round(w * s); c.height = Math.round(h * s);
+              c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+              out.push(c.toDataURL('image/jpeg', 0.72));
+            }
+          } catch(e) {}
+        }
+
         try { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); } catch (e) {}
         resolve(out);
       }
