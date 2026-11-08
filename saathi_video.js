@@ -74,7 +74,17 @@
       }
       v.addEventListener('loadeddata', start);
       v.addEventListener('loadedmetadata', function () { setTimeout(start, 300); });
-      v.src = att.dataUrl; // यहाँ असली वीडियो का URL है
+      try {
+        // Base64 को Blob में बदलकर सुरक्षित तरीके से लोड करें
+        var parts = att.dataUrl.split(",");
+        var byteString = atob(parts[1]);
+        var mimeString = parts[0].split(":")[1].split(";")[0];
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) { ia[i] = byteString.charCodeAt(i); }
+        var blob = new Blob([ab], { type: mimeString });
+        v.src = URL.createObjectURL(blob);
+      } catch(e) { v.src = att.dataUrl; }
     });
   }
 
