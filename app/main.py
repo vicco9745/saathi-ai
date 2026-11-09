@@ -92,7 +92,7 @@ def _call_openrouter_vision(prompt: str, images: list) -> str:
         raise HTTPException(503, "OPENROUTER_API_KEY set nahi hai")
 
     content = [{"type": "text", "text": prompt or "Is photo me kya hai? Puri detail batao."}]
-    for img in images[:3]:
+    for img in images[:10]:
         url = img.dataUrl or ""
         if not url.startswith("data:image"):
             continue
@@ -786,7 +786,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
         text_prompt = VISION_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
     content = [{"type": "text", "text": text_prompt}]
     
-    for img in images[:5]:
+    for img in images[:10]:
         url = getattr(img, 'dataUrl', '') or (img.get('dataUrl', '') if isinstance(img, dict) else '')
         if not url.startswith("data:image"):
             continue
