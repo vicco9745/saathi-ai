@@ -142,3 +142,29 @@
   }
   setInterval(scan, 400);
 })();
+
+/* __vidBadge: status chip */
+(function () {
+  var el = null, seenNoFrames = 0, busyStart = 0;
+  function mk() {
+    if (el || !document.body) return;
+    el = document.createElement('div');
+    el.id = 'vidBadge';
+    el.style.cssText = 'position:fixed;bottom:140px;left:50%;transform:translateX(-50%);z-index:99999;padding:6px 12px;border-radius:14px;font:600 12px/1.2 sans-serif;color:#fff;background:#6b7280;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.2);max-width:90%;text-align:center;';
+    document.body.appendChild(el);
+  }
+  function set(t, c) { mk(); if (!el) return; el.textContent = t; el.style.background = c; }
+  setInterval(function () {
+    try {
+      if (typeof pendingAttachments === 'undefined' || !Array.isArray(pendingAttachments)) { set('❌ Video helper: attachments list nahi mili', '#dc2626'); return; }
+      var vids = pendingAttachments.filter(function (a) { return a && a.kind === 'video' && a.origin === 'user'; });
+      var frames = pendingAttachments.filter(function (a) { return a && a.name && String(a.name).indexOf('video-frame-') === 0; });
+      var busy = vids.some(function (a) { return a.__vidBusy; });
+      if (busy) { if (!busyStart) busyStart = Date.now(); set('⏳ Video padh raha hoon... ' + Math.round((Date.now() - busyStart) / 1000) + ' sec', '#d97706'); seenNoFrames = 0; return; }
+      busyStart = 0;
+      if (frames.length) { set('✅ ' + frames.length + ' frame taiyaar, ab bhej sakte ho', '#16a34a'); seenNoFrames = 0; return; }
+      if (vids.length) { seenNoFrames++; if (seenNoFrames > 8) set('❌ 0 frame nikle', '#dc2626'); else set('⏳ Video check ho raha hai...', '#d97706'); return; }
+      seenNoFrames = 0; set('Video helper ON · koi video nahi', '#6b7280');
+    } catch (e) {}
+  }, 500);
+})();
