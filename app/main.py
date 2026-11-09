@@ -741,6 +741,28 @@ VISION_RULES = """Photo ko bahut dhyaan se padho. Niyam:
 - Address ki line ka ek shabd do hisson mein mat todo (jaise LAMAHI ek hi shabd hai).
 - Apni taraf se koi baat mat jodo."""
 
+_OR_VIS_CACHE = {"t": 0, "m": []}
+def _or_vision_models():
+    import time, requests
+    if _OR_VIS_CACHE["m"] and time.time() - _OR_VIS_CACHE["t"] < 3600:
+        return list(_OR_VIS_CACHE["m"])
+    try:
+        r = requests.get("https://openrouter.ai/api/v1/models", timeout=15)
+        out = []
+        for m in r.json().get("data", []):
+            ins = (m.get("architecture") or {}).get("input_modalities") or []
+            pr = m.get("pricing") or {}
+            if "image" in ins and str(pr.get("prompt")) in ("0", "0.0") and str(pr.get("completion")) in ("0", "0.0"):
+                out.append((m.get("context_length") or 0, m.get("id")))
+        out.sort(reverse=True)
+        ids = [i for _, i in out if i][:6]
+        if ids:
+            _OR_VIS_CACHE["t"] = time.time()
+            _OR_VIS_CACHE["m"] = ids
+        return ids
+    except Exception:
+        return []
+
 def _call_vision_v2(prompt: str, images: list) -> str:
     # Check karein ki kya ye video frames hain
     is_video = any("video-frame" in (getattr(img, 'name', '') or '') for img in images)
@@ -797,13 +819,13 @@ def _call_vision_v2(prompt: str, images: list) -> str:
     # OpenRouter (भरोसेमंद फॉलबैक) — अब चालू मॉडल्स
     or_key = os.environ.get("OPENROUTER_API_KEY")
     if or_key:
-        or_models = [
+        or_models = _or_vision_models() + [
             "qwen/qwen3.8-27b:free",
             "google/gemma-4-31b-it:free",
             "nvidia/nemotron-nano-12b-v2-vl:free",
             "thinkingmachines/inkling-small:free",
         ]
-        for model in or_models:
+        for model in list(dict.fromkeys(or_models)):
             try:
                 r = _req.post(
                     "https://openrouter.ai/api/v1/chat/completions",
