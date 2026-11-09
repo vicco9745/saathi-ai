@@ -126,7 +126,7 @@
       }
       pendingAttachments.slice().forEach(function (a) {
         if (!a || a.kind !== 'video' || a.origin !== 'user' || !a.dataUrl || done.has(a)) return;
-        done.add(a);
+        done.add(a); a.__vidBusy = true;
         say('Video padh raha hoon, 10-20 second ruko...');
         grab(a).then(function (frames) {
           if (pendingAttachments.indexOf(a) === -1) return;
@@ -136,7 +136,7 @@
           });
           try { renderPendingAttachments(); updateActionButton(); } catch (e) {}
           say(frames.length + ' frame taiyaar, ab bhej sakte ho');
-        }).catch(function () { say('Video padhne me gadbad hui'); });
+        }).catch(function () { say('Video padhne me gadbad hui'); }).then(function () { a.__vidBusy = false; try { if (typeof tryFlushSend === 'function') tryFlushSend(); } catch (e) {} });
       });
     } catch (e) {}
   }

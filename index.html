@@ -3787,7 +3787,7 @@ if(!savePublished(list)){showToast('Publish nahi ho paya: jagah kam hai');return
 pg.remove();codePreviewOverlay.classList.remove('open');showToast('Publish ho gaya');openArtifacts();});
 setTimeout(()=>ti.focus(),50);}
 let sendQueued=false;
-function attBusy(){return uploadLoading>0||pendingAttachments.some(a=>a.loadUntil&&a.loadUntil>Date.now());}
+function attBusy(){return uploadLoading>0||pendingAttachments.some(a=>(a.loadUntil&&a.loadUntil>Date.now())||a.__vidBusy);}
 function tryFlushSend(){if(!sendQueued||attBusy())return;sendQueued=false;updateActionButton();sendMessage();}
 function sendMessage(){
 const text=msgInput.value.trim();
