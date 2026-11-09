@@ -1,3 +1,6 @@
+window.__vidPA=function(){try{if(window.__vidApi)return window.__vidApi.get();if(typeof pendingAttachments!=='undefined')return pendingAttachments;}catch(e){}return undefined;};
+window.__vidRender=function(){try{if(window.__vidApi)window.__vidApi.render();}catch(e){}};
+window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}catch(e){}};
 /* Saathi: video se 5 frame nikaal kar photo ki tarah jodta hai, taaki vision unhe padh sake */
 (function () {
   var done = new WeakSet(), warned = false;
@@ -52,8 +55,8 @@
           // पहले फ्रेम को वीडियो का थंबनेल (प्रीव्यू) बना दें
           if (out.length === 0) {
             att.dataUrl = dataUrl;
-            if (typeof renderPendingAttachments === 'function') {
-              renderPendingAttachments(); // UI को तुरंत अपडेट करें
+            if (true) {
+              window.__vidRender(); // UI को तुरंत अपडेट करें
             }
           }
           out.push(dataUrl);
@@ -120,23 +123,23 @@
 
   function scan() {
     try {
-      if (typeof pendingAttachments === 'undefined' || !Array.isArray(pendingAttachments)) {
+      if (typeof window.__vidPA() === 'undefined' || !Array.isArray(window.__vidPA())) {
         if (!warned) { warned = true; say('Video helper: attachments list nahi mili'); }
         return;
       }
-      pendingAttachments.slice().forEach(function (a) {
+      window.__vidPA().slice().forEach(function (a) {
         if (!a || a.kind !== 'video' || a.origin !== 'user' || !a.dataUrl || done.has(a)) return;
         done.add(a); a.__vidBusy = true;
         say('Video padh raha hoon, 10-20 second ruko...');
         grab(a).then(function (frames) {
-          if (pendingAttachments.indexOf(a) === -1) return;
+          if (window.__vidPA().indexOf(a) === -1) return;
           if (!frames.length) { say('Video se frame nahi nikle'); return; }
           frames.forEach(function (f, i) {
-            pendingAttachments.push({ kind: 'photo', name: 'video-frame-' + (i + 1) + '.jpg', size: f.length, dataUrl: f, origin: 'user' });
+            window.__vidPA().push({ kind: 'photo', name: 'video-frame-' + (i + 1) + '.jpg', size: f.length, dataUrl: f, origin: 'user' });
           });
-          try { renderPendingAttachments(); updateActionButton(); } catch (e) {}
+          try { window.__vidRender(); updateActionButton(); } catch (e) {}
           say(frames.length + ' frame taiyaar, ab bhej sakte ho');
-        }).catch(function () { say('Video padhne me gadbad hui'); }).then(function () { a.__vidBusy = false; try { if (typeof tryFlushSend === 'function') tryFlushSend(); } catch (e) {} });
+        }).catch(function () { say('Video padhne me gadbad hui'); }).then(function () { a.__vidBusy = false; try { if (true) window.__vidFlush(); } catch (e) {} });
       });
     } catch (e) {}
   }
@@ -156,9 +159,9 @@
   function set(t, c) { mk(); if (!el) return; el.textContent = t; el.style.background = c; }
   setInterval(function () {
     try {
-      if (typeof pendingAttachments === 'undefined' || !Array.isArray(pendingAttachments)) { set('❌ Video helper: attachments list nahi mili', '#dc2626'); return; }
-      var vids = pendingAttachments.filter(function (a) { return a && a.kind === 'video' && a.origin === 'user'; });
-      var frames = pendingAttachments.filter(function (a) { return a && a.name && String(a.name).indexOf('video-frame-') === 0; });
+      if (typeof window.__vidPA() === 'undefined' || !Array.isArray(window.__vidPA())) { set('❌ Video helper: attachments list nahi mili', '#dc2626'); return; }
+      var vids = window.__vidPA().filter(function (a) { return a && a.kind === 'video' && a.origin === 'user'; });
+      var frames = window.__vidPA().filter(function (a) { return a && a.name && String(a.name).indexOf('video-frame-') === 0; });
       var busy = vids.some(function (a) { return a.__vidBusy; });
       if (busy) { if (!busyStart) busyStart = Date.now(); set('⏳ Video padh raha hoon... ' + Math.round((Date.now() - busyStart) / 1000) + ' sec', '#d97706'); seenNoFrames = 0; return; }
       busyStart = 0;
