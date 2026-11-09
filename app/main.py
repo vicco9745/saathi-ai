@@ -763,6 +763,14 @@ def _or_vision_models():
     except Exception:
         return []
 
+VIDEO_RULES = """VIDEO MODE (upar ke photo/document wale rules aur 3-hisse wale format ko is video ke liye IGNORE karo):
+Neeche di gayi tasveerein EK hi video ke frames hain, kram mein. Inhe photo mat samjho aur 'photo', 'frame' ya 'image' shabd use mat karo; sab kuch 'video mein' ke roop mein batao.
+Jawab Hinglish mein, saaf aur seedha, in hisson mein:
+1. Video mein kya ho raha hai: shuru se ant tak scene-by-scene kahani, kaun-kaun dikh raha hai (kapde, jagah, kaam), woh kya kar raha hai.
+2. Jo bol ya likha hua dikhe (subtitles ya text), use video ki baat-cheet ki tarah likho aur batao ki woh kya keh raha hai.
+3. Video ka matlab aur sandesh: yeh kis baare mein hai, ismein se kya seekh milti hai, aur agar baat kamyabi ya tarakki ki hai to kamyab hone ke liye video kya sikhata hai.
+Spelling ya grammar ki galtiyan mat nikalo. Chehre se kisi asli insaan ki pehchaan ya naam mat batao; sirf wahi batao jo dikhta hai ya likha hai. Jo saaf na dikhe use andaaza kehkar batao, banao mat."""
+
 def _call_vision_v2(prompt: str, images: list) -> str:
     # Check karein ki kya ye video frames hain
     is_video = any("video-frame" in (getattr(img, 'name', '') or '') for img in images)
@@ -772,7 +780,10 @@ def _call_vision_v2(prompt: str, images: list) -> str:
     else:
         default_prompt = "Is photo me kya hai? Puri detail batao."
         
-    text_prompt = VISION_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
+    if is_video:
+        text_prompt = VISION_RULES + "\n\n" + VIDEO_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
+    else:
+        text_prompt = VISION_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
     content = [{"type": "text", "text": text_prompt}]
     
     for img in images[:5]:
