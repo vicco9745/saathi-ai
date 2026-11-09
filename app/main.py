@@ -773,7 +773,7 @@ Spelling ya grammar ki galtiyan mat nikalo. Chehre se kisi asli insaan ki pehcha
 
 def _call_vision_v2(prompt: str, images: list) -> str:
     # Check karein ki kya ye video frames hain
-    is_video = any("video-frame" in (getattr(img, 'name', '') or '') for img in images)
+    is_video = any("video-frame" in (getattr(img, 'name', '') or '') or "video-thumbnail" in (getattr(img, 'name', '') or '') for img in images)
     
     if is_video:
         default_prompt = "Yeh ek video ke lagatar frames hain (kram mein). Inhe dekh kar poori video ka vistarit varnan karein aur user ke sawaal ka jawab dein."
