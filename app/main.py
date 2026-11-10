@@ -245,6 +245,15 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     # Agar user ne image bheji hai to vision path use karo
     images = [a for a in (body.attachments or []) if a.kind == "photo" and a.dataUrl]
 
+    videos = [a for a in (body.attachments or []) if a.kind == "video" and a.dataUrl]
+    if videos:  # VIDNATIVE
+        try:
+            _nv = _call_video_native(body.message, videos[0])
+        except Exception:
+            _nv = ""
+        if _nv:
+            return {"service": "chat", "reply": _nv, "model": "saathi-video"}
+
     if images:
         raw = _call_vision_v2(body.message, images)
         raw = __import__("re").sub(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+", "", raw)
@@ -777,6 +786,57 @@ Jawab Roman Hinglish mein, saaf aur seedha. In teen hisson mein likho:
 **Jo likha ya bola dikha** - screen par jo subtitles ya text dikhe use bilkul waisa hi likho jaisa likha hai (spelling mat badlo), aur batao ki yeh kya keh raha hai. Tum aawaaz nahi sun sakte, isliye bola hua sirf tab batao jab woh likha dikhe.
 **Matlab aur sandesh** - video kis baare mein hai, ismein se kya seekh milti hai, aur agar baat kamyabi ya tarakki ki hai to kamyab hone ke liye video kya sikhata hai.
 Niyam: kisi asli insaan ko chehre se pehchaan kar naam mat batao; sirf wahi batao jo dikhta ya likha hai. Jo saaf na dikhe use 'andaaza' kehkar batao. Watermark ya credit (jaise @naam) dikhe to ek line mein batao. Spelling ya grammar ki galtiyan mat nikalo."""
+
+# VIDNATIVE helpers
+_OR_VID_CACHE = {"t": 0, "m": []}
+def _or_video_models():
+    import time, requests
+    if _OR_VID_CACHE["m"] and time.time() - _OR_VID_CACHE["t"] < 3600:
+        return list(_OR_VID_CACHE["m"])
+    try:
+        r = requests.get("https://openrouter.ai/api/v1/models", timeout=15)
+        out = []
+        for m in r.json().get("data", []):
+            ins = (m.get("architecture") or {}).get("input_modalities") or []
+            pr = m.get("pricing") or {}
+            if "video" in ins and str(pr.get("prompt")) in ("0", "0.0") and str(pr.get("completion")) in ("0", "0.0"):
+                out.append((m.get("context_length") or 0, m.get("id")))
+        out.sort(reverse=True)
+        ids = [i for _, i in out if i][:3]
+        if ids:
+            _OR_VID_CACHE["t"] = time.time()
+            _OR_VID_CACHE["m"] = ids
+        return ids
+    except Exception:
+        return []
+
+def _call_video_native(prompt, video):
+    import re, requests
+    key = os.environ.get("OPENROUTER_API_KEY")
+    url = getattr(video, "dataUrl", "") or ""
+    if not key or not url.startswith("data:video"):
+        return ""
+    text = VIDEO_RULES + "\n\nUSER KA SAWAAL: " + (prompt or "Is video mein kya ho raha hai, poori detail se batao.")
+    content = [{"type": "text", "text": text}, {"type": "video_url", "video_url": {"url": url}}]
+    for model in _or_video_models()[:2]:
+        try:
+            r = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "HTTP-Referer": "https://saathi-ai-y48j.onrender.com", "X-Title": "Saathi AI"},
+                json={"model": model, "messages": [{"role": "system", "content": VIDEO_SYSTEM}, {"role": "user", "content": content}], "max_tokens": 2000},
+                timeout=70,
+            )
+            if r.status_code != 200:
+                continue
+            ch = r.json().get("choices") or []
+            if ch:
+                txt = (ch[0].get("message", {}).get("content") or "").strip()
+                txt = re.sub(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+", "", txt)
+                if txt:
+                    return txt
+        except Exception:
+            continue
+    return ""
 
 def _call_vision_v2(prompt: str, images: list) -> str:
     # Check karein ki kya ye video frames hain

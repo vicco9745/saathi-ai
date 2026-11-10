@@ -75,7 +75,7 @@ ss.speak=function(u){try{if(u&&typeof u.text==='string')u.text=sc(u.text);}catch
 var snap=[],seen=0;
 function grab(){
 var a=[];
-try{if(typeof pendingAttachments!=='undefined'&&pendingAttachments.length){pendingAttachments.forEach(function(p){if(p&&p.kind==='photo'&&p.dataUrl)a.push({kind:'photo',dataUrl:p.dataUrl,name:p.name||'photo.jpg'});});}}catch(e){}
+try{var PA=(window.__vidApi&&window.__vidApi.get())||(typeof pendingAttachments!=='undefined'?pendingAttachments:null);if(PA&&PA.length){PA.forEach(function(p){if(p&&p.kind==='photo'&&p.dataUrl)a.push({kind:'photo',dataUrl:p.dataUrl,name:p.name||'photo.jpg'});if(p&&p.kind==='video'&&p.dataUrl&&p.dataUrl.length<9000000)a.push({kind:'video',dataUrl:p.dataUrl,name:p.name||'video.mp4'});});}}catch(e){}
 if(!a.length){try{document.querySelectorAll('#pendingAttachmentsWrap img').forEach(function(im,i){if(/^data:image/.test(im.src))a.push({kind:'photo',dataUrl:im.src,name:'photo'+i+'.jpg'});});}catch(e){}}
 return a;
 }
