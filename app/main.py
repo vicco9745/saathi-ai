@@ -248,7 +248,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     if images:
         raw = _call_vision_v2(body.message, images)
         raw = __import__("re").sub(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+", "", raw)
-        reply = __import__("re").sub(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+", "", _polish_vision_reply(raw, body.message))
+        reply = __import__("re").sub(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+", "", (raw if any("video-frame" in (getattr(a, "name", "") or "") for a in images) else _polish_vision_reply(raw, body.message)))  # VIDPOLISH
         return {
             "service": "chat",
             "reply": reply,
