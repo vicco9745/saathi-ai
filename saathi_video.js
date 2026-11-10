@@ -1,7 +1,7 @@
-/* Saathi: video se 1 frame nikaal kar dikhata hai aur AI ko bhejta hai */
+/* Saathi: video se frame nikaalta hai, UI mein sirf 1 dikhata hai, baaki AI ko chupke se bhejta hai */
 (function () {
   var done = new WeakSet(), warned = false;
-  var FRAMES = 1, MAXW = 900; // Sirf 1 frame nikalega
+  var MAXW = 900;
 
   function say(t) { try { if (typeof showToast === 'function') showToast(t); } catch (e) {} }
 
@@ -15,7 +15,7 @@
       v.style.cssText = 'position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none;';
       document.body.appendChild(v);
 
-      var total = setTimeout(finish, 45000);
+      var total = setTimeout(finish, 60000); // 60 sec tak wait karega
       function finish() {
         if (finished) return; finished = true;
         clearTimeout(total);
@@ -49,7 +49,7 @@
           var dataUrl = c.toDataURL('image/jpeg', 0.72);
 
           if (out.length === 0) {
-            att.dataUrl = dataUrl; // Thumbnail set
+            att.dataUrl = dataUrl; // UI mein pehla frame
             if (typeof renderPendingAttachments === 'function') renderPendingAttachments();
           }
           out.push(dataUrl);
@@ -59,8 +59,12 @@
       function run() {
         var d = v.duration;
         if (!isFinite(d) || d <= 0) { finish(); return; }
-        var times = [0.1]; // Sirf pehla frame uthayega
-        var idx = 0;
+        
+        // Video ki lambai ke hisaab se frames nikale (Har 3 second mein 1 frame, max 10)
+        var count = Math.max(2, Math.min(10, Math.floor(d / 3)));
+        var times = [], idx = 0;
+        for (var i = 0; i < count; i++) times.push(Math.min(Math.max(d - 0.1, 0), d * (i + 0.5) / count));
+        
         function next() {
           if (idx >= times.length) { finish(); return; }
           var t = times[idx++], fired = false;
@@ -115,18 +119,32 @@
       pendingAttachments.slice().forEach(function (a) {
         if (!a || a.kind !== 'video' || a.origin !== 'user' || !a.dataUrl || done.has(a)) return;
         done.add(a);
-        say('Video padh raha hoon, 10-20 second ruko...');
+        say('Video padh raha hoon, thoda intezaar karein...');
+        
         grab(a).then(function (frames) {
           if (pendingAttachments.indexOf(a) === -1) return;
           if (!frames.length) { say('Video se frame nahi nikle'); return; }
           
-          // Nayi 6 photos nahi banayenge, bas video ko hi photo bana denge
+          // Pehla frame UI mein dikhega
           a.dataUrl = frames[0];
           a.kind = 'photo';
           a.name = 'video-thumbnail.jpg';
-          
+
+          // Baaki frames chhup kar (hidden) AI ke paas jayenge
+          for (var i = 1; i < frames.length; i++) {
+            var f = frames[i];
+            pendingAttachments.push({ 
+              kind: 'photo', 
+              name: 'video-frame-' + (i + 1) + '.jpg', 
+              size: f.length, 
+              dataUrl: f, 
+              origin: 'user',
+              hidden: true // Ye UI mein nahi dikhega
+            });
+          }
+
           try { renderPendingAttachments(); updateActionButton(); } catch (e) {}
-          say('1 frame taiyaar, ab sawaal likh kar bhejo');
+          say('Video taiyaar hai, ab sawaal likh kar bhejein');
         }).catch(function () { say('Video padhne me gadbad hui'); });
       });
     } catch (e) {}
