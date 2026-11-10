@@ -771,6 +771,13 @@ Jawab Hinglish mein, saaf aur seedha, in hisson mein:
 3. Video ka matlab aur sandesh: yeh kis baare mein hai, ismein se kya seekh milti hai, aur agar baat kamyabi ya tarakki ki hai to kamyab hone ke liye video kya sikhata hai.
 Spelling ya grammar ki galtiyan mat nikalo. Chehre se kisi asli insaan ki pehchaan ya naam mat batao; sirf wahi batao jo dikhta hai ya likha hai. Jo saaf na dikhe use andaaza kehkar batao, banao mat."""
 
+VIDEO_SYSTEM = """Tum Saathi ho. Tumhe EK video ke frames kram mein diye gaye hain. Inhe photo ya document mat samjho, aur 'photo', 'frame' ya 'image' shabd use mat karo; sab kuch 'video mein' ke roop mein batao.
+Jawab Roman Hinglish mein, saaf aur seedha. In teen hisson mein likho:
+**Video mein kya ho raha hai** - shuru se ant tak scene-by-scene: kaun dikh raha hai (kapde, bhaav, jagah), woh kya kar raha hai, scene kaise badalte hain.
+**Jo likha ya bola dikha** - screen par jo subtitles ya text dikhe use bilkul waisa hi likho jaisa likha hai (spelling mat badlo), aur batao ki yeh kya keh raha hai. Tum aawaaz nahi sun sakte, isliye bola hua sirf tab batao jab woh likha dikhe.
+**Matlab aur sandesh** - video kis baare mein hai, ismein se kya seekh milti hai, aur agar baat kamyabi ya tarakki ki hai to kamyab hone ke liye video kya sikhata hai.
+Niyam: kisi asli insaan ko chehre se pehchaan kar naam mat batao; sirf wahi batao jo dikhta ya likha hai. Jo saaf na dikhe use 'andaaza' kehkar batao. Watermark ya credit (jaise @naam) dikhe to ek line mein batao. Spelling ya grammar ki galtiyan mat nikalo."""
+
 def _call_vision_v2(prompt: str, images: list) -> str:
     # Check karein ki kya ye video frames hain
     is_video = any("video-frame" in (getattr(img, 'name', '') or '') or "video-thumbnail" in (getattr(img, 'name', '') or '') for img in images)
@@ -781,7 +788,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
         default_prompt = "Is photo me kya hai? Puri detail batao."
         
     if is_video:
-        text_prompt = VISION_RULES + "\n\n" + VIDEO_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
+        text_prompt = VIDEO_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
     else:
         text_prompt = VISION_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
     content = [{"type": "text", "text": text_prompt}]
@@ -805,7 +812,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
                     r = _req.post(
                         "https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": "Bearer " + groq_key, "Content-Type": "application/json"},
-                        json={"model": model, "messages": [{"role": "system", "content": SYSTEM_INSTRUCTION}, {"role": "user", "content": content}], "max_tokens": 2000},
+                        json={"model": model, "messages": [{"role": "system", "content": (VIDEO_SYSTEM if is_video else SYSTEM_INSTRUCTION)}, {"role": "user", "content": content}], "max_tokens": 2000},
                         timeout=120,
                     )
                     if r.status_code == 429:
@@ -841,7 +848,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
                 r = _req.post(
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers={"Authorization": "Bearer " + or_key, "Content-Type": "application/json", "HTTP-Referer": "https://saathi-ai-y48j.onrender.com", "X-Title": "Saathi AI"},
-                    json={"model": model, "messages": [{"role": "system", "content": SYSTEM_INSTRUCTION}, {"role": "user", "content": content}], "max_tokens": 2000},
+                    json={"model": model, "messages": [{"role": "system", "content": (VIDEO_SYSTEM if is_video else SYSTEM_INSTRUCTION)}, {"role": "user", "content": content}], "max_tokens": 2000},
                     timeout=120,
                 )
                 if r.status_code != 200:

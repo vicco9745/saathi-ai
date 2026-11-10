@@ -4,7 +4,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
 /* Saathi: video se 5 frame nikaal kar photo ki tarah jodta hai, taaki vision unhe padh sake */
 (function () {
   var done = new WeakSet(), warned = false;
-  var FRAMES = 5, MAXW = 900;
+  var FRAMES = 5, MAXW = 1024;
 
   function say(t) { try { if (typeof showToast === 'function') showToast(t); } catch (e) {} }
 
@@ -18,7 +18,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
       v.style.cssText = 'position:fixed;left:-9999px;top:0;width:2px;height:2px;opacity:0;pointer-events:none;';
       document.body.appendChild(v);
 
-      var total = setTimeout(finish, 45000);
+      var total = setTimeout(finish, 90000);
       function finish() {
         if (finished) return; finished = true;
         clearTimeout(total);
@@ -32,7 +32,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
               var c = document.createElement('canvas');
               c.width = Math.round(w * s); c.height = Math.round(h * s);
               c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
-              out.push(c.toDataURL('image/jpeg', 0.72));
+              out.push(c.toDataURL('image/jpeg', 0.75));
             }
           } catch(e) {}
         }
@@ -50,7 +50,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
           var c = document.createElement('canvas');
           c.width = Math.round(w * s); c.height = Math.round(h * s);
           c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
-          var dataUrl = c.toDataURL('image/jpeg', 0.72);
+          var dataUrl = c.toDataURL('image/jpeg', 0.75);
           
           // पहले फ्रेम को वीडियो का थंबनेल (प्रीव्यू) बना दें
           if (out.length === 0) {
@@ -67,7 +67,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
         var d = v.duration;
         if (!isFinite(d) || d <= 0) { finish(); return; }
         var times = [], idx = 0;
-        for (var i = 0; i < FRAMES; i++) times.push(Math.min(Math.max(d - 0.1, 0), d * (i + 0.5) / FRAMES));
+        var N = Math.max(6, Math.min(8, Math.round(d / 1.5))); for (var i = 0; i < N; i++) times.push(Math.min(Math.max(d - 0.1, 0), d * (i + 0.5) / N));
         function next() {
           if (idx >= times.length) { finish(); return; }
           var t = times[idx++], fired = false;
