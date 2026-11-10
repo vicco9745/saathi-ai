@@ -246,16 +246,26 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     images = [a for a in (body.attachments or []) if a.kind == "photo" and a.dataUrl]
 
     videos = [a for a in (body.attachments or []) if a.kind == "video" and a.dataUrl]
+    _vmsg = body.message
+    _tr = ""
+    if videos:
+        try:
+            _tr = _transcribe_video(videos[0])
+        except Exception:
+            _tr = ""
+        print("VIDEO: transcript chars =", len(_tr))
+        if _tr:
+            _vmsg = (body.message or "Is video mein kya ho raha hai, poori detail se batao.") + "\n\nAAWAAZ KA TRANSCRIPT (video ki aawaaz Whisper se likhi gayi; galtiyan ho sakti hain, music ya shor ho to bekaar ho sakta hai): " + _tr + "\nIse 'Jo likha ya bola dikha' hisse mein bola hua maan kar use karo. Agar yeh video se match na kare ya bekaar lage to ignore karo."
     if videos:  # VIDNATIVE
         try:
-            _nv = _call_video_native(body.message, videos[0])
+            _nv = _call_video_native(_vmsg, videos[0])
         except Exception:
             _nv = ""
         if _nv:
             return {"service": "chat", "reply": _nv, "model": "saathi-video"}
 
     if images:
-        raw = _call_vision_v2(body.message, images)
+        raw = _call_vision_v2(_vmsg if videos else body.message, images)
         raw = __import__("re").sub(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+", "", raw)
         reply = __import__("re").sub(r"[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]+", "", (raw if any("video-frame" in (getattr(a, "name", "") or "") for a in images) else _polish_vision_reply(raw, body.message)))  # VIDPOLISH
         return {
@@ -783,9 +793,38 @@ Spelling ya grammar ki galtiyan mat nikalo. Chehre se kisi asli insaan ki pehcha
 VIDEO_SYSTEM = """Tum Saathi ho. Tumhe EK video ke frames kram mein diye gaye hain. Inhe photo ya document mat samjho, aur 'photo', 'frame' ya 'image' shabd use mat karo; sab kuch 'video mein' ke roop mein batao.
 Jawab Roman Hinglish mein, saaf aur seedha. In teen hisson mein likho:
 **Video mein kya ho raha hai** - shuru se ant tak scene-by-scene: kaun dikh raha hai (kapde, bhaav, jagah), woh kya kar raha hai, scene kaise badalte hain.
-**Jo likha ya bola dikha** - screen par jo subtitles ya text dikhe use bilkul waisa hi likho jaisa likha hai (spelling mat badlo), aur batao ki yeh kya keh raha hai. Tum aawaaz nahi sun sakte, isliye bola hua sirf tab batao jab woh likha dikhe.
+**Jo likha ya bola dikha** - screen par jo subtitles ya text dikhe use bilkul waisa hi likho jaisa likha hai (spelling mat badlo), aur batao ki yeh kya keh raha hai. Tum aawaaz seedha nahi sun sakte; bola hua sirf tab batao jab woh likha dikhe, ya jab 'AAWAAZ KA TRANSCRIPT' diya gaya ho (tab use bola hua maano).
 **Matlab aur sandesh** - video kis baare mein hai, ismein se kya seekh milti hai, aur agar baat kamyabi ya tarakki ki hai to kamyab hone ke liye video kya sikhata hai.
 Niyam: kisi asli insaan ko chehre se pehchaan kar naam mat batao; sirf wahi batao jo dikhta ya likha hai. Jo saaf na dikhe use 'andaaza' kehkar batao. Watermark ya credit (jaise @naam) dikhe to ek line mein batao. Spelling ya grammar ki galtiyan mat nikalo."""
+
+# AUDIO helpers
+def _transcribe_video(video):
+    import base64, requests
+    key = os.environ.get("GROQ_API_KEY")
+    url = getattr(video, "dataUrl", "") or ""
+    if not key or "," not in url:
+        return ""
+    try:
+        raw = base64.b64decode(url.split(",", 1)[1])
+    except Exception:
+        return ""
+    if len(raw) > 24 * 1024 * 1024:
+        return ""
+    for model in ("whisper-large-v3-turbo", "whisper-large-v3"):
+        try:
+            r = requests.post(
+                "https://api.groq.com/openai/v1/audio/transcriptions",
+                headers={"Authorization": "Bearer " + key},
+                files={"file": ("video.mp4", raw, "video/mp4")},
+                data={"model": model, "response_format": "json", "temperature": "0"},
+                timeout=60,
+            )
+            if r.status_code == 200:
+                return (r.json().get("text") or "").strip()[:3000]
+            print("WHISPER", model, r.status_code, r.text[:150])
+        except Exception as e:
+            print("WHISPER error", model, repr(e)[:150])
+    return ""
 
 # VIDNATIVE helpers
 _OR_VID_CACHE = {"t": 0, "m": []}
