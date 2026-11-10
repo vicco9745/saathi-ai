@@ -118,7 +118,7 @@
       }
       pendingAttachments.slice().forEach(function (a) {
         if (!a || a.kind !== 'video' || a.origin !== 'user' || !a.dataUrl || done.has(a)) return;
-        done.add(a);
+        done.add(a); a.__vidBusy = true;
         say('Video padh raha hoon, thoda intezaar karein...');
         
         grab(a).then(function (frames) {
@@ -145,7 +145,7 @@
 
           try { renderPendingAttachments(); updateActionButton(); } catch (e) {}
           say('Video taiyaar hai, ab sawaal likh kar bhejein');
-        }).catch(function () { say('Video padhne me gadbad hui'); });
+        }).catch(function () { say('Video padhne me gadbad hui'); }).then(function () { a.__vidBusy = false; try { if (typeof tryFlushSend === 'function') tryFlushSend(); } catch (e) {} });
       });
     } catch (e) {}
   }
