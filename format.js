@@ -82,7 +82,7 @@ return a;
 setInterval(function(){var a=grab();if(a.length){snap=a;seen=Date.now();}else if(Date.now()-seen>5000){snap=[];}},150);
 var of=window.fetch;
 window.fetch=function(u,o){
-try{if(snap.length&&typeof u==='string'&&/\/v1\/chat$/.test(u.split('?')[0])&&o&&typeof o.body==='string'){var b=JSON.parse(o.body);if(!b.attachments||!b.attachments.length){b.attachments=snap;o=Object.assign({},o,{body:JSON.stringify(b)});}snap=[];seen=0;}}catch(e){}
+try{if(snap.length&&typeof u==='string'&&/\/v1\/chat$/.test(u.split('?')[0])&&o&&typeof o.body==='string'){var b=JSON.parse(o.body);if(!b.attachments||!b.attachments.length){b.attachments=snap;try{var __k={};snap.forEach(function(x){var n=(x.kind||'?')+(/^video-frame/.test(x.name||'')?'(frame)':'');__k[n]=(__k[n]||0)+1;});var __d=document.createElement('div');__d.id='sendInfo';__d.textContent='Bhej raha hoon: '+Object.keys(__k).map(function(n){return n+' x'+__k[n];}).join(', ');__d.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:99999;padding:6px 12px;border-radius:14px;font:600 12px/1.2 sans-serif;color:#fff;background:#2563eb;max-width:90%;text-align:center;';document.body.appendChild(__d);setTimeout(function(){try{__d.remove();}catch(e){}},25000);}catch(e){}o=Object.assign({},o,{body:JSON.stringify(b)});}snap=[];seen=0;}}catch(e){}
 return of.call(this,u,o);
 };
 })();
