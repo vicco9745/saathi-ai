@@ -1,3 +1,6 @@
+window.__vidPA=function(){try{if(window.__vidApi)return window.__vidApi.get();if(typeof pendingAttachments!=='undefined')return pendingAttachments;}catch(e){}return undefined;};
+window.__vidRender=function(){try{if(window.__vidApi)window.__vidApi.render();}catch(e){}};
+window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}catch(e){}};
 /* Saathi: video se frame nikaalta hai, UI mein sirf 1 dikhata hai, baaki AI ko chupke se bhejta hai */
 (function () {
   var done = new WeakSet(), warned = false;
@@ -50,7 +53,7 @@
 
           if (out.length === 0) {
             att.dataUrl = dataUrl; // UI mein pehla frame
-            if (typeof renderPendingAttachments === 'function') renderPendingAttachments();
+            if (true) window.__vidRender();
           }
           out.push(dataUrl);
         } catch (e) {}
@@ -112,17 +115,17 @@
 
   function scan() {
     try {
-      if (typeof pendingAttachments === 'undefined' || !Array.isArray(pendingAttachments)) {
+      if (typeof window.__vidPA() === 'undefined' || !Array.isArray(window.__vidPA())) {
         if (!warned) { warned = true; say('Video helper: attachments list nahi mili'); }
         return;
       }
-      pendingAttachments.slice().forEach(function (a) {
+      window.__vidPA().slice().forEach(function (a) {
         if (!a || a.kind !== 'video' || a.origin !== 'user' || !a.dataUrl || done.has(a)) return;
         done.add(a); a.__vidBusy = true;
         say('Video padh raha hoon, thoda intezaar karein...');
         
         grab(a).then(function (frames) {
-          if (pendingAttachments.indexOf(a) === -1) return;
+          if (window.__vidPA().indexOf(a) === -1) return;
           if (!frames.length) { say('Video se frame nahi nikle'); return; }
           
           // Pehla frame UI mein dikhega
@@ -133,7 +136,7 @@
           // Baaki frames chhup kar (hidden) AI ke paas jayenge
           for (var i = 1; i < frames.length; i++) {
             var f = frames[i];
-            pendingAttachments.push({ 
+            window.__vidPA().push({ 
               kind: 'photo', 
               name: 'video-frame-' + (i + 1) + '.jpg', 
               size: f.length, 
@@ -143,9 +146,9 @@
             });
           }
 
-          try { renderPendingAttachments(); updateActionButton(); } catch (e) {}
+          try { window.__vidRender(); updateActionButton(); } catch (e) {}
           say('Video taiyaar hai, ab sawaal likh kar bhejein');
-        }).catch(function () { say('Video padhne me gadbad hui'); }).then(function () { a.__vidBusy = false; try { if (typeof tryFlushSend === 'function') tryFlushSend(); } catch (e) {} });
+        }).catch(function () { say('Video padhne me gadbad hui'); }).then(function () { a.__vidBusy = false; try { if (true) window.__vidFlush(); } catch (e) {} });
       });
     } catch (e) {}
   }
