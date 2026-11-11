@@ -605,6 +605,9 @@ def website(body: GenericRequest, key=Depends(require_api_key)):
         html = html.replace("```html", "").replace("```", "").strip()
     return {"html": html, "filename": "index.html"}
 
+# VIDEOCAP
+SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION + " Saathi video bhi padh sakta hai: jab user video bhejta hai, to uske frames dekhe jaate hain aur aawaaz likhi jaati hai. Agar user poochhe 'kya tum video dekh sakte ho', to kaho haan aur video bhejne ko kaho. Kabhi mat kaho ki tum video nahi dekh sakte. Agar user pehle bheje gaye video ke baare mein poochhe aur uske frames tumhare paas nahi hain, to kaho ki video dobara bhejein."
+
 VISION_SYSTEM_INSTRUCTION = (
     "Tum Saathi ho — ek insaan jaisa madadgaar saathi. User ne tumhe kuch bheja hai "
     "(photo, video, file, kuch bhi). Tumhara kaam hai usse DEKHNA, SAMJHNA, aur "
