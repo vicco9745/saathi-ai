@@ -255,7 +255,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
             _tr = ""
         print("VIDEO: transcript chars =", len(_tr))
         if _tr:
-            _vmsg = (body.message or "Is video mein kya ho raha hai, poori detail se batao.") + "\n\nAAWAAZ KA TRANSCRIPT (video ki aawaaz Whisper se likhi gayi; galtiyan ho sakti hain, music ya shor ho to bekaar ho sakta hai): " + _tr + "\nIse 'Jo likha ya bola dikha' hisse mein bola hua maan kar use karo. Agar yeh video se match na kare ya bekaar lage to ignore karo."
+            _vmsg = (body.message or "Is video mein kya ho raha hai, poori detail se batao.") + "\n\nAAWAAZ KA TRANSCRIPT (video ki aawaaz Whisper se likhi gayi; galtiyan ho sakti hain, music ya shor ho to bekaar ho sakta hai): " + _tr + "\nIse 'Jo likha ya bola dikha' hisse mein bola hua maan kar use karo, par 'transcript' shabd mat likho aur use shabd-ba-shabd copy mat karo; agar woh bekaar ya angrezi anuvaad jaisa lage to ignore karo. Agar yeh video se match na kare ya bekaar lage to ignore karo."
     if videos:  # VIDNATIVE
         try:
             _nv = _call_video_native(_vmsg, videos[0])
@@ -816,7 +816,7 @@ def _transcribe_video(video):
                 "https://api.groq.com/openai/v1/audio/transcriptions",
                 headers={"Authorization": "Bearer " + key},
                 files={"file": ("video.mp4", raw, "video/mp4")},
-                data={"model": model, "response_format": "json", "temperature": "0"},
+                data={"model": model, "response_format": "json", "temperature": "0", "language": "hi"},
                 timeout=60,
             )
             if r.status_code == 200:
