@@ -817,7 +817,7 @@ def _transcribe_video(video):
         return ""
     if len(raw) > 24 * 1024 * 1024:
         return ""
-    for model in ("whisper-large-v3-turbo", "whisper-large-v3"):
+    for model in ("whisper-large-v3", "whisper-large-v3-turbo"):
         try:
             r = requests.post(
                 "https://api.groq.com/openai/v1/audio/transcriptions",
