@@ -257,11 +257,16 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
         # SPEECHDEFAULT: jab tak user dekhne ko na kahe, sirf bola hua shabd batao
         import re as _re2
         _SEE = _re2.compile(r"dekh|dikh|kya\s*-?\s*kya|kya\s+ho\s+raha|kya\s+hai|scene|describe|visual|kaun|kapde|vistar|detail|poori|\bsee\b|\blook\b|what.?s in|show")
-        if not _SEE.search((body.message or "").lower()):
+        _SP = _re2.compile(r"bol|awaaz|aawaaz|sun|transcript|shabd|dialogue|kehta|kya\s+keh|said|speech|audio")
+        _qq = (body.message or "").strip().lower()
+        if (not _qq) or (_SP.search(_qq) and not _SEE.search(_qq)):
             if _tr:
                 return {"service": "chat", "reply": "**Video mein bola gaya:**\n\n" + _tr, "model": "saathi-audio"}
             return {"service": "chat", "reply": "Is video mein mujhe bola hua kuch sunai nahi diya. Agar chahte hain ki main video dekh kar bataun, to 'video dekh kar batao' likh kar bhejiye.", "model": "saathi-audio"}
-        if _tr:
+        _WANT_TEXT = _re2.compile(r"text|likha|likhe|subtitle|caption|bola|bol\s+raha|bol\s+rahi|bolta|keh|awaaz|aawaaz|transcript|shabd|dialogue|baat")
+        if not _WANT_TEXT.search((body.message or "").lower()):
+            _vmsg = (body.message or "Is video mein kya dikh raha hai, poori detail se batao.") + " [[VISUAL_ONLY]]"
+        elif _tr:
             _vmsg = (body.message or "Is video mein kya ho raha hai, poori detail se batao.") + "\n\nAAWAAZ KA TRANSCRIPT (video ki aawaaz Whisper se likhi gayi; galtiyan ho sakti hain, music ya shor ho to bekaar ho sakta hai): " + _tr + "\nIse 'Jo likha ya bola dikha' hisse mein bola hua maan kar use karo, par 'transcript' shabd mat likho aur use shabd-ba-shabd copy mat karo; agar woh bekaar ya angrezi anuvaad jaisa lage to ignore karo. Agar yeh video se match na kare ya bekaar lage to ignore karo."
     if videos:  # VIDNATIVE
         try:
@@ -791,14 +796,14 @@ def _or_vision_models():
 
 VIDEO_RULES = """VIDEO MODE (upar ke photo/document wale rules aur 3-hisse wale format ko is video ke liye IGNORE karo):
 Neeche di gayi tasveerein EK hi video ke frames hain, kram mein. Inhe photo mat samjho aur 'photo', 'frame' ya 'image' shabd use mat karo; sab kuch 'video mein' ke roop mein batao.
-Jawab Hinglish mein, saaf aur seedha, in hisson mein:
+Jawab Hinglish mein, saaf aur seedha. PEHLA NIYAM (NIYAM_ASK): agar user ne koi KHAAS sawaal poocha hai (jaise 'kitne aadmi hain', 'kya likha hai', 'dhundhla kya hai', 'kya bol raha hai', 'iska matlab kya hai'), to SIRF usi sawaal ka jawab do, apni taraf se kuch aur mat batao aur koi heading mat banao. Agar user arth ya matlab poochhe to uska matlab samjhao. Neeche ke hisse sirf tab likho jab user ne aam sawaal poocha ho ('video dekh kar batao', 'kya kya hai'). Tab in hisson mein:
 1. Video mein kya ho raha hai: shuru se ant tak scene-by-scene kahani, kaun-kaun dikh raha hai (kapde, jagah, kaam), woh kya kar raha hai.
 2. Jo bol ya likha hua dikhe (subtitles ya text), use video ki baat-cheet ki tarah likho aur batao ki woh kya keh raha hai.
 3. Video ka matlab aur sandesh: yeh kis baare mein hai, ismein se kya seekh milti hai, aur agar baat kamyabi ya tarakki ki hai to kamyab hone ke liye video kya sikhata hai.
 Spelling ya grammar ki galtiyan mat nikalo. Chehre se kisi asli insaan ki pehchaan ya naam mat batao; sirf wahi batao jo dikhta hai ya likha hai. Jo saaf na dikhe use andaaza kehkar batao, banao mat."""
 
 VIDEO_SYSTEM = """Tum Saathi ho. Tumhe EK video ke frames kram mein diye gaye hain. Inhe photo ya document mat samjho, aur 'photo', 'frame' ya 'image' shabd use mat karo; sab kuch 'video mein' ke roop mein batao.
-Jawab Roman Hinglish mein, saaf aur seedha. In teen hisson mein likho:
+Jawab Roman Hinglish mein, saaf aur seedha. PEHLA NIYAM (NIYAM_ASK): agar user ne koi KHAAS sawaal poocha hai (jaise 'kitne aadmi hain', 'kya likha hai', 'dhundhla kya hai', 'kya bol raha hai', 'iska matlab kya hai'), to SIRF usi sawaal ka jawab do, apni taraf se kuch aur mat batao aur koi heading mat banao. Agar user arth ya matlab poochhe to uska matlab samjhao. Neeche ke hisse sirf tab likho jab user ne aam sawaal poocha ho ('video dekh kar batao', 'kya kya hai'). Tab in teen hisson mein likho:
 **Video mein kya ho raha hai** - shuru se ant tak scene-by-scene: kaun dikh raha hai (kapde, bhaav, jagah), woh kya kar raha hai, scene kaise badalte hain.
 **Jo likha ya bola dikha** - screen par jo subtitles ya text dikhe use bilkul waisa hi likho jaisa likha hai (spelling mat badlo), aur batao ki yeh kya keh raha hai. Tum aawaaz seedha nahi sun sakte; bola hua sirf tab batao jab woh likha dikhe, ya jab 'AAWAAZ KA TRANSCRIPT' diya gaya ho (tab use bola hua maano).
 **Matlab aur sandesh** - video kis baare mein hai, ismein se kya seekh milti hai, aur agar baat kamyabi ya tarakki ki hai to kamyab hone ke liye video kya sikhata hai.
@@ -833,6 +838,16 @@ def _transcribe_video(video):
             print("WHISPER error", model, repr(e)[:150])
     return ""
 
+VIDEO_SYSTEM_VIS = """Tum Saathi ho. Tumhe EK video ke frames kram mein diye gaye hain. Inhe photo mat samjho, aur 'photo', 'frame' ya 'image' shabd use mat karo; sab kuch 'video mein' ke roop mein batao.
+Sirf wahi batao jo video mein DIKH raha hai. Screen par likha hua text, subtitles, watermark ya bola hua BILKUL mat batao, na hi uska zikr karo.
+Jawab Roman Hinglish mein, saaf aur seedha. PEHLA NIYAM (NIYAM_ASK): agar user ne koi KHAAS sawaal poocha hai (jaise 'kitne aadmi hain', 'kya likha hai', 'dhundhla kya hai', 'kya bol raha hai', 'iska matlab kya hai'), to SIRF usi sawaal ka jawab do, apni taraf se kuch aur mat batao aur koi heading mat banao. Agar user arth ya matlab poochhe to uska matlab samjhao. Neeche ke hisse sirf tab likho jab user ne aam sawaal poocha ho ('video dekh kar batao', 'kya kya hai'). Tab do hisson mein likho:
+**Video mein kya dikh raha hai** - shuru se ant tak scene-by-scene. Har scene mein batao: kitne log dikhte hain (ginti), kaun-kaun hai (umar ka andaaza, kapde, bhaav, kya kar raha hai), jagah ya mahaul kaisa hai, rang aur roshni kaisi hai. Jo hissa kala ya dhundhla ho use waisa hi kehkar batao ('kala hissa', 'dhundhla hissa'); andaaza mat lagao ki uske peeche kya hai.
+**Matlab** - agar dikhne wali cheezon se video ka matlab ya sandesh saaf samajh aata ho to 1-2 line mein batao, nahi to ye hissa chhod do.
+Niyam: kisi asli insaan ko chehre se pehchaan kar naam mat batao; sirf wahi batao jo dikhta hai. Jo saaf na dikhe use 'andaaza' kehkar batao, banao mat. Spelling ya grammar ki galtiyan mat nikalo."""
+
+VIDEO_RULES_VIS = """VIDEO MODE (photo/document wale rules aur koi bhi purana format IGNORE karo):
+Neeche di gayi tasveerein EK hi video ke frames hain, kram mein. Sirf dikhne wali cheezein batao: scene-by-scene, kitne log hain, kaun kaisa dikhta hai, kya kar raha hai, jagah, rang, kala ya dhundhla hissa. Screen par likha text, subtitles, watermark aur bola hua mat batao. PEHLA NIYAM (NIYAM_ASK): agar user ne koi KHAAS sawaal poocha hai (jaise 'kitne aadmi hain', 'kya likha hai', 'dhundhla kya hai', 'kya bol raha hai', 'iska matlab kya hai'), to SIRF usi sawaal ka jawab do, apni taraf se kuch aur mat batao aur koi heading mat banao. Agar user arth ya matlab poochhe to uska matlab samjhao. Neeche ke hisse sirf tab likho jab user ne aam sawaal poocha ho ('video dekh kar batao', 'kya kya hai'). Tab do hisse: 'Video mein kya dikh raha hai' aur (zaroorat ho to) 'Matlab'. Chehre se kisi asli insaan ka naam mat batao. Jo saaf na dikhe use 'andaaza' kehkar batao."""
+
 # VIDNATIVE helpers
 _OR_VID_CACHE = {"t": 0, "m": []}
 def _or_video_models():
@@ -862,14 +877,14 @@ def _call_video_native(prompt, video):
     url = getattr(video, "dataUrl", "") or ""
     if not key or not url.startswith("data:video"):
         return ""
-    text = VIDEO_RULES + "\n\nUSER KA SAWAAL: " + (prompt or "Is video mein kya ho raha hai, poori detail se batao.")
+    text = (VIDEO_RULES_VIS if "[[VISUAL_ONLY]]" in (prompt or "") else VIDEO_RULES) + "\n\nUSER KA SAWAAL: " + (prompt or "Is video mein kya ho raha hai, poori detail se batao.").replace("[[VISUAL_ONLY]]", "")
     content = [{"type": "text", "text": text}, {"type": "video_url", "video_url": {"url": url}}]
     for model in _or_video_models()[:1]:
         try:
             r = requests.post(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "HTTP-Referer": "https://saathi-ai-y48j.onrender.com", "X-Title": "Saathi AI"},
-                json={"model": model, "messages": [{"role": "system", "content": VIDEO_SYSTEM}, {"role": "user", "content": content}], "max_tokens": 2000},
+                json={"model": model, "messages": [{"role": "system", "content": (VIDEO_SYSTEM_VIS if "[[VISUAL_ONLY]]" in (prompt or "") else VIDEO_SYSTEM)}, {"role": "user", "content": content}], "max_tokens": 2000},
                 timeout=45,
             )
             if r.status_code != 200:
@@ -894,7 +909,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
         default_prompt = "Is photo me kya hai? Puri detail batao."
         
     if is_video:
-        text_prompt = VIDEO_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
+        text_prompt = (VIDEO_RULES_VIS if "[[VISUAL_ONLY]]" in (prompt or "") else VIDEO_RULES) + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt).replace("[[VISUAL_ONLY]]", "")
     else:
         text_prompt = VISION_RULES + "\n\nUSER KA SAWAAL: " + (prompt or default_prompt)
     content = [{"type": "text", "text": text_prompt}]
@@ -918,7 +933,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
                     r = _req.post(
                         "https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": "Bearer " + groq_key, "Content-Type": "application/json"},
-                        json={"model": model, "messages": [{"role": "system", "content": (VIDEO_SYSTEM if is_video else SYSTEM_INSTRUCTION)}, {"role": "user", "content": content}], "max_tokens": 2000},
+                        json={"model": model, "messages": [{"role": "system", "content": ((VIDEO_SYSTEM_VIS if "[[VISUAL_ONLY]]" in (prompt or "") else VIDEO_SYSTEM) if is_video else SYSTEM_INSTRUCTION)}, {"role": "user", "content": content}], "max_tokens": 2000},
                         timeout=120,
                     )
                     if r.status_code == 429:
@@ -954,7 +969,7 @@ def _call_vision_v2(prompt: str, images: list) -> str:
                 r = _req.post(
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers={"Authorization": "Bearer " + or_key, "Content-Type": "application/json", "HTTP-Referer": "https://saathi-ai-y48j.onrender.com", "X-Title": "Saathi AI"},
-                    json={"model": model, "messages": [{"role": "system", "content": (VIDEO_SYSTEM if is_video else SYSTEM_INSTRUCTION)}, {"role": "user", "content": content}], "max_tokens": 2000},
+                    json={"model": model, "messages": [{"role": "system", "content": ((VIDEO_SYSTEM_VIS if "[[VISUAL_ONLY]]" in (prompt or "") else VIDEO_SYSTEM) if is_video else SYSTEM_INSTRUCTION)}, {"role": "user", "content": content}], "max_tokens": 2000},
                     timeout=120,
                 )
                 if r.status_code != 200:
