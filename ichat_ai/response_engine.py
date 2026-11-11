@@ -322,14 +322,6 @@ def get_response(user_text, history=None, lang_pref=None):
         add_conversation(original_text, reply)
         return reply
 
-    # VIDEOQ: kya tum video dekh sakte ho
-    import re as _vre
-    if _vre.search(r"(video|वीडियो).{0,25}(dekh|देख|padh|पढ़|samajh|समझ|sun|सुन|support|kar sakt|कर सक)|(dekh|देख|padh|पढ़|samajh|समझ|sun|सुन).{0,25}(video|वीडियो)", original_text.lower()) and len(original_text) < 80:
-        reply = ("हाँ, मैं वीडियो पढ़ सकता हूँ। वीडियो भेजिए: कुछ न लिखें तो मैं उसमें बोले गए शब्द बताऊँगा, और 'video dekh kar batao' लिखें तो जो दिख रहा है वह बताऊँगा।" if _lang == "hi"
-                 else "Yes, I can read videos. Send one: with no text I will tell you the words spoken in it, and write 'video dekh kar batao' and I will tell you what is visible.")
-        add_conversation(original_text, reply)
-        return reply
-
     if _matches_any(normalized_original, _CREATOR_PATTERNS):
         reply = "मुझे Vikas ने बनाया है।" if _lang == "hi" else "I was created by Vikas."
         add_conversation(original_text, reply)
