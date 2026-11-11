@@ -857,13 +857,13 @@ def _call_video_native(prompt, video):
         return ""
     text = VIDEO_RULES + "\n\nUSER KA SAWAAL: " + (prompt or "Is video mein kya ho raha hai, poori detail se batao.")
     content = [{"type": "text", "text": text}, {"type": "video_url", "video_url": {"url": url}}]
-    for model in _or_video_models()[:2]:
+    for model in _or_video_models()[:1]:
         try:
             r = requests.post(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "HTTP-Referer": "https://saathi-ai-y48j.onrender.com", "X-Title": "Saathi AI"},
                 json={"model": model, "messages": [{"role": "system", "content": VIDEO_SYSTEM}, {"role": "user", "content": content}], "max_tokens": 2000},
-                timeout=70,
+                timeout=45,
             )
             if r.status_code != 200:
                 continue

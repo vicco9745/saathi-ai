@@ -3,12 +3,12 @@ import re
 # 1) index.html mein saathi_video.js ka script tag (v=2) lagana
 p = "index.html"
 s = open(p, encoding="utf-8").read()
-TAG = '<script src="saathi_video.js?v=8"></script>\n'
+TAG = '<script src="saathi_video.js?v=9"></script>\n'
 
-if "saathi_video.js?v=8" in s:
+if "saathi_video.js?v=9" in s:
     print("video: index.html mein v=2 tag pehle se hai")
 elif s.count("saathi_video.js?v=1") == 1:
-    open(p, "w", encoding="utf-8").write(s.replace("saathi_video.js?v=1", "saathi_video.js?v=8"))
+    open(p, "w", encoding="utf-8").write(s.replace("saathi_video.js?v=1", "saathi_video.js?v=9"))
     print("video: tag v=1 se v=2 kar diya")
 else:
     i = s.rfind("</body>")

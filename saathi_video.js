@@ -8,7 +8,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
 
   function say(t) { try { if (typeof showToast === 'function') showToast(t); } catch (e) {} }
 
-  function grab(att) {
+  function grab(att) { try { if (!att.__origUrl) att.__origUrl = att.dataUrl; } catch (e) {}
     return new Promise(function (resolve) {
       var out = [], finished = false, started = false;
       var v = document.createElement('video');
