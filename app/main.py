@@ -246,6 +246,22 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     images = [a for a in (body.attachments or []) if a.kind == "photo" and a.dataUrl]
 
     videos = [a for a in (body.attachments or []) if a.kind == "video" and a.dataUrl]
+    # ABILDOWN: kharab suvidha ko chalaya na jaye
+    try:
+        from ichat_ai.abilities import ability_down as _ad
+        _hints = ""
+        _real = [i for i in images if "video-frame" not in (getattr(i, "name", "") or "")]
+        if videos and _ad("video")[0]:
+            _hints += " [User ne video bheja hai, par video padhna abhi kharab hai]"
+            videos = []
+            images = _real
+        if _real and _ad("photo")[0]:
+            _hints += " [User ne photo bheji hai, par photo padhna abhi kharab hai]"
+            images = [i for i in images if i not in _real]
+        if _hints:
+            body.message = (body.message or "") + _hints
+    except Exception:
+        pass
     _vmsg = body.message
     _tr = ""
     if videos:
@@ -1195,6 +1211,12 @@ def _pdf_caption(prompt, html_body):
 
 # SITECHECK: website banne ke baad Saathi Private Chrome se jaanch
 def _site_check_report(html):
+    try:
+        from ichat_ai.abilities import ability_down as _adc
+        if _adc("chrome")[0]:
+            return ""
+    except Exception:
+        pass
     url = os.environ.get("CHROME_URL", "").rstrip("/")
     key = os.environ.get("CHROME_KEY", "")
     if not url or not key:

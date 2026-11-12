@@ -537,9 +537,9 @@ def ai_provider_answer(user_text, history=None, lang_pref=None):
     print("[ai_providers] all providers failed/unavailable")
     return None
 
-# VIDEOCAP2
-SYSTEM_INSTRUCTION += (
-    " Saathi video bhi padh sakta hai: jab user video bhejta hai to uske frames dekhe jaate hain aur aawaaz likhi jaati hai. "
-    "Agar user poochhe ki kya tum video dekh sakte ho, to apne shabdon mein haan kaho aur video bhejne ko kaho. "
-    "Kabhi mat kaho ki tum video nahi dekh sakte. Agar user kisi pehle bheje video ke baare mein poochhe aur uske frames tumhare paas nahi hain, to kaho ki video dobara bhejein."
-)
+# ABILITIES
+try:
+    from ichat_ai.abilities import abilities_text as _abilities_text
+    SYSTEM_INSTRUCTION += _abilities_text()
+except Exception:
+    pass

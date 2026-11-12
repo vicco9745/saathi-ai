@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Video padhna",
+    "key": "video",
+    "status": "ok",
+    "note": "",
+    "text": "user video bheje to uske frames dekhe jaate hain aur aawaaz (Hindi) likhi jaati hai. Bina kuch likhe video bhejne par bole gaye shabd bataye jaate hain, aur 'video dekh kar batao' likhne par jo dikh raha hai woh bataya jaata hai.",
+    "needs_any": [
+      "GROQ_API_KEY",
+      "OPENROUTER_API_KEY"
+    ]
+  },
+  {
+    "name": "Photo padhna",
+    "key": "photo",
+    "status": "ok",
+    "note": "",
+    "text": "user photo bheje to use dekh kar padh sakte ho aur uske baare mein bata sakte ho.",
+    "needs_any": [
+      "GROQ_API_KEY",
+      "OPENROUTER_API_KEY"
+    ]
+  },
+  {
+    "name": "Saathi Private Chrome",
+    "key": "chrome",
+    "status": "ok",
+    "note": "",
+    "text": "tumhari banayi hui website ko asli Chromium browser mein desktop, tablet aur mobile size par khol kar jaancha jaata hai (JavaScript galtiyan, tooti images aur links, bekaar buttons) aur report jawab ke neeche judti hai. Tum kisi dusre ki website apni marzi se nahi khol sakte.",
+    "needs_env": [
+      "CHROME_URL",
+      "CHROME_KEY"
+    ]
+  }
+]
