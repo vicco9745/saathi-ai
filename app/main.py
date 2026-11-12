@@ -373,7 +373,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
                 html = html.replace("```html", "").replace("```", "").strip()
             return {
                 "service": "chat",
-                "reply": "Yeh raha aapki website ka code.",
+                "reply": "Yeh raha aapki website ka code." + _site_check_report(html),  # SITECHECK
                 "html": html,
                 "filename": "index.html",
                 "model": "saathi",
@@ -1192,3 +1192,25 @@ def _pdf_caption(prompt, html_body):
         ).strip()
     except Exception:
         return ""
+
+# SITECHECK: website banne ke baad Saathi Private Chrome se jaanch
+def _site_check_report(html):
+    url = os.environ.get("CHROME_URL", "").rstrip("/")
+    key = os.environ.get("CHROME_KEY", "")
+    if not url or not key:
+        return ""
+    import requests
+    try:
+        r = requests.post(url + "/check", json={"html": html, "shots": False}, headers={"X-Chrome-Key": key}, timeout=90)
+        if r.status_code != 200:
+            return "\n\n(Chrome jaanch nahi ho paayi: server ne %d diya.)" % r.status_code
+        d = r.json()
+        if d.get("summary") == "ERROR":
+            return "\n\n(Chrome jaanch nahi ho paayi.)"
+        lines = (d.get("text") or "").strip().split("\n")
+        out = "\n\n**Chrome jaanch:** " + lines[0]
+        if len(lines) > 1:
+            out += "\n\n" + "\n".join("- " + x for x in lines[1:])
+        return out
+    except Exception:
+        return "\n\n(Chrome jaanch nahi ho paayi: Chrome server abhi jaag raha hai ya vyast hai.)"
