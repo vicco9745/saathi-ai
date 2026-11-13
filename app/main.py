@@ -1024,35 +1024,15 @@ def _fit29(t):
 def _title_from_text(text: str) -> str:
     if not text or not text.strip():
         return ""
-    key = os.environ.get("GROQ_API_KEY")
-    if not key:
-        t = text.strip().replace("\n", " ")
-        return t[:40] + ("…" if len(t) > 40 else "")
+    t0 = text.strip().replace("\n", " ")
+    fb = t0[:40] + ("…" if len(t0) > 40 else "")
     try:
-        r = _req.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
-            json={
-                "model": "openai/gpt-oss-20b",
-                "messages": [
-                    {"role": "system", "content": "User ke message ka 25-29 akshar ka chat title banao. Sirf title likho, koi quote nahi, koi punctuation nahi. User ki bhasha mein hi rakho. Example: 'Gold chart analysis', 'Pizza recipe', 'Python bug fix', 'मौसम की जानकारी'."},
-                    {"role": "user", "content": text},
-                ],
-                "max_tokens": 60,
-                "temperature": 0.3,
-            },
-            timeout=30,
-        )
-        if r.status_code != 200:
-            t = text.strip().replace("\n", " ")
-            return t[:40] + ("…" if len(t) > 40 else "")
-        data = r.json()
-        t = (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
-        t = t.replace("\n", " ").replace('"', '').replace("'", "").strip()
-        return _fit29(t) if t else text.strip()[:40]
+        sysmsg = ("User ke message ka 25-29 akshar ka chat title banao. Sirf title likho, koi quote nahi, koi punctuation nahi. User ki bhasha mein hi rakho. Example: Gold chart analysis, Pizza recipe, Python bug fix. Agar message sirf Hi ya Hello jaisa abhivadan ho to title Abhivadan ya Greeting rakho.")
+        t = (_call_groq(t0[:500], system=sysmsg) or "").strip()
+        t = t.replace("\n", " ").replace('"', "").replace("'", "").strip()
+        return _fit29(t) if t else fb
     except Exception:
-        t = text.strip().replace("\n", " ")
-        return t[:40] + ("…" if len(t) > 40 else "")
+        return fb
 
 
 def _title_from_image(image_data_url: str) -> str:
