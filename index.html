@@ -5,7 +5,7 @@
 (function(){
 if(window.__SL_PAGE)return;window.__SL_PAGE=true;
 /* Page-level smart loading: blur + light zoom + blue spinner + "Loading...". Shown ONLY if content is still not ready after `delay` ms. */
-var P=window.SLPage={delay:350,minShow:500,timeout:20000};
+var P=window.SLPage={delay:350,minShow:500,timeout:120000};
 var keys={},shown=false,showT=0,shownAt=0,ov=null,failedAny=false;
 function count(){return Object.keys(keys).length;}
 function offline(){return window.navigator&&navigator.onLine===false;}
