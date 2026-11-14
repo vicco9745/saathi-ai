@@ -1224,6 +1224,9 @@ img,video,canvas,iframe{max-width:100%}
 html.slp-on{overflow:hidden}
 body.slp-on>*:not(#slPage),body.slp-out>*:not(#slPage){transition:filter .45s ease,transform .45s ease}
 body.slp-on>*:not(#slPage){filter:blur(9px);transform:scale(1.03);pointer-events:none;user-select:none}
+body.slp-on>#codePreviewOverlay{filter:none;transform:none;pointer-events:none}
+body.slp-on #codePreviewOverlay .code-preview-topbar{position:relative;z-index:2147483600;pointer-events:auto;filter:none}
+body.slp-on #codePreviewOverlay .code-preview-topbar *{pointer-events:auto}
 .slp-box{display:flex;flex-direction:column;align-items:center;transform:translateZ(0)}
 .slp-spin,.sla-spin{position:relative;width:36px;height:36px;border-radius:50%;background:conic-gradient(from 0deg,rgba(47,124,246,0) 0deg,#2f7cf6 340deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));animation:slp-rot .9s linear infinite;will-change:transform}
 .slp-spin::before,.sla-spin::before{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(47,124,246,.16)}
