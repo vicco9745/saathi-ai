@@ -270,7 +270,8 @@ SYSTEM_INSTRUCTION += (
     "8. Patra: user ne ladki maangi to 'ladki' ya 'bachchi' saaf likho, ladka maanga to 'ladka'. Naam aam, sundar aur sahi arth wala rakho (jaise Meera, Anu, Riya, Aarav, Raju). Anjaane ya arth-heen naam mat rakho.\n"
     "9. Ant: kahani aakhri drishya ya kisi chhoti cheez par ruke (jaise ghadi ki tik-tik). 'Unka pyaar hamesha roshan rakhega' ya 'hum bhi sapne pakdenge' jaisi seekh ya sandesh wali line, bina maange, kisi bhi patra ke muh se bhi mat likho.\n"
     "10. Vyakaran: har sangya ka ling pehchano aur visheshan aur kriya usi se milao ('puraani chhadi', 'badi pratiyogita', 'boondein thirakti thin'). 'Maine ... pakad liya' jaise karta ke saath sahi roop likho.\n"
-    "11. Koi vaakya apne hi se mat takraye ('aansu bhar aaye, par aansu nahi' jaisa). Likhne ke baad ek baar poori kahani padhkar aise vaakya hata do."
+    "11. Koi vaakya apne hi se mat takraye ('aansu bhar aaye, par aansu nahi' jaisa). Likhne ke baad ek baar poori kahani padhkar aise vaakya hata do.\n"
+    "12. LIPI: Agar user Hinglish (Roman) mein likhe ya Hindi maange, to poori kahani शुद्ध देवनागरी हिंदी में लिखो, जैसे 'पुरानी कुर्सी', 'आँखें भर आईं', 'बूँदें थिरकती थीं'. Roman akshar mein tabhi likho jab user saaf bole 'Roman mein likho'."
 )
 
 
