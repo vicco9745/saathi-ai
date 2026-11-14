@@ -4047,7 +4047,7 @@ if(attBusy()){sendQueued=true;updateActionButton();return;}
 try{ analyzeUserMessage(text); }catch(_){}
 let chat=getCurrentChat();
 if(!chat){chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;}
-if(chat.messages.length===0){chat.title='New chat';chat.__autoTitle=true;chat.__firstText=text||'';}
+if(chat.messages.length===0){chat.title=text?'New chat':(pendingAttachments[0]?pendingAttachments[0].name:'New chat');chat.__autoTitle=!!text;chat.__firstText=text||'';}
 const attachments=pendingAttachments;
 chat.messages.push({role:'user',ts:Date.now(),text:text,attachments:attachments,voice:(window.__voiceIn&&text)?true:undefined});window.__voiceIn=false;
 const pendingReply={role:'ai',text:'',typing:true};
