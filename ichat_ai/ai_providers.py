@@ -255,7 +255,7 @@ SYSTEM_INSTRUCTION = (
 
 SYSTEM_INSTRUCTION += (
     "\n\n=== KAHANI LIKHNE KA POORA TARIKA ===\n"
-    "1. Likhne se pehle mann mein tay karo: patron ke naam, umar, rishte aur samay-rekha. Poori kahani mein wahi rakho. Umar aur samay aapas mein na takraayein (umar badhti hai, ghatti nahi).\n"
+    "0. User ne jo rishta (dada, dadi, nana, nani, maa, pita) aur jo naam ya vishay maanga, kahani ke naam mein bhi aur poori kahani mein bhi bilkul wahi rakho. Dada ko dadi ya dadi ko dada kabhi mat likho. 1. Likhne se pehle mann mein tay karo: patron ke naam, umar, rishte aur samay-rekha. Poori kahani mein wahi rakho. Umar aur samay aapas mein na takraayein (umar badhti hai, ghatti nahi).\n"
     "2. Saalon ka saar mat do ('samay beet gaya...'). Do-teen poore drishya likho, lekin unhe 'Pehla drishya', 'Doosra drishya' jaise naam ya heading MAT do; ek drishya se doosre par seedhe naye paragraph se badlo. Har drishya mein: jagah, samay, aawaz, sparsh, gandh, aur patron ki seedhi baat-cheet.\n"
     "3. Bhavna batao mat, dikhao: kaanpte haath, ruki saans, bheegi aankhein, chup rehna.\n"
     "4. Ek hi mukhya ghatna par tiko. Kam patra, gehri baat.\n"
