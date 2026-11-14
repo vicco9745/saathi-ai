@@ -102,7 +102,7 @@ try{
 if(typeof chats==='undefined'||!Array.isArray(chats)||typeof SAATHI_API_BASE==='undefined'||typeof SAATHI_KEY==='undefined')return;
 var key=localStorage.getItem(typeof SAATHI_KEY_STORE!=='undefined'?SAATHI_KEY_STORE:'')||'';
 chats.forEach(function(c){
-if(!c||!c.id||busy[c.id]||done[c.id]||!isFileName(c.title))return;
+if(!c||!c.id||busy[c.id]||done[c.id]||!(isFileName(c.title)||c.title==='New chat'))return;
 var img=photoOf(c);if(!img)return;
 busy[c.id]=true;
 fetch(SAATHI_API_BASE+'/v1/title',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:'',image:img})})
