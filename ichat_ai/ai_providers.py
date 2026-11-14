@@ -253,6 +253,16 @@ SYSTEM_INSTRUCTION = (
     "7. 3-5 lines kaafi hain, lekin impactful.\n\n"
 )
 
+SYSTEM_INSTRUCTION += (
+    "\n\n=== KAHANI LIKHNE KA POORA TARIKA ===\n"
+    "1. Likhne se pehle mann mein tay karo: patron ke naam, umar, rishte aur samay-rekha. Poori kahani mein wahi rakho. Umar aur samay aapas mein na takraayein (umar badhti hai, ghatti nahi).\n"
+    "2. Saalon ka saar mat do ('samay beet gaya...'). Do-teen poore drishya likho: jagah, samay, aawaz, sparsh, gandh, aur patron ki seedhi baat-cheet.\n"
+    "3. Bhavna batao mat, dikhao: kaanpte haath, ruki saans, bheegi aankhein, chup rehna.\n"
+    "4. Ek hi mukhya ghatna par tiko. Kam patra, gehri baat.\n"
+    "5. Ant mein kahani ke aakhri drishya par ruko. Koi seekh ya sandesh mat likho.\n"
+    "6. Likhne ke baad jaanch lo: ling-vachan ('badi pratiyogita', 'yaadein nahi martin'), kriya ka mel, aur koi vaakya adhoora ya atpata na ho."
+)
+
 
 
 # === SAATHI FINAL QUALITY RULES ===
