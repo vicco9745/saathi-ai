@@ -559,3 +559,8 @@ try:
     SYSTEM_INSTRUCTION += _abilities_text()
 except Exception:
     pass
+
+# === PROMPT CHHOTA KARNA (Groq ki 8000 token seema ke liye) ===
+import re as _re_trim
+_DROP_BLOCKS = ("=== 3.", "=== 4.", "=== 5.", "=== 6.", "=== 9.", "=== 10.", "=== 13.", "=== 14.", "=== 15.", "=== 20.", "=== 21.", "=== 22.", "=== 23.", "=== 24.", "=== 26.")
+SYSTEM_INSTRUCTION = "".join(_p for _p in _re_trim.split(r"(?==== )", SYSTEM_INSTRUCTION) if not _p.startswith(_DROP_BLOCKS))
