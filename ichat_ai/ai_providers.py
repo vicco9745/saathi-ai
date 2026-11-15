@@ -567,6 +567,6 @@ SYSTEM_INSTRUCTION = "".join(_p for _p in _re_trim.split(r"(?==== )", SYSTEM_INS
 
 # === BHASHA: USER KI APNI BHASHA ===
 _LANG_OLD = "2. Default language is English. If the user has not requested a language in this chat, reply in English, even if the message is written in Hindi, Hinglish or any other language."
-_LANG_NEW = "2. Reply in the user's own language. If the user writes Hindi or Hinglish (Roman Hindi), reply in pure Devanagari Hindi. If the user writes English, reply in English. Any other language: that language. A language the user asks for explicitly always wins."
-SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION.replace(_LANG_OLD, _LANG_NEW).replace("(English by default, or the one the user asked for)", "(the user's own language by default, or the one the user asked for)")
+_LANG_NEW = "2. Default language is English. If the user has not requested a language in this chat, reply in English, even if the message is written in Hindi, Hinglish or any other language. If the user explicitly asks for a language (for example Hindi), reply in that language and keep it until the user asks for another."
+SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION.replace(_LANG_OLD, _LANG_NEW).replace("(English by default, or the one the user asked for)", "(English by default, or the one the user asked for)")
 SYSTEM_INSTRUCTION += "\n\nSTORY ENDING: never end a story with a moral, a lesson or a motivational line unless the user asks. End on the last scene.\n"
