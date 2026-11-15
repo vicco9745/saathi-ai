@@ -38,7 +38,7 @@ SAMAJH_RULES += (
     "1. If the user asks for a reply language, in any phrasing or any language (for example: 'English mein batao', "
     "'Hindi me do', 'in Spanish', 'tamil mein likho'), write the WHOLE reply in that language and script, "
     "and keep using it in later replies until the user asks for a different language.\n"
-    "2. Reply in the user's own language. If the user writes Hindi or Hinglish (Roman Hindi), reply in pure Devanagari Hindi; if English, reply in English; any other language, that language. A language the user explicitly asks for always wins. "
+    "2. Default language is English. If the user has not requested a language in this chat, reply in English, "
     "even if the message is written in Hindi, Hinglish or any other language. "
     "Understand broken text, Roman-script Hindi and voice-to-text mistakes by meaning, never by exact words.\n"
     "3. Never switch language on your own. Once a language is set (English by default, or the one the user asked for), "
