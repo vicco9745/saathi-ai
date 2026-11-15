@@ -2964,7 +2964,7 @@ function openSourcesModal(sources){sourcesList.innerHTML='';sources.forEach(s=>{
 function closeSourcesModal(){closeSheet(sourcesSheet,sourcesModalOverlay);}
 sourcesModalCloseBtn.addEventListener('click',closeSourcesModal);
 sourcesModalOverlay.addEventListener('click',(e)=>{if(e.target===sourcesModalOverlay)closeSourcesModal();});
-function buildSourcesChip(sources){const chip=document.createElement('button');chip.type='button';chip.className='sources-chip';const iconsWrap=document.createElement('span');iconsWrap.className='sources-chip-icons';sources.slice(0,3).forEach(s=>{const img=document.createElement('img');img.src=getFaviconUrl(s.url);img.alt='';img.addEventListener('error',()=>{img.style.visibility='hidden';});iconsWrap.appendChild(img);});const label=document.createElement('span');label.textContent='Sources';chip.appendChild(iconsWrap);chip.appendChild(label);chip.addEventListener('click',()=>openSourcesModal(sources));return chip;}
+function buildSourcesChip(sources){const chip=document.createElement('button');chip.type='button';chip.className='sources-chip';const iconsWrap=document.createElement('span');iconsWrap.className='sources-chip-icons';sources.slice(0,3).forEach(s=>{const img=document.createElement('img');img.src=getFaviconUrl(s.site_url||s.url);img.alt='';img.addEventListener('error',()=>{img.style.visibility='hidden';});iconsWrap.appendChild(img);});const label=document.createElement('span');label.textContent='Sources';chip.appendChild(iconsWrap);chip.appendChild(label);chip.addEventListener('click',()=>openSourcesModal(sources));return chip;}
 
 const feedbackModalTitle=document.getElementById('feedbackModalTitle');
 const feedbackModalSub=document.getElementById('feedbackModalSub');
