@@ -484,9 +484,32 @@ def get_response(user_text, history=None, lang_pref=None):
     else:
         print(f"[NEWS-CHECK] msg='{original_text[:50]}', is_news_request=False")
 
+    _web_src = []
     try:
         from ichat_ai.ai_providers import ai_provider_answer
-        ai_answer = ai_provider_answer(original_text, history=history, lang_pref=lang_pref)
+        _ai_input = original_text
+        try:
+            _q = original_text.lower()
+            _FRESH = ("aaj", "abhi", "taaza", "latest", "current", "today", "right now", "price", "rate", "score", "weather", "mausam", "news", "khabar", "result", "who is", "kaun hai", "kaun hain", "kitna", "kitne", "live", "2025", "2026", "आज", "अभी", "ताज़ा", "ताजा", "मौसम", "दाम", "भाव", "स्कोर", "खबर", "कौन है", "कौन हैं", "कितना", "कितने", "नतीजा", "रिज़ल्ट")
+            if any(k in _q for k in _FRESH):
+                from ichat_ai.web_search import search_web
+                _res = search_web(original_text, limit=5)
+                _lines = []
+                for _i, _r in enumerate(_res or [], 1):
+                    _t = (_r.get("title") or "").strip()
+                    _d = (_r.get("description") or "").strip()
+                    _c = (_r.get("content") or "").strip()[:400]
+                    _lines.append(f"{_i}. {_t}\n{_d}\n{_c}")
+                    if _r.get("url") and _t and len(_web_src) < 8:
+                        _web_src.append({"title": _t, "url": _r["url"]})
+                if _lines:
+                    _ai_input = ("Question: " + original_text + "\n\nLatest web search results (use these to answer; they are newer than your training data):\n\n" + "\n\n".join(_lines))
+                    print(f"[web-first] {len(_lines)} results ai ko diye")
+        except Exception as _e:
+            print(f"[web-first] failed: {type(_e).__name__}: {_e}")
+            _ai_input = original_text
+            _web_src = []
+        ai_answer = ai_provider_answer(_ai_input, history=history, lang_pref=lang_pref)
     except Exception as e:
         print(f"[get_response] ai_provider_answer CRASHED: {type(e).__name__}: {e}")
         ai_answer = None
@@ -504,6 +527,8 @@ def get_response(user_text, history=None, lang_pref=None):
     if ai_answer:
         reply = ai_answer
         add_conversation(original_text, reply)
+        if _web_src:
+            return {"reply": reply, "sources": _web_src}
         return reply
 
     web_answer, web_sources = web_search_answer(original_text)
