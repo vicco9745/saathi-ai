@@ -266,11 +266,12 @@ def _fetch_live_news(query=None, lang="hi", country="IN"):
 
         sources = []
         news_lines = []
-        for i, item in enumerate(items[:7]):
+        for i, item in enumerate(items[:40]):
             title = item.findtext("title", "").strip()
             link = item.findtext("link", "").strip()
             if title:
-                news_lines.append(f"{i+1}. {title}")
+                if i < 7:
+                    news_lines.append(f"{i+1}. {title}")
                 sources.append({"title": title[:80], "url": link})
 
         if news_lines:
@@ -502,6 +503,26 @@ def get_response(user_text, history=None, lang_pref=None):
                     _lines.append(f"{_i}. {_t}\n{_d}\n{_c}")
                     if _r.get("url") and _t and len(_web_src) < 8:
                         _web_src.append({"title": _t, "url": _r["url"]})
+                try:
+                    import urllib.request as _ur, urllib.parse as _up, re as _rx, html as _hh
+                    from ichat_ai.web_search import _original_url
+                    _seen = {x["url"] for x in _web_src}
+                    for _pg in range(3):
+                        _bu = "https://www.bing.com/search?" + _up.urlencode({"q": original_text, "setlang": "hi", "first": _pg * 10 + 1})
+                        _bd = _ur.urlopen(_ur.Request(_bu, headers={"User-Agent": "Mozilla/5.0"}), timeout=6).read().decode("utf-8", "ignore")
+                        for _it in _rx.findall(r'<li class="b_algo".*?</li>', _bd, _rx.S):
+                            _m = _rx.search(r'<h2[^>]*>\s*<a[^>]+href="([^"]+)"[^>]*>(.*?)</a>', _it, _rx.S)
+                            if not _m:
+                                continue
+                            _raw = _hh.unescape(_m.group(1))
+                            _lk = _original_url(_raw) or _raw
+                            _tt = _hh.unescape(_rx.sub(r"<[^>]+>", "", _m.group(2))).strip()
+                            if _lk and _tt and _lk not in _seen and len(_web_src) < 40:
+                                _seen.add(_lk)
+                                _web_src.append({"title": _tt[:80], "url": _lk})
+                    print(f"[web-first] sources total: {len(_web_src)}")
+                except Exception as _e2:
+                    print(f"[web-first] extra sources failed: {type(_e2).__name__}: {_e2}")
                 if _lines:
                     _ai_input = ("Question: " + original_text + "\n\nLatest web search results (use these to answer; they are newer than your training data):\n\n" + "\n\n".join(_lines))
                     print(f"[web-first] {len(_lines)} results ai ko diye")
