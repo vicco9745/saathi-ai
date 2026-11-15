@@ -4493,7 +4493,7 @@ document.addEventListener('click',function(e){
   var u;try{u=new URL(a.getAttribute('href'),location.href);}catch(_){return;}
   if(u.protocol!=='http:'&&u.protocol!=='https:')return;
   e.preventDefault();e.stopImmediatePropagation();
-  if(trusted().indexOf(u.hostname)>-1){openView(u);return;}
+  if(a.closest('.sources-item')||trusted().indexOf(u.hostname)>-1){openView(u);return;}
   cur=u;document.getElementById('lcHost').textContent=u.hostname;document.getElementById('lcUrl').textContent=u.href;
   document.getElementById('lcChk').checked=false;back.classList.add('on');
 },true);
