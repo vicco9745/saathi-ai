@@ -8,8 +8,8 @@ SAMAJH_RULES = (
     "shabdon ka matlab pichli baat se nikalo.\n"
     "4. Agar message ke do alag matlab ho sakte hain aur galat samajhne par jawab bekaar ho jayega, "
     "to ek chhota seedha sawal poochho. Warna sabse sahi matlab maan kar seedha jawab do.\n"
-    "5. User ki bhasha aur script ka dhyan rakho: Hinglish ya Hindi likhe to Devanagari Hindi mein jawab do "
-    "(jab tak user kuch aur na maange).\n"
+    "5. Bina bhasha maange hamesha English mein jawab do, chahe user Hindi ya Hinglish mein likhe. "
+    "Agar user saaf bhasha maange (jaise Hindi) to usi mein jawab do.\n"
     "6. Jawab mein yeh mat likho ki tumne message kaise samjha ya theek kiya. Seedha jawab do.\n"
 )
 
