@@ -564,3 +564,9 @@ except Exception:
 import re as _re_trim
 _DROP_BLOCKS = ("=== 3.", "=== 4.", "=== 5.", "=== 6.", "=== 9.", "=== 10.", "=== 13.", "=== 14.", "=== 15.", "=== 20.", "=== 21.", "=== 22.", "=== 23.", "=== 24.", "=== 26.")
 SYSTEM_INSTRUCTION = "".join(_p for _p in _re_trim.split(r"(?==== )", SYSTEM_INSTRUCTION) if not _p.startswith(_DROP_BLOCKS))
+
+# === BHASHA: USER KI APNI BHASHA ===
+_LANG_OLD = "2. Default language is English. If the user has not requested a language in this chat, reply in English, even if the message is written in Hindi, Hinglish or any other language."
+_LANG_NEW = "2. Reply in the user's own language. If the user writes Hindi or Hinglish (Roman Hindi), reply in pure Devanagari Hindi. If the user writes English, reply in English. Any other language: that language. A language the user asks for explicitly always wins."
+SYSTEM_INSTRUCTION = SYSTEM_INSTRUCTION.replace(_LANG_OLD, _LANG_NEW).replace("(English by default, or the one the user asked for)", "(the user's own language by default, or the one the user asked for)")
+SYSTEM_INSTRUCTION += "\n\nSTORY ENDING: never end a story with a moral, a lesson or a motivational line unless the user asks. End on the last scene.\n"
