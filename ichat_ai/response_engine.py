@@ -272,7 +272,8 @@ def _fetch_live_news(query=None, lang="hi", country="IN"):
             if title:
                 if i < 7:
                     news_lines.append(f"{i+1}. {title}")
-                sources.append({"title": title[:80], "url": link})
+                _src = item.find("source")
+                sources.append({"title": title[:80], "url": link, "site": ((_src.text or "").strip() if _src is not None else ""), "site_url": (_src.get("url", "") if _src is not None else "")})
 
         if news_lines:
             header = "आज की ताज़ा खबरें:" if lang == "hi" else "Latest News:"
