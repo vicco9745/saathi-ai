@@ -492,7 +492,7 @@ def get_response(user_text, history=None, lang_pref=None):
         _ai_input = original_text
         try:
             _q = original_text.lower()
-            _FRESH = ("aaj", "abhi", "taaza", "latest", "current", "today", "right now", "price", "rate", "score", "weather", "mausam", "news", "khabar", "result", "who is", "kaun hai", "kaun hain", "kitna", "kitne", "live", "2025", "2026", "आज", "अभी", "ताज़ा", "ताजा", "मौसम", "दाम", "भाव", "स्कोर", "खबर", "कौन है", "कौन हैं", "कितना", "कितने", "नतीजा", "रिज़ल्ट")
+            _FRESH = ("aaj", "abhi", "taaza", "latest", "current", "today", "right now", "price", "rate", "score", "weather", "mausam", "news", "khabar", "result", "who is", "kaun hai", "kaun hain", "kitna", "kitne", "live", "2025", "2026", "आज", "अभी", "ताज़ा", "ताजा", "मौसम", "दाम", "भाव", "स्कोर", "खबर", "कौन है", "कौन हैं", "कितना", "कितने", "नतीजा", "रिज़ल्ट", "mamla", "kya hua", "dhokha", "viral", "instagram", "मामला", "क्या हुआ", "धोखा", "वायरल", "इंस्टाग्राम")
             if any(k in _q for k in _FRESH):
                 from ichat_ai.web_search import search_web
                 _res = search_web(original_text, limit=5)
@@ -525,7 +525,7 @@ def get_response(user_text, history=None, lang_pref=None):
                 except Exception as _e2:
                     print(f"[web-first] extra sources failed: {type(_e2).__name__}: {_e2}")
                 if _lines:
-                    _ai_input = ("Question: " + original_text + "\n\nLatest web search results (use these to answer; they are newer than your training data):\n\n" + "\n\n".join(_lines))
+                    _ai_input = ("Question: " + original_text + "\n\nLatest web search results (use these to answer; they are newer than your training data). If the question is about a story, incident or case, explain it fully and in order: what happened, who was involved, what the trick or fraud was, and where it stands now. Say clearly which parts the results confirm and which are unverified or only rumour. Do not invent details:\n\n" + "\n\n".join(_lines))
                     print(f"[web-first] {len(_lines)} results ai ko diye")
         except Exception as _e:
             print(f"[web-first] failed: {type(_e).__name__}: {_e}")
