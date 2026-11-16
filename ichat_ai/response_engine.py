@@ -538,6 +538,12 @@ def get_response(user_text, history=None, lang_pref=None):
             _ai_input = original_text
             _web_src = []
         ai_answer = ai_provider_answer(_ai_input, history=history, lang_pref=lang_pref)
+        if ai_answer and _ai_input != original_text:
+            try:
+                from ichat_ai.checker.checker import check_reply
+                ai_answer = check_reply(original_text, ai_answer, _ai_input, history=history, lang_pref=lang_pref)
+            except Exception as _ce:
+                print(f"[checker] hook skipped: {type(_ce).__name__}: {_ce}")
     except Exception as e:
         print(f"[get_response] ai_provider_answer CRASHED: {type(e).__name__}: {e}")
         ai_answer = None
