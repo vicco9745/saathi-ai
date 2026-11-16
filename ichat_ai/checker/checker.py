@@ -1,5 +1,6 @@
 """Saathi Master Checker: har jaanch alag file mein hai. Koi file hata do to wo jaanch chhoot jayegi, chat nahi rukegi."""
 import importlib
+import time
 
 
 def _load(name):
@@ -12,6 +13,7 @@ def _load(name):
 
 def check_reply(question, reply, evidence, history=None, lang_pref=None):
     original = reply
+    t0 = time.time()
     try:
         if not isinstance(reply, str) or not reply.strip():
             return reply
@@ -44,6 +46,9 @@ def check_reply(question, reply, evidence, history=None, lang_pref=None):
                     fact_bad = True
             if not problems or corr is None or attempt >= maxc:
                 break
+            if time.time() - t0 > getattr(cfg, "TIME_BUDGET", 20):
+                print(f"[checker] samay seema paar ({time.time() - t0:.0f}s), sudhar chhoda")
+                break
             print(f"[checker] sudhar prayas {attempt + 1}: {problems}")
             reply = corr.fix(question, reply, evidence, problems)
             if lang:
@@ -51,6 +56,7 @@ def check_reply(question, reply, evidence, history=None, lang_pref=None):
         if fact_bad and cfg is not None and lang is not None:
             note = cfg.HI_NOTE if lang.deva_ratio(reply) > 0.3 else cfg.EN_NOTE
             reply = reply.rstrip() + "\n\n" + note
+        print(f"[checker] total {time.time() - t0:.1f}s")
         return ver.approve(original, reply) if ver else reply
     except Exception as e:
         print(f"[checker] CRASHED, asli jawab bhej rahe: {type(e).__name__}: {e}")
