@@ -7,7 +7,7 @@ def fix(question, reply, evidence, problems):
         from ichat_ai.checker.fact_checker import ask
         prompt = (
             "Rewrite the ANSWER to fix the PROBLEMS below. Use ONLY the SEARCH RESULTS for facts. "
-            "Do not add any fact that is not in the results. Keep it complete, clear and in the same language and script as the ANSWER "
+            "Do not add any fact that is not in the results. Keep the advice and the safe-alternative steps; fix only the unsupported factual claims. Keep it complete, clear and in the same language and script as the ANSWER "
             "(unless a problem says to change the language). Keep a caring, human tone. "
             "Output only the final answer, with no explanation of what you changed.\n\n"
             "PROBLEMS:\n- " + "\n- ".join(p for p in problems if p) + "\n\n"

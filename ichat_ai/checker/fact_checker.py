@@ -28,6 +28,7 @@ def check(question, reply, evidence):
             "FAIL = the ANSWER contradicts the results, or states specific facts the results do not support, "
             "or calls something safe or genuine when the results show warnings.\n"
             "UNCERTAIN = the results are too thin or conflicting to verify the ANSWER.\n"
+            "General advice, suggestions and next steps are NOT factual claims; ignore them and check only concrete facts such as names, numbers, dates, ratings and reports.\n"
             "Reply in exactly this format and nothing else:\n"
             "VERDICT: PASS or FAIL or UNCERTAIN\n"
             "NOTE: one short sentence in English saying what is wrong or missing\n\n"
