@@ -531,7 +531,7 @@ def get_response(user_text, history=None, lang_pref=None):
                 except Exception as _e2:
                     print(f"[web-first] extra sources failed: {type(_e2).__name__}: {_e2}")
                 if _lines:
-                    _ai_input = ("Question: " + original_text + "\n\nLatest web search results (use these to answer; they are newer than your training data). If the question is about a story, incident or case, explain it fully and in order: what happened, who was involved, what the trick or fraud was, and where it stands now. Say clearly which parts the results confirm and which are unverified or only rumour. Do not invent details:\n\n" + "\n\n".join(_lines))
+                    _ai_input = ("Question: " + original_text + "\n\nLatest web search results (use these only as facts to learn from and never copy their wording; they are newer than your training data). If the question is about a story, incident or case, explain it fully and in order: what happened, who was involved, what the trick or fraud was, and where it stands now. Say clearly which parts the results confirm and which are unverified or only rumour. Do not invent details:\n\n" + "\n\n".join(_lines))
                     print(f"[web-first] {len(_lines)} results ai ko diye")
         except Exception as _e:
             print(f"[web-first] failed: {type(_e).__name__}: {_e}")
