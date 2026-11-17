@@ -506,7 +506,7 @@ def get_response(user_text, history=None, lang_pref=None):
                 for _i, _r in enumerate(_res or [], 1):
                     _t = (_r.get("title") or "").strip()
                     _d = (_r.get("description") or "").strip()
-                    _c = (_r.get("content") or "").strip()[:400]
+                    _c = (_r.get("content") or "").strip()[:250]
                     _lines.append(f"{_i}. {_t}\n{_d}\n{_c}")
                     if _r.get("url") and _t and len(_web_src) < 8:
                         _web_src.append({"title": _t, "url": _r["url"]})
