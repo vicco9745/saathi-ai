@@ -22,6 +22,14 @@ def check_reply(question, reply, evidence, history=None, lang_pref=None):
             return reply
         lang, comp = _load("language_checker"), _load("completeness_checker")
         fact, corr, ver = _load("fact_checker"), _load("correction_engine"), _load("verification")
+        ctx = _load("context_checker") if getattr(cfg, "CONTEXT_CHECK_ON", True) else None
+        logic = _load("logic_checker") if getattr(cfg, "LOGIC_CHECK_ON", True) else None
+        qa = _load("question_analyzer") if getattr(cfg, "QUESTION_ANALYZER_ON", True) else None
+        if qa:
+            try:
+                print(f"[checker] sawal: {qa.analyze(question)}")
+            except Exception as e:
+                print(f"[checker] question_analyzer fail: {type(e).__name__}")
         maxc = min(max(int(getattr(cfg, "MAX_CORRECTIONS", 1)), 0), 2) if cfg else 1
         if lang:
             reply = lang.clean(reply)
@@ -36,6 +44,20 @@ def check_reply(question, reply, evidence, history=None, lang_pref=None):
                 v, n = comp.check(question, reply)
                 if v != "PASS":
                     problems.append(n)
+            if ctx:
+                try:
+                    v, n = ctx.check(question, reply, history)
+                    if v != "PASS":
+                        problems.append(n)
+                except Exception as e:
+                    print(f"[checker] context jaanch fail: {type(e).__name__}")
+            if logic:
+                try:
+                    v, n = logic.check(question, reply)
+                    if v != "PASS":
+                        problems.append(n)
+                except Exception as e:
+                    print(f"[checker] logic jaanch fail: {type(e).__name__}")
             if fact:
                 v, n = fact.check(question, reply, evidence)
                 print(f"[checker] fact verdict: {v}")

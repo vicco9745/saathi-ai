@@ -6,3 +6,6 @@ TIME_BUDGET = 20                # jaanch ke baad itne second se zyada lage to su
 MIN_REPLY_CHARS = 40            # isse chhota jawab INCOMPLETE maana jayega
 HI_NOTE = "ध्यान दें: इस जानकारी की पक्की पुष्टि नहीं हो पाई, इसलिए इसे अंतिम सच न मानें और किसी आधिकारिक स्रोत से जाँच लें।"
 EN_NOTE = "Note: I could not fully verify this, so please don't treat it as final and check an official source."
+QUESTION_ANALYZER_ON = True     # sawal ki bhasha/prakar log mein dikhega
+CONTEXT_CHECK_ON = True         # False karoge to sandarbh jaanch band
+LOGIC_CHECK_ON = True           # False karoge to tark jaanch band
