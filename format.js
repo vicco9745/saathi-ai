@@ -88,7 +88,7 @@ return of.call(this,u,o);
 })();
 (function(){
 var busy={},done={};
-function isFileName(t){return /\.(png|jpe?g|webp|gif|heic)$/i.test(String(t||'').trim());}
+function isFileName(t){return /\.(png|jpe?g|webp|gif|heic|mp4|mov|webm|mkv|3gp|avi)$/i.test(String(t||'').trim());}
 function photoOf(c){
 var ms=(c&&c.messages)||[];
 for(var i=0;i<ms.length;i++){
@@ -126,14 +126,14 @@ var r={};
 try{r.chats=(typeof chats!=='undefined')?chats.length:'undefined';}catch(e){r.chats='err';}
 try{r.api=(typeof SAATHI_API_BASE!=='undefined')?'ok':'undefined';}catch(e){r.api='err';}
 try{r.key=(typeof SAATHI_KEY!=='undefined'&&SAATHI_KEY)?'ok':'missing';}catch(e){r.key='err';}
-try{r.fileTitles=chats.filter(function(c){return /\.(png|jpe?g|webp|gif|heic)$/i.test(String(c.title||''));}).length;}catch(e){r.fileTitles='err';}
+try{r.fileTitles=chats.filter(function(c){return /\.(png|jpe?g|webp|gif|heic|mp4|mov|webm|mkv|3gp|avi)$/i.test(String(c.title||''));}).length;}catch(e){r.fileTitles='err';}
 try{r.withPhoto=chats.filter(function(c){return (c.messages||[]).some(function(m){return (m.attachments||[]).some(function(a){return a&&a.kind==='photo'&&a.dataUrl;});});}).length;}catch(e){r.withPhoto='err';}
 alert(JSON.stringify(r));
 };
 })();
 (function(){
 var busy={},done={};
-function isFile(t){return /\.(png|jpe?g|webp|gif|heic)$/i.test(String(t||'').trim());}
+function isFile(t){return /\.(png|jpe?g|webp|gif|heic|mp4|mov|webm|mkv|3gp|avi)$/i.test(String(t||'').trim());}
 function photoOf(c){var ms=(c&&c.messages)||[];for(var i=0;i<ms.length;i++){var at=ms[i].attachments||[];for(var j=0;j<at.length;j++){if(at[j]&&at[j].kind==='photo'&&at[j].dataUrl&&String(at[j].dataUrl).indexOf('data:image')===0)return at[j].dataUrl;}}return null;}
 function tick(){
 try{
@@ -161,7 +161,7 @@ alert(JSON.stringify(r));
 (function(){
 var PH='Naam ban raha hai…';
 var busy={},done={};
-function isFile(t){return /\.(png|jpe?g|webp|gif|heic)$/i.test(String(t||'').trim());}
+function isFile(t){return /\.(png|jpe?g|webp|gif|heic|mp4|mov|webm|mkv|3gp|avi)$/i.test(String(t||'').trim());}
 function needs(t){return isFile(t)||String(t||'')===PH;}
 function photoOf(c){var ms=(c&&c.messages)||[];for(var i=0;i<ms.length;i++){var at=ms[i].attachments||[];for(var j=0;j<at.length;j++){if(at[j]&&at[j].kind==='photo'&&at[j].dataUrl&&String(at[j].dataUrl).indexOf('data:image')===0)return at[j].dataUrl;}}return null;}
 function tick(){
