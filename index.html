@@ -1614,7 +1614,19 @@ background:linear-gradient(180deg,#f7fbff 0%,#e9f3ff 42%,#f1ecff 100%);color:var
 <style id="voicemic-style">.vmic{display:inline-flex;vertical-align:-3px;margin-right:7px;color:var(--text-soft);opacity:.85}.vmic svg{width:15px;height:15px}</style>
 <style id="linkask-style">
 </style>
-<style id="md-style">.md-h{font-weight:700;margin:12px 0 4px;line-height:1.35}.md-h1{font-size:1.3em}.md-h2{font-size:1.18em}.md-h3{font-size:1.08em}.md-h4,.md-h5,.md-h6{font-size:1em}.md-p{margin:0}.md-sp{height:8px}.md-l{margin:4px 0;padding-left:22px}.md-l li{margin:2px 0}.md-q{border-left:3px solid rgba(128,128,128,.5);padding:2px 0 2px 10px;margin:4px 0;opacity:.85}.md-hr{border:0;border-top:1px solid rgba(128,128,128,.3);margin:10px 0}.md-tw{overflow-x:auto;margin:8px 0}.md-t{border-collapse:collapse;font-size:.95em;min-width:100%}.md-t th,.md-t td{border:1px solid rgba(128,128,128,.3);padding:6px 10px;text-align:left;vertical-align:top}.md-t th{background:rgba(128,128,128,.12);font-weight:700}.md-ic{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background:rgba(128,128,128,.16);padding:1px 5px;border-radius:4px}</style></head>
+<style id="md-style">.md-h{font-weight:700;margin:12px 0 4px;line-height:1.35}.md-h1{font-size:1.3em}.md-h2{font-size:1.18em}.md-h3{font-size:1.08em}.md-h4,.md-h5,.md-h6{font-size:1em}.md-p{margin:0}.md-sp{height:8px}.md-l{margin:4px 0;padding-left:22px}.md-l li{margin:2px 0}.md-q{border-left:3px solid rgba(128,128,128,.5);padding:2px 0 2px 10px;margin:4px 0;opacity:.85}.md-hr{border:0;border-top:1px solid rgba(128,128,128,.3);margin:10px 0}.md-tw{overflow-x:auto;margin:8px 0}.md-t{border-collapse:collapse;font-size:.95em;min-width:100%}.md-t th,.md-t td{border:1px solid rgba(128,128,128,.3);padding:6px 10px;text-align:left;vertical-align:top}.md-t th{background:rgba(128,128,128,.12);font-weight:700}.md-ic{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em;background:rgba(128,128,128,.16);padding:1px 5px;border-radius:4px}</style><style id="fbSheetStyle">
+@media (max-width:700px){
+#feedbackSheet .sheet-header{position:relative;justify-content:center;padding:6px 16px 8px}
+#feedbackSheet .sheet-header-actions{display:contents}
+#feedbackSheet #feedbackModalCloseBtn{position:absolute;left:10px;top:50%;transform:translateY(-50%)}
+#feedbackSheet .sheet-header span{order:1}
+#feedbackSheet #feedbackModalThumbBtn{order:2;margin-left:8px;background:none;width:auto;height:auto}
+#feedbackSheet .feedback-sheet-body{flex:1;padding:8px 20px 20px}
+#feedbackSheet .feedback-note{margin-top:auto}
+#feedbackSheet .feedback-submit-btn{width:100%;align-self:stretch;padding:15px;font-size:15px;font-weight:700;margin-top:0}
+}
+</style>
+</head>
 <body>
 
 <div class="topbar" id="mainTopbar">
@@ -2975,7 +2987,7 @@ const feedbackThumbIcon=document.getElementById('feedbackThumbIcon');
 let feedbackTargetMessage=null,feedbackTargetRating=null;
 const THUMB_UP='<path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14Z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>';
 const THUMB_DOWN='<path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10Z"/><path d="M17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/>';
-function openFeedbackModal(message,rating){feedbackTargetMessage=message;feedbackTargetRating=rating;feedbackModalInput.value='';feedbackModalTitle.textContent='Submit feedback';if(rating==='like'){feedbackModalSub.textContent='Please provide details: (optional)';feedbackModalInput.placeholder='What was satisfying about this response?';feedbackThumbIcon.innerHTML=THUMB_UP;}else{feedbackModalSub.textContent='Please provide details: (optional)';feedbackModalInput.placeholder='What went wrong with this response?';feedbackThumbIcon.innerHTML=THUMB_DOWN;}openSheet(feedbackSheet,feedbackModalOverlay,75,true);}
+function openFeedbackModal(message,rating){feedbackTargetMessage=message;feedbackTargetRating=rating;feedbackModalInput.value='';feedbackModalTitle.textContent='Submit feedback';if(rating==='like'){feedbackModalSub.textContent='Please provide details: (optional)';feedbackModalInput.placeholder='What was satisfying about this response?';feedbackThumbIcon.innerHTML=THUMB_UP;}else{feedbackModalSub.textContent='Please provide details: (optional)';feedbackModalInput.placeholder='What went wrong with this response?';feedbackThumbIcon.innerHTML=THUMB_DOWN;}openSheet(feedbackSheet,feedbackModalOverlay,80,true);}
 function closeFeedbackModal(){closeSheet(feedbackSheet,feedbackModalOverlay);feedbackTargetMessage=null;feedbackTargetRating=null;}
 feedbackModalCloseBtn.addEventListener('click',closeFeedbackModal);
 feedbackModalOverlay.addEventListener('click',(e)=>{if(e.target===feedbackModalOverlay)closeFeedbackModal();});
