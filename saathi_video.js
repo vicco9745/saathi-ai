@@ -6,7 +6,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
   var done = new WeakSet(), warned = false;
   var FRAMES = 5, MAXW = 1024;
 
-  function say(t) { try { if (typeof showToast === 'function') showToast(t); } catch (e) {} }
+  function say(t) { /* toast band */ }
 
   function grab(att) { try { if (!att.__origUrl) att.__origUrl = att.dataUrl; } catch (e) {}
     return new Promise(function (resolve) {
@@ -133,13 +133,13 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
         say('Video padh raha hoon, 10-20 second ruko...');
         grab(a).then(function (frames) {
           if (window.__vidPA().indexOf(a) === -1) return;
-          if (!frames.length) { say('Video se frame nahi nikle'); return; }
+          if (!frames.length) { a.__vidFail = true; try { window.__vidRender(); } catch (e) {} return; }
           frames.forEach(function (f, i) {
             window.__vidPA().push({ kind: 'photo', name: 'video-frame-' + (i + 1) + '.jpg', size: f.length, dataUrl: f, origin: 'user' });
           });
           try { window.__vidRender(); updateActionButton(); } catch (e) {}
           say(frames.length + ' frame taiyaar, ab bhej sakte ho');
-        }).catch(function () { say('Video padhne me gadbad hui'); }).then(function () { a.__vidBusy = false; try { if (true) window.__vidFlush(); } catch (e) {} });
+        }).catch(function () { a.__vidFail = true; try { window.__vidRender(); } catch (e) {} }).then(function () { a.__vidBusy = false; try { if (true) window.__vidFlush(); } catch (e) {} });
       });
     } catch (e) {}
   }
@@ -156,7 +156,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
     el.style.cssText = 'position:fixed;bottom:140px;left:50%;transform:translateX(-50%);z-index:99999;padding:6px 12px;border-radius:14px;font:600 12px/1.2 sans-serif;color:#fff;background:#6b7280;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.2);max-width:90%;text-align:center;';
     document.body.appendChild(el);
   }
-  function set(t, c) { if (/^(Video helper ON|.{1,2} Video padh raha)/.test(t)) { if (el) el.style.display = 'none'; return; } mk(); if (!el) return; el.style.display = ''; el.textContent = t; el.style.background = c; }
+  function set(t, c) { /* badge band */ }
   setInterval(function () {
     try {
       if (typeof window.__vidPA() === 'undefined' || !Array.isArray(window.__vidPA())) { set('❌ Video helper: attachments list nahi mili', '#dc2626'); return; }
