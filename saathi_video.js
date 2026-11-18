@@ -151,7 +151,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
     el.style.cssText = 'position:fixed;bottom:140px;left:50%;transform:translateX(-50%);z-index:99999;padding:6px 12px;border-radius:14px;font:600 12px/1.2 sans-serif;color:#fff;background:#6b7280;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.2);max-width:90%;text-align:center;';
     document.body.appendChild(el);
   }
-  function set(t, c) { /* badge band: kuch nahi dikhega */ }
+  function set(t, c) { if (!/^(⏳ Video padh|✅)/.test(t)) { if (el) el.style.display = 'none'; return; } mk(); if (!el) return; el.style.display = ''; el.textContent = t; el.style.background = c; }
   setInterval(function () {
     try {
       if (typeof window.__vidPA() === 'undefined' || !Array.isArray(window.__vidPA())) { set('❌ Video helper: attachments list nahi mili', '#dc2626'); return; }
