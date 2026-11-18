@@ -4035,6 +4035,7 @@ function sendMessage(){
 const text=msgInput.value.trim();
 if(!text&&pendingAttachments.length===0)return;
 if(attBusy()){sendQueued=true;updateActionButton();return;}
+if(pendingAttachments.some(a=>a&&a.__vidFail)){try{renderPendingAttachments();}catch(_){}return;}
 try{ analyzeUserMessage(text); }catch(_){}
 let chat=getCurrentChat();
 if(!chat){chat={id:genId(),title:'New chat',messages:[]};chats.unshift(chat);currentChatId=chat.id;}
@@ -4059,7 +4060,7 @@ renderPendingAttachments();updateActionButton();saveChats();renderChatList();ren
 const mediaAttachments=attachments.filter(a=>a.kind!=='text');
 const textAttachments=attachments.filter(a=>a.kind==='text');
 const analyzableFiles=attachments.filter(a=>a.kind==='file'&&a.content&&String(a.content).trim().length>0);
-if(mediaAttachments.length>0&&analyzableFiles.length===0&&!mediaAttachments.some(a=>a.kind==='photo')){
+if(false&&mediaAttachments.length>0&&analyzableFiles.length===0&&!mediaAttachments.some(a=>a.kind==='photo')){
 const isPhotoOnly=mediaAttachments.length===1&&mediaAttachments[0].kind==='photo';
 {setTimeout(()=>{let replyText;if(mediaAttachments.length===1){const a=mediaAttachments[0];if(a.kind==='video')replyText='Video mil gaya: "'+a.name+'" ('+formatSize(a.size)+').';else if(a.kind==='photo')replyText='Image mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';else replyText='File mil gayi: "'+a.name+'" ('+formatSize(a.size)+').';}else{replyText=mediaAttachments.length+' items mil gaye.';}pendingReply.text=replyText;saveChats();renderMessages();},500);}
 }else{
