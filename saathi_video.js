@@ -108,10 +108,15 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
       v.addEventListener('loadeddata', start);
       v.addEventListener('loadedmetadata', function () { setTimeout(start, 300); });
       try {
-        // Blob fetch se (kam memory)
-        fetch(att.dataUrl).then(function (r) { return r.blob(); }).then(function (blob) {
-          v.src = URL.createObjectURL(blob);
-        }).catch(function () { v.src = att.dataUrl; });
+        // Base64 को Blob में बदलकर सुरक्षित तरीके से लोड करें
+        var parts = att.dataUrl.split(",");
+        var byteString = atob(parts[1]);
+        var mimeString = parts[0].split(":")[1].split(";")[0];
+        var ab = new ArrayBuffer(byteString.length);
+        var ia = new Uint8Array(ab);
+        for (var i = 0; i < byteString.length; i++) { ia[i] = byteString.charCodeAt(i); }
+        var blob = new Blob([ab], { type: mimeString });
+        v.src = URL.createObjectURL(blob);
       } catch(e) { v.src = att.dataUrl; }
     });
   }
@@ -151,7 +156,7 @@ window.__vidFlush=function(){try{if(window.__vidApi)window.__vidApi.flush();}cat
     el.style.cssText = 'position:fixed;bottom:140px;left:50%;transform:translateX(-50%);z-index:99999;padding:6px 12px;border-radius:14px;font:600 12px/1.2 sans-serif;color:#fff;background:#6b7280;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.2);max-width:90%;text-align:center;';
     document.body.appendChild(el);
   }
-  function set(t, c) { if (!/^(⏳ Video padh|✅)/.test(t)) { if (el) el.style.display = 'none'; return; } mk(); if (!el) return; el.style.display = ''; el.textContent = t; el.style.background = c; }
+  function set(t, c) { mk(); if (!el) return; el.textContent = t; el.style.background = c; }
   setInterval(function () {
     try {
       if (typeof window.__vidPA() === 'undefined' || !Array.isArray(window.__vidPA())) { set('❌ Video helper: attachments list nahi mili', '#dc2626'); return; }
