@@ -2598,7 +2598,7 @@ function stopVoice(){
   document.querySelectorAll('.voice-fab.speaking, #detailVoiceBtn.speaking, #permVoiceBtn.speaking, .msg-action-btn.speaking')
     .forEach(b => b.classList.remove('speaking'));
 }
-function speakPageBrowser(text, btnEl){
+function speakPage(text, btnEl){
   if(!isSpeechSupported()){
     showToast('Is browser mein voice support nahi hai. Chrome mein kholiye.');
     return;
@@ -2646,7 +2646,7 @@ function speakPageBrowser(text, btnEl){
   }
 }
 // Generic TTS with optional green button (message listen)
-function speakTextBrowser(text, onEnd, btnEl){
+function speakText(text, onEnd, btnEl){
   if(!isSpeechSupported() || !text){ if(onEnd) onEnd(); return; }
   const synth = window.speechSynthesis;
 
@@ -4510,41 +4510,6 @@ document.addEventListener('click',function(e){
   cur=u;document.getElementById('lcHost').textContent=u.hostname;document.getElementById('lcUrl').textContent=u.href;
   document.getElementById('lcChk').checked=false;back.classList.add('on');
 },true);
-})();
-</script>
-<script>
-(function(){
-var saathiAudio=null,saathiTok=0;
-var _sv=window.stopVoice;
-window.stopVoice=function(){saathiTok++;try{if(saathiAudio)saathiAudio.pause();}catch(_){}saathiAudio=null;return _sv?_sv.apply(this,arguments):undefined;};
-function saathiVoice(text,btnEl,onEnd,fallback,isPage){
-  try{
-    if(!text||typeof SAATHI_API_BASE==='undefined'||typeof SAATHI_KEY==='undefined'||typeof detectSpeechLang!=='function')return fallback();
-    var ss=window.speechSynthesis;
-    var playing=!!saathiAudio||(btnEl&&btnEl.classList&&btnEl.classList.contains('speaking'))||(isPage&&ss&&(ss.speaking||ss.pending));
-    if(playing){window.stopVoice();if(onEnd)onEnd();return;}
-    var lang=detectSpeechLang(text),px=String(lang).split('-')[0].toLowerCase();
-    if(px!=='hi'&&px!=='en')return fallback();
-    var my=++saathiTok;
-    try{setVoiceBtnState(btnEl,true);}catch(_){}
-    fetch(SAATHI_API_BASE+'/v1/tts',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({text:text,lang:lang})})
-    .then(function(r){if(!r.ok)throw new Error('tts');return r.blob();})
-    .then(function(b){
-      if(my!==saathiTok)return;
-      var a=new Audio(URL.createObjectURL(b));saathiAudio=a;
-      a.onended=function(){if(saathiAudio===a)saathiAudio=null;try{setVoiceBtnState(btnEl,false);}catch(_){}if(onEnd)onEnd();};
-      a.onerror=function(){if(my!==saathiTok)return;saathiAudio=null;try{setVoiceBtnState(btnEl,false);}catch(_){}fallback();};
-      var pr=a.play();
-      if(pr&&pr.catch)pr.catch(function(){if(my!==saathiTok)return;saathiAudio=null;try{setVoiceBtnState(btnEl,false);}catch(_){}fallback();});
-    })
-    .catch(function(){if(my!==saathiTok)return;try{setVoiceBtnState(btnEl,false);}catch(_){}fallback();});
-  }catch(e){fallback();}
-}
-window.speakPage=function(text,btnEl){return saathiVoice(text,btnEl,null,function(){speakPageBrowser(text,btnEl);},true);};
-window.speakText=function(text,onEnd,btnEl){
-  if(!btnEl)return speakTextBrowser(text,onEnd,btnEl);
-  return saathiVoice(text,btnEl,onEnd,function(){speakTextBrowser(text,onEnd,btnEl);},false);
-};
 })();
 </script>
 <script src="format.js?v=20"></script>
