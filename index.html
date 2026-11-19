@@ -2592,13 +2592,39 @@ function setVoiceBtnState(btnEl, on){
     btnEl.classList.toggle('speaking', !!on);
   }
 }
-function stopVoice(){
+function stopVoice(){ srvStop();
   try{ window.speechSynthesis.cancel(); }catch(_){}
   voiceUtter=null;
   document.querySelectorAll('.voice-fab.speaking, #detailVoiceBtn.speaking, #permVoiceBtn.speaking, .msg-action-btn.speaking')
     .forEach(b => b.classList.remove('speaking'));
 }
-function speakPage(text, btnEl){
+var srvAudio=null,srvTok=0;
+function srvStop(){srvTok=(srvTok||0)+1;try{if(srvAudio)srvAudio.pause();}catch(_){}srvAudio=null;}
+function srvTry(text,btnEl,onEnd,fb){
+  try{
+    if(!text||typeof SAATHI_API_BASE==='undefined'||typeof SAATHI_KEY==='undefined'||typeof detectSpeechLang!=='function')return false;
+    if(btnEl&&btnEl.classList&&btnEl.classList.contains('speaking')){stopVoice();if(onEnd)onEnd();return true;}
+    const lang=detectSpeechLang(text),px=String(lang).split('-')[0].toLowerCase();
+    if(px!=='hi'&&px!=='en')return false;
+    stopVoice();
+    const my=++srvTok;
+    setVoiceBtnState(btnEl,true);
+    fetch(SAATHI_API_BASE+'/v1/tts',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({text:text,lang:lang})})
+    .then(function(r){if(!r.ok)throw new Error('tts');return r.blob();})
+    .then(function(b){
+      if(my!==srvTok)return;
+      const a=new Audio(URL.createObjectURL(b));srvAudio=a;
+      a.onended=function(){if(srvAudio===a)srvAudio=null;setVoiceBtnState(btnEl,false);if(onEnd)onEnd();};
+      a.onerror=function(){if(my!==srvTok)return;srvAudio=null;setVoiceBtnState(btnEl,false);fb();};
+      const pr=a.play();
+      if(pr&&pr.catch)pr.catch(function(){if(my!==srvTok)return;srvAudio=null;setVoiceBtnState(btnEl,false);fb();});
+    })
+    .catch(function(){if(my!==srvTok)return;setVoiceBtnState(btnEl,false);fb();});
+    return true;
+  }catch(e){return false;}
+}
+function speakPage(text, btnEl, __ns){
+  if(!__ns&&srvTry(text,btnEl,null,function(){speakPage(text,btnEl,true);}))return;
   if(!isSpeechSupported()){
     showToast('Is browser mein voice support nahi hai. Chrome mein kholiye.');
     return;
@@ -2646,7 +2672,8 @@ function speakPage(text, btnEl){
   }
 }
 // Generic TTS with optional green button (message listen)
-function speakText(text, onEnd, btnEl){
+function speakText(text, onEnd, btnEl, __ns){
+  if(!__ns&&srvTry(text,btnEl,onEnd,function(){speakText(text,onEnd,btnEl,true);}))return;
   if(!isSpeechSupported() || !text){ if(onEnd) onEnd(); return; }
   const synth = window.speechSynthesis;
 
