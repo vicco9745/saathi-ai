@@ -2602,14 +2602,14 @@ var srvAudio=null,srvTok=0;
 function srvStop(){srvTok=(srvTok||0)+1;try{if(srvAudio)srvAudio.pause();}catch(_){}srvAudio=null;}
 function srvTry(text,btnEl,onEnd,fb){
   try{
-    if(!text||typeof SAATHI_API_BASE==='undefined'||typeof SAATHI_KEY==='undefined'||typeof detectSpeechLang!=='function')return false;
+    if(!text||typeof SAATHI_API_BASE==='undefined'||!localStorage.getItem('saathi_api_key')||typeof detectSpeechLang!=='function')return false;
     if(btnEl&&btnEl.classList&&btnEl.classList.contains('speaking')){stopVoice();if(onEnd)onEnd();return true;}
     const lang=detectSpeechLang(text),px=String(lang).split('-')[0].toLowerCase();
     if(px!=='hi'&&px!=='en')return false;
     stopVoice();
     const my=++srvTok;
     setVoiceBtnState(btnEl,true);
-    fetch(SAATHI_API_BASE+'/v1/tts',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({text:text,lang:lang})})
+    fetch(SAATHI_API_BASE+'/v1/tts',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':localStorage.getItem('saathi_api_key')},body:JSON.stringify({text:text,lang:lang})})
     .then(function(r){if(!r.ok)throw new Error('tts');return r.blob();})
     .then(function(b){
       if(my!==srvTok)return;

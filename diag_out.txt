@@ -1,0 +1,69 @@
+
+=== 1. FILES AUR GIT ===
+[OK]   saathi_video.js maujood -> 5736 chars
+[OK]   saathi_video.js syntax sahi
+[OK]   saathi_video.js git mein hai
+[OK]   98_video.py git mein hai
+[OK]   koi unpushed commit nahi
+[INFO] git status: ?? Dockerfile
+?? diag_out.txt
+?? diag_video.py
+?? main
+
+=== 2. INDEX.HTML (local) ===
+[OK]   video script tag ek baar hai -> saathi_video.js count=1
+[OK]   module script nahi hai
+[OK]   pendingAttachments define hai
+[OK]   renderPendingAttachments define hai
+[OK]   updateActionButton define hai
+[OK]   showToast define hai
+[OK]   formatSize define hai
+pendingAttachments ka declaration:
+   2779: const pendingAttachmentsWrap=document.getElementById('pendingAttachmentsWrap');
+   3553: let pendingAttachments=[];
+Video attachment kahan banta hai:
+   3843: if(videoMatch){const videoPrompt=videoMatch[1].trim();pendingReply.mediaType='video';pendingReply.generating=true;saveChats();renderMessages();fetch(SAATHI_API_BASE+'/v1/video',{method:'POST',headers:{'Content-Type':'app
+origin kahan set hota hai:
+   231: .art-thumb iframe{position:absolute;top:0;left:0;width:390px;height:350px;border:0;transform:scale(.277);transform-origin:0 0;pointer-events:none;background:#fff}
+   366: .proc-t{transform-origin:left center;position:absolute;left:0;right:0;top:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+   708: .call-waves .wave{position:absolute;bottom:-40%;left:-50%;width:200%;height:180%;border-radius:45%;background:rgba(135,206,250,0.4);animation:waveMove 4s infinite linear;transform-origin:50% 100%}
+   3061: if(d.kind==='website'&&d.html){m.typing=false;m.processing=null;m.attachments=[{kind:'file',name:d.filename||'index.html',content:d.html,origin:'ai'}];m.text=buildGenReply('website',{caption:d.caption,html:d.html,prompt:
+   3062: if(d.kind==='pdf'&&d.pdf_base64){m.processing=null;m.attachments=[{kind:'file',name:d.filename||'generated.pdf',dataUrl:'data:application/pdf;base64,'+d.pdf_base64,origin:'ai'}];m.text=buildGenReply('pdf',{caption:d.capt
+Photo (frames) wali lines:
+   2093: function openUploadedFiles(){const chat=getCurrentChat();const body=document.getElementById('uploadedFilesBody');body.innerHTML='';if(!chat){body.innerHTML='<div class="uploaded-empty">Koi chat open nahi hai</div>';openS
+   2094: function buildUFSection(title,items){const wrap=document.createElement('div');const t=document.createElement('div');t.className='uploaded-section-title';t.textContent=title;wrap.appendChild(t);const grid=document.createE
+   2576: function openDownloadSheet(src, kind, name){downloadSheetBody.innerHTML='';const title=document.createElement('div');title.className='download-options-title';title.textContent='Choose a format to download:';downloadSheet
+   2954: if(att.kind==='photo'){const tile=document.createElement('div');tile.className='attachment-tile';const img=document.createElement('img');img.src=att.dataUrl;img.alt=att.name;img.style.cursor='pointer';img.addEventListene
+   2973: if(att.kind==='photo'){tile.classList.add('loading');const img=document.createElement('img');img.alt=att.name||'AI image';tile.appendChild(img);
+   2983: tile.addEventListener('click',()=>{openDownloadSheet(att.dataUrl, att.kind==='photo'?'photo':'video', att.name||'saathi-media');});return tile;}
+'video-frame' ka koi filter:
+   (kuch nahi mila)
+Video mil gaya wala rasta:
+   3820: if(mediaAttachments.length>0&&analyzableFiles.length===0&&!mediaAttachments.some(a=>a.kind==='photo')){
+
+=== 3. SERVER (app/main.py) ===
+[OK]   _call_vision_v2 hai
+[OK]   vision 5 frame leta hai
+[OK]   /v1/chat route hai
+main.py mein 'images' wali lines:
+   def _call_openrouter_vision(prompt: str, images: list) -> str:
+   for img in images[:3]:
+   "Questions about websites, images or PDFs, or anything else, are NONE. "
+   images = [a for a in (body.attachments or []) if a.kind == "photo" and a.dataUrl]
+   if images:
+   raw = _call_vision_v2(body.message, images)
+   def _call_vision_v2(prompt: str, images: list) -> str:
+   is_video = any("video-frame" in (getattr(img, 'name', '') or '') for img in images)
+
+=== 4. LIVE SITE AUR SERVER ===
+[OK]   live index.html mein tag hai
+[OK]   live saathi_video.js 200 deti hai -> 200 6270 bytes, local=6270 bytes
+[INFO] server URL: ['https://saathi-ai-y48j.onrender.com']
+[OK]   server jawab deta hai https://saathi-ai-y48j.onrender.com -> 200 21.888222s
+
+=== 5. WORKFLOW ===
+[INFO] site_patches: 10_photo.py 20_expose.py 30_regen.py 40_copyfix.py 50_md.py 60_usercode.py 70_imgnat.py 80_imgwait.py 90_imgsize.py 95_sitenat.py 96_sitetext.py 97_sitedesc.py 98_copyhtml.py 98_video.py 99_chatartifact.py 99_pdfnat.py 99_pdftext.py
+[OK]   apply_all.py hai
+[OK]   workflow apply_all chalata hai
+
+=== KUL FAIL: 0 ===
