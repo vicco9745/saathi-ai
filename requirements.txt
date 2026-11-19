@@ -5,3 +5,4 @@ pydantic
 requests
 playwright==1.49.0
 fpdf2
+edge-tts

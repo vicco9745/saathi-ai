@@ -571,6 +571,42 @@ def video(body: GenericRequest, key=Depends(require_api_key)):
     record_usage(key, "video")
     raise HTTPException(501, "Video model/provider अभी connect नहीं है")
 
+# ---- Saathi TTS: awaaz dene wala hissa (baad mein ElevenLabs lagana ho to sirf _tts_provider badlo) ----
+class TTSRequest(BaseModel):
+    text: str
+    lang: Optional[str] = "hi-IN"
+
+_TTS_VOICES = {"hi": "hi-IN-SwaraNeural", "en": "en-IN-NeerjaNeural"}
+
+async def _tts_provider(text, lang):
+    import edge_tts
+    voice = _TTS_VOICES.get((lang or "hi").split("-")[0].lower())
+    if not voice:
+        raise ValueError("is bhasha ki awaaz nahi")
+    out = b""
+    async for ch in edge_tts.Communicate(text, voice).stream():
+        if ch.get("type") == "audio":
+            out += ch["data"]
+    if not out:
+        raise ValueError("awaaz khali aayi")
+    return out
+
+@app.post("/v1/tts")
+async def tts(body: TTSRequest, key=Depends(require_api_key)):
+    import re
+    from fastapi.responses import Response as _Resp
+    record_usage(key, "voice")
+    t = re.sub(r"[*#`_>~|]+", " ", body.text or "")
+    t = re.sub(r"https?://\S+", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()[:2500]
+    if not t:
+        raise HTTPException(400, "text khali hai")
+    try:
+        audio = await _tts_provider(t, body.lang)
+    except Exception as e:
+        raise HTTPException(502, "tts fail: " + type(e).__name__)
+    return _Resp(content=audio, media_type="audio/mpeg")
+
 @app.post("/v1/voice")
 def voice(body: GenericRequest, key=Depends(require_api_key)):
     record_usage(key, "voice")
