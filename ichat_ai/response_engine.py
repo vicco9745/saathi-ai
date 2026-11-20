@@ -297,6 +297,13 @@ def _is_news_request(msg_lower):
     return any(kw in msg_lower for kw in news_keywords)
 
 
+_STORY_KEYS = ("kahani", "kahaani", "कहानी", "story", "jivani", "jeevani", "जीवनी", "biography", "itihas", "इतिहास", "history of", "life of", "ke bare", "ke baare", "के बारे", "kaun the", "kaun tha", "kaun thi", "कौन थे", "कौन था", "कौन थी")
+_STORY_FICTION = ("nai kahani", "nayi kahani", "naya kahani", "नई कहानी", "नयी कहानी", "काल्पनिक", "kalpnik", "fictional", "imagine", "make up", "ek kahani banao", "ek kahani bana", "एक कहानी बना", "ek kahani likho", "एक कहानी लिख", "write a story", "create a story", "bachchon ki kahani", "bacchon ki kahani", "बच्चों की कहानी")
+
+def _story_real(q):
+    s = (q or "").lower()
+    return any(k in s for k in _STORY_KEYS) and not any(k in s for k in _STORY_FICTION)
+
 def get_response(user_text, history=None, lang_pref=None):
     from ichat_ai.memory.memory import remember, recall
 
@@ -494,7 +501,7 @@ def get_response(user_text, history=None, lang_pref=None):
             _q = original_text.lower()
             _FRESH = ("aaj", "abhi", "taaza", "latest", "current", "today", "right now", "price", "rate", "score", "weather", "mausam", "news", "khabar", "result", "who is", "kaun hai", "kaun hain", "kitna", "kitne", "live", "2025", "2026", "khojo", "dhundho", "dhoondo", "find me", "search for", "scam", "fraud", "afwah", "rumour", "paise kamane", "earn money", "ke bare mein", "ढूँढो", "ढूंढो", "खोजो", "अफवाह", "अफ़वाह", "स्कैम", "ठगी", "पैसे कमाने", "के बारे में", "आज", "अभी", "ताज़ा", "ताजा", "मौसम", "दाम", "भाव", "स्कोर", "खबर", "कौन है", "कौन हैं", "कितना", "कितने", "नतीजा", "रिज़ल्ट", "mamla", "kya hua", "dhokha", "viral", "instagram", "मामला", "क्या हुआ", "धोखा", "वायरल", "इंस्टाग्राम")
             _CHK = ("legit", "genuine", "safe", "trusted", "trustworthy", "review", "rating", "complaint", "real or fake", "fake or real", "sahi hai", "bharosa", "bharosemand", "kharab", "worth", "use karne", ".com", ".in", "http", "भरोसा", "भरोसेमंद", "सही है", "सुरक्षित", "रेटिंग", "शिकायत", "असली", "नकली")
-            if any(k in _q for k in _FRESH) or any(k in _q for k in _CHK):
+            if any(k in _q for k in _FRESH) or any(k in _q for k in _CHK) or _story_real(_q):
                 from ichat_ai.web_search import search_web
                 _res = search_web(original_text, limit=5)
                 if any(k in _q for k in _CHK):
@@ -532,11 +539,15 @@ def get_response(user_text, history=None, lang_pref=None):
                     print(f"[web-first] extra sources failed: {type(_e2).__name__}: {_e2}")
                 if _lines:
                     _ai_input = ("Question: " + original_text + "\n\nLatest web search results (use these only as facts to learn from and never copy their wording; they are newer than your training data). If the question is about a story, incident or case, explain it fully and in order: what happened, who was involved, what the trick or fraud was, and where it stands now. Say clearly which parts the results confirm and which are unverified or only rumour. Do not invent details:\n\n" + "\n\n".join(_lines))
+                    if _story_real(_q):
+                        _ai_input += "\n\nIMPORTANT: The user wants the REAL story or biography (not a made-up one). Tell it as a flowing narrative in the user's own language, using ONLY facts that appear in the search results above. Do not add any detail, date, number, quote or event that is not in the results. If something is not in the results, leave it out. Do not invent anything."
                     print(f"[web-first] {len(_lines)} results ai ko diye")
         except Exception as _e:
             print(f"[web-first] failed: {type(_e).__name__}: {_e}")
             _ai_input = original_text
             _web_src = []
+        if _story_real(original_text.lower()) and _ai_input == original_text:
+            _ai_input = "Question: " + original_text + "\n\nNo reliable web results were found for this. Do NOT invent a story, facts or dates. Tell the user honestly, in their own language, that you could not find reliable information about this, and offer to try again with a clearer name, or to write a clearly fictional story only if they ask for one."
         ai_answer = ai_provider_answer(_ai_input, history=history, lang_pref=lang_pref)
         if ai_answer and _ai_input != original_text:
             try:
