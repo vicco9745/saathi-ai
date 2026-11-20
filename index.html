@@ -4071,7 +4071,7 @@ function __dtStart(){
     var mt=__dtMime();__dtChunks=[];
     __dtRec=mt?new MediaRecorder(st,{mimeType:mt}):new MediaRecorder(st);
     __dtRec.ondataavailable=function(e){if(e.data&&e.data.size)__dtChunks.push(e.data);};
-    __dtRec.start(250);
+    __dtRec.start(250);showToast('Recording chal rahi hai');
   }).catch(function(){
     window.__dtMic=false;isDictating=false;updateDictateButton();updateActionButton();
     showToast('Mic ki ijazat nahi mili. Browser mein Allow karein');
@@ -4083,7 +4083,7 @@ function __dtFinish(sendAfter){
   var done=function(){
     isDictating=false;updateDictateButton();updateActionButton();
     var blob=new Blob(__dtChunks,{type:mime});__dtChunks=[];__dtRelease();
-    if(blob.size<1500)return;
+    if(blob.size<1500){showToast('Recording khali hai: '+blob.size+' bytes');return;}
     showToast('Likh raha hoon...');
     __dtSend(blob,mime,sendAfter);
   };
@@ -4105,7 +4105,7 @@ function __dtSend(blob,mime,sendAfter){
       if(sendAfter&&msgInput.value.trim().length>0)sendMessage();
     }).catch(function(e){
       if(e&&(e.status===404||e.status===405||e.status===503))window.__dtMic=false;
-      showToast('Awaaz likhne mein dikkat aayi, dobara koshish karein');
+      showToast('Awaaz likhne mein dikkat: '+((e&&(e.status||e.message))||'?'));
     });
   };
   rd.readAsDataURL(blob);
