@@ -633,6 +633,70 @@ def stt(body: STTRequest, key=Depends(require_api_key)):
             print("STT error", model, repr(e)[:150])
     raise HTTPException(502, "stt fail")
 
+class PreviewRequest(BaseModel):
+    url: str
+
+_PREV_CACHE = {}
+
+def _host_ok(host):
+    import socket, ipaddress
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except Exception:
+        return False
+    for inf in infos:
+        try:
+            ip = ipaddress.ip_address(inf[4][0])
+        except Exception:
+            return False
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            return False
+    return True
+
+@app.post("/v1/preview")
+def preview(body: PreviewRequest, key=Depends(require_api_key)):
+    import re, requests
+    from urllib.parse import urlparse, urljoin
+    url = (body.url or "").strip()
+    if url in _PREV_CACHE:
+        return {"image": _PREV_CACHE[url]}
+    img = ""
+    try:
+        cur = url
+        for _ in range(4):
+            pu = urlparse(cur)
+            if pu.scheme not in ("http", "https") or not pu.hostname or not _host_ok(pu.hostname):
+                raise ValueError("blocked")
+            r = requests.get(cur, headers={"User-Agent": "Mozilla/5.0 (compatible; SaathiBot/1.0)", "Accept": "text/html"}, timeout=4, stream=True, allow_redirects=False)
+            if r.status_code in (301, 302, 303, 307, 308) and r.headers.get("Location"):
+                cur = urljoin(cur, r.headers["Location"])
+                r.close()
+                continue
+            if r.status_code != 200 or "html" not in (r.headers.get("Content-Type") or "").lower():
+                r.close()
+                break
+            raw = b""
+            for chunk in r.iter_content(8192):
+                raw += chunk
+                if len(raw) > 250000:
+                    break
+            r.close()
+            html = raw.decode("utf-8", "ignore")
+            m = (re.search(r'<meta[^>]+(?:property|name)=["\'](?:og:image|twitter:image)["\'][^>]*content=["\']([^"\']+)["\']', html, re.I)
+                 or re.search(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]*(?:property|name)=["\'](?:og:image|twitter:image)["\']', html, re.I))
+            if m:
+                img = urljoin(cur, m.group(1).replace("&amp;", "&"))
+                if not img.lower().startswith(("http://", "https://")):
+                    img = ""
+            break
+    except Exception as e:
+        print("PREVIEW error", repr(e)[:120])
+    if img:
+        if len(_PREV_CACHE) > 500:
+            _PREV_CACHE.clear()
+        _PREV_CACHE[url] = img
+    return {"image": img}
+
 @app.post("/v1/tts")
 async def tts(body: TTSRequest, key=Depends(require_api_key)):
     import re
