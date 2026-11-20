@@ -3855,11 +3855,11 @@ const MIC_ON_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const MIC_OFF_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="2" x2="22" y2="22"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/></svg>';
 function renderCallMicIcon(){callDictateIcon.innerHTML=callMuted?MIC_OFF_SVG:MIC_ON_SVG;callDictateBtn.classList.remove('has-text');callDictateBtn.classList.toggle('muted',callMuted);callDictateBtn.title=callMuted?'Mic chalu karein':'Mic band karein (mute)';}
 let callMuted=false;
-function listenOnce(){if(!callActive||callMuted||callBusy)return;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showToast('Is browser mein mic se baat support nahi hai. Chrome mein kholiye.');return;}try{recognition=new SR();recognition.lang=(function(){try{return localStorage.getItem('saathi_voice_lang')||'hi-IN';}catch(_){return 'hi-IN';}})();recognition.interimResults=true;recognition.continuous=true;recognition.maxAlternatives=1;recognition.onresult=(e)=>{let liveFinal='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal){liveFinal+=r[0].transcript;}}if(liveFinal.trim()){addLiveUserText(liveFinal.trim());__cvAsk(liveFinal.trim());}};recognition.onerror=(ev)=>{if(ev&&(ev.error==='not-allowed'||ev.error==='service-not-allowed'))showToast('Mic ki permission nahi mili');};recognition.onend=()=>{if(callActive&&!callMuted&&!callBusy){try{recognition.start();}catch(_){}}};try{recognition.start();}catch(_){}}catch(_){}}
+function listenOnce(){if(!callActive||callMuted||callBusy)return;if(window.__cvMic!==false){__cvMicOpen();return;}const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showToast('Is browser mein mic se baat support nahi hai. Chrome mein kholiye.');return;}try{recognition=new SR();recognition.lang=(function(){try{return localStorage.getItem('saathi_voice_lang')||'hi-IN';}catch(_){return 'hi-IN';}})();recognition.interimResults=true;recognition.continuous=true;recognition.maxAlternatives=1;recognition.onresult=(e)=>{let liveFinal='';for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal){liveFinal+=r[0].transcript;}}if(liveFinal.trim()){addLiveUserText(liveFinal.trim());__cvAsk(liveFinal.trim());}};recognition.onerror=(ev)=>{if(ev&&(ev.error==='not-allowed'||ev.error==='service-not-allowed'))showToast('Mic ki permission nahi mili');};recognition.onend=()=>{if(callActive&&!callMuted&&!callBusy){try{recognition.start();}catch(_){}}};try{recognition.start();}catch(_){}}catch(_){}}
 function addLiveUserText(text){let chat=getCurrentChat();if(!chat){chat={id:genId(),title:text.length>28?text.slice(0,28)+'…':text,messages:[]};chats.unshift(chat);currentChatId=chat.id;}if(chat.messages.length===0){chat.title=text.length>28?text.slice(0,28)+'…':text;}const _last=chat.messages[chat.messages.length-1];if(_last&&_last.role==='user'&&_last.liveVoice){_last.text=(_last.text+' '+text).trim();}else{chat.messages.push({role:'user',ts:Date.now(),text:text,liveVoice:true});}saveChats();renderChatList();renderMessages();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}
 /*callvoice*/var callBusy=false,__cvPend='',__cvT=null,__cvAudio=null,__cvTok=0;
 function __cvClean(t){return String(t||'').replace(/```[\s\S]*?```/g,' ').replace(/`([^`]*)`/g,'$1').replace(/!?\[([^\]]*)\]\([^)]*\)/g,'$1').replace(/https?:\/\/\S+/g,' ').replace(/[*#_>~|]+/g,' ').replace(/\s+/g,' ').trim();}
-function __cvSplit(t){var out=[],s=t;while(s.length>0&&out.length<4){if(s.length<=260){out.push(s);break;}var cut=-1,m,re=/[\u0964.!?]\s/g,head=s.slice(0,260);while((m=re.exec(head))!==null)cut=m.index+1;if(cut<80)cut=s.lastIndexOf(' ',260);if(cut<1)cut=260;out.push(s.slice(0,cut).trim());s=s.slice(cut).trim();}return out;}
+function __cvSplit(t){var out=[],s=t;while(s.length>0&&out.length<12){if(s.length<=260){out.push(s);break;}var cut=-1,m,re=/[\u0964.!?]\s/g,head=s.slice(0,260);while((m=re.exec(head))!==null)cut=m.index+1;if(cut<80)cut=s.lastIndexOf(' ',260);if(cut<1)cut=260;out.push(s.slice(0,cut).trim());s=s.slice(cut).trim();}return out;}
 function __cvStop(){__cvTok++;try{if(__cvAudio)__cvAudio.pause();}catch(_){}__cvAudio=null;window.__saathiAudio=null;window.__saathiSpeaking=false;}
 function __cvDone(tok){if(tok!==__cvTok)return;window.__saathiSpeaking=false;__cvAudio=null;window.__saathiAudio=null;callBusy=false;if(callActive&&!callMuted)setTimeout(listenOnce,300);}
 function __cvSpeak(text){
@@ -3909,8 +3909,92 @@ function __cvSend(){
     callBusy=false;if(callActive&&!callMuted)setTimeout(listenOnce,300);
   });
 }
+/*callstt*/var __cvStream=null,__cvCtx=null,__cvAn=null,__cvBuf=null,__cvTimer=null,__cvRec=null,__cvChunks=[],__cvFloor=0.008,__cvSpeech=0,__cvSil=0,__cvVoiced=0,__cvRecT=0,__cvOpening=false;
+function __cvMime(){var L=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];for(var i=0;i<L.length;i++){try{if(window.MediaRecorder&&MediaRecorder.isTypeSupported(L[i]))return L[i];}catch(_){}}return '';}
+function __cvMicOpen(){
+  if(__cvStream&&__cvTimer)return;
+  if(__cvOpening)return;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder||!(window.AudioContext||window.webkitAudioContext)){window.__cvMic=false;listenOnce();return;}
+  __cvOpening=true;
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(function(st){
+    __cvOpening=false;
+    if(!callActive){st.getTracks().forEach(function(t){t.stop();});return;}
+    __cvStream=st;
+    var AC=window.AudioContext||window.webkitAudioContext;__cvCtx=new AC();
+    var src=__cvCtx.createMediaStreamSource(st);__cvAn=__cvCtx.createAnalyser();__cvAn.fftSize=1024;src.connect(__cvAn);
+    __cvBuf=new Uint8Array(__cvAn.fftSize);
+    if(__cvCtx.state==='suspended'){try{__cvCtx.resume();}catch(_){}}
+    __cvTimer=setInterval(__cvTick,60);
+  }).catch(function(){
+    __cvOpening=false;window.__cvMic=false;showToast('Mic ki permission nahi mili');if(callActive)listenOnce();
+  });
+}
+function __cvMicClose(){
+  clearInterval(__cvTimer);__cvTimer=null;__cvRecDrop();
+  try{if(__cvStream)__cvStream.getTracks().forEach(function(t){t.stop();});}catch(_){}
+  __cvStream=null;try{if(__cvCtx)__cvCtx.close();}catch(_){}__cvCtx=null;__cvAn=null;
+}
+function __cvRecStart(){
+  try{
+    var mt=__cvMime();__cvChunks=[];
+    __cvRec=mt?new MediaRecorder(__cvStream,{mimeType:mt}):new MediaRecorder(__cvStream);
+    __cvRec.ondataavailable=function(e){if(e.data&&e.data.size)__cvChunks.push(e.data);};
+    __cvRec.start(250);
+    __cvSpeech=0;__cvSil=0;__cvVoiced=0;__cvRecT=Date.now();
+  }catch(_){__cvRec=null;}
+}
+function __cvRecDrop(){
+  var r=__cvRec;__cvRec=null;
+  if(r){r.ondataavailable=null;r.onstop=null;try{if(r.state!=='inactive')r.stop();}catch(_){}}
+  __cvChunks=[];__cvSpeech=0;__cvSil=0;__cvVoiced=0;
+}
+function __cvRecSend(){
+  var r=__cvRec;if(!r)return;__cvRec=null;
+  var mime=r.mimeType||'audio/webm';
+  r.onstop=function(){
+    var blob=new Blob(__cvChunks,{type:mime});__cvChunks=[];
+    __cvSpeech=0;__cvSil=0;__cvVoiced=0;
+    __cvTranscribe(blob,mime);
+  };
+  callBusy=true;
+  try{r.stop();}catch(_){callBusy=false;}
+}
+function __cvTranscribe(blob,mime){
+  var KEY=localStorage.getItem('saathi_api_key');
+  var rd=new FileReader();
+  rd.onload=function(){
+    var b64=String(rd.result).split(',')[1]||'';
+    fetch(SAATHI_API_BASE+'/v1/stt',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':KEY},body:JSON.stringify({audio:b64,mime:mime,lang:'hi'})})
+    .then(function(r){if(!r.ok){var e=new Error('stt '+r.status);e.status=r.status;throw e;}return r.json();})
+    .then(function(d){
+      var t=String((d&&d.text)||'').trim();
+      if(!callActive){callBusy=false;return;}
+      if(t.length<2||/^(thank you|thanks for watching|you)\W*$/i.test(t)){callBusy=false;return;}
+      addLiveUserText(t);__cvPend=t;clearTimeout(__cvT);__cvSend();
+    }).catch(function(e){
+      callBusy=false;
+      if(e&&(e.status===404||e.status===405||e.status===503)){window.__cvMic=false;__cvMicClose();showToast('Naya mic server abhi ready nahi hai, purana mic chal raha hai');if(callActive)listenOnce();}
+      else showToast('Awaaz samajh nahi aayi, dobara boliye');
+    });
+  };
+  rd.readAsDataURL(blob);
+}
+function __cvTick(){
+  if(!callActive){__cvMicClose();return;}
+  if(callMuted||callBusy||window.__cvMic===false){if(__cvRec)__cvRecDrop();return;}
+  if(!__cvStream||!__cvAn)return;
+  if(!__cvRec){__cvRecStart();if(!__cvRec)return;}
+  __cvAn.getByteTimeDomainData(__cvBuf);
+  var sum=0;for(var i=0;i<__cvBuf.length;i++){var v=(__cvBuf[i]-128)/128;sum+=v*v;}
+  var rms=Math.sqrt(sum/__cvBuf.length),th=Math.max(0.02,__cvFloor*3);
+  if(rms>th){__cvVoiced+=60;__cvSil=0;if(__cvVoiced>=200)__cvSpeech=1;}
+  else{__cvSil+=60;if(!__cvSpeech){__cvFloor=__cvFloor*0.95+rms*0.05;__cvVoiced=0;}}
+  var now=Date.now();
+  if(__cvSpeech&&(__cvSil>=1700||now-__cvRecT>60000)){__cvRecSend();return;}
+  if(!__cvSpeech&&now-__cvRecT>15000)__cvRecDrop();
+}
 function startCall(){callActive=true;callMuted=false;renderCallMicIcon();callChunks=[];callOverlay.classList.add('open');callOverlay.classList.remove('chat-open');updateCallActionButton();listenOnce();}
-function stopCall(){callActive=false;callMuted=false;__cvStop();clearTimeout(__cvT);__cvPend='';callBusy=false;renderCallMicIcon();if(recognition){try{recognition.abort();}catch(_){}recognition=null;}if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeechKeepAlive();callOverlay.classList.remove('open');callOverlay.classList.remove('chat-open');callChunks=[];}
+function stopCall(){callActive=false;callMuted=false;__cvMicClose();__cvStop();clearTimeout(__cvT);__cvPend='';callBusy=false;renderCallMicIcon();if(recognition){try{recognition.abort();}catch(_){}recognition=null;}if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeechKeepAlive();callOverlay.classList.remove('open');callOverlay.classList.remove('chat-open');callChunks=[];}
 callAttachBtn.addEventListener('click',(e)=>{e.stopPropagation();callAttachMenu.classList.remove('open');attachBtn.click();});
 document.addEventListener('click',(e)=>{if(!callAttachMenu.contains(e.target)&&e.target!==callAttachBtn)callAttachMenu.classList.remove('open');});
 document.getElementById('callAttachFileOption').addEventListener('click',()=>{callAttachMenu.classList.remove('open');callFileInput.click();});

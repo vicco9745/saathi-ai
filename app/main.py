@@ -591,6 +591,48 @@ async def _tts_provider(text, lang):
         raise ValueError("awaaz khali aayi")
     return out
 
+class STTRequest(BaseModel):
+    audio: str
+    mime: str = "audio/webm"
+    lang: str = "hi"
+
+@app.post("/v1/stt")
+def stt(body: STTRequest, key=Depends(require_api_key)):
+    import base64, requests
+    gkey = os.environ.get("GROQ_API_KEY")
+    if not gkey:
+        raise HTTPException(503, "stt provider not configured")
+    try:
+        raw = base64.b64decode(body.audio)
+    except Exception:
+        raise HTTPException(400, "bad audio")
+    if len(raw) < 800 or len(raw) > 24 * 1024 * 1024:
+        return {"text": ""}
+    record_usage(key, "voice")
+    mime = (body.mime or "audio/webm").split(";")[0]
+    ext = "mp4" if "mp4" in mime else ("ogg" if "ogg" in mime else "webm")
+    data = {"response_format": "json", "temperature": "0"}
+    lg = (body.lang or "").split("-")[0].lower()
+    if lg in ("hi", "en"):
+        data["language"] = lg
+    for model in ("whisper-large-v3-turbo", "whisper-large-v3"):
+        try:
+            d = dict(data)
+            d["model"] = model
+            r = requests.post(
+                "https://api.groq.com/openai/v1/audio/transcriptions",
+                headers={"Authorization": "Bearer " + gkey},
+                files={"file": ("a." + ext, raw, mime)},
+                data=d,
+                timeout=40,
+            )
+            if r.status_code == 200:
+                return {"text": (r.json().get("text") or "").strip()[:3000]}
+            print("STT", model, r.status_code, r.text[:150])
+        except Exception as e:
+            print("STT error", model, repr(e)[:150])
+    raise HTTPException(502, "stt fail")
+
 @app.post("/v1/tts")
 async def tts(body: TTSRequest, key=Depends(require_api_key)):
     import re
