@@ -4754,5 +4754,6 @@ document.addEventListener('click',function(e){
 #callOverlay:not(.chat-open) .call-waves-wrap{margin-top:25px}
 .call-composer-wrap .composer:focus-within{border-color:transparent!important;box-shadow:none!important}
 </style>
+<script id="vidrow">(function(){var sh=document.getElementById('vsSheet'),vid=document.getElementById('cv2Vid');if(!sh||!vid||document.getElementById('vsVidRow'))return;var b=document.createElement('button');b.type='button';b.className='vs-row';b.id='vsVidRow';b.innerHTML='<svg class="vs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><span class="vs-rt"><span class="vs-rm">Video call</span></span>';b.addEventListener('click',function(){var o=document.getElementById('vsOverlay');if(o)o.click();setTimeout(function(){vid.click();},250);});sh.appendChild(b);})();</script>
 </body>
 </html>
