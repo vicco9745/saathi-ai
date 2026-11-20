@@ -304,6 +304,18 @@ def _story_real(q):
     s = (q or "").lower()
     return any(k in s for k in _STORY_KEYS) and not any(k in s for k in _STORY_FICTION)
 
+_STORY_STOP = ("kahani", "kahaani", "कहानी", "suna", "sunao", "sunaao", "सुनाओ", "सुना", "सुनाइए", "दो", "do", "batao", "bataiye", "बताओ", "बताइए", "बता", "poori", "puri", "पूरी", "pura", "पूरा", "jivani", "jeevani", "जीवनी", "ki", "ka", "ke", "की", "का", "के", "ek", "एक", "mujhe", "मुझे", "please", "story", "tell", "me", "about", "the", "bare", "baare", "mein", "में", "बारे", "kaun", "tha", "thi", "थे", "था", "थी")
+
+def _story_query(text):
+    import re as _re
+    t = _re.sub(r"[\u0964\u0965]", " ", text or "")
+    t = _re.sub(r"[^\w\s\u0900-\u097F]", " ", t)
+    words = [w for w in t.split() if w.lower() not in _STORY_STOP]
+    subj = " ".join(words).strip()
+    if not subj:
+        return text
+    return subj + " biography history life story"
+
 def get_response(user_text, history=None, lang_pref=None):
     from ichat_ai.memory.memory import remember, recall
 
@@ -503,7 +515,7 @@ def get_response(user_text, history=None, lang_pref=None):
             _CHK = ("legit", "genuine", "safe", "trusted", "trustworthy", "review", "rating", "complaint", "real or fake", "fake or real", "sahi hai", "bharosa", "bharosemand", "kharab", "worth", "use karne", ".com", ".in", "http", "भरोसा", "भरोसेमंद", "सही है", "सुरक्षित", "रेटिंग", "शिकायत", "असली", "नकली")
             if any(k in _q for k in _FRESH) or any(k in _q for k in _CHK) or _story_real(_q):
                 from ichat_ai.web_search import search_web
-                _res = search_web(original_text, limit=5)
+                _res = search_web((_story_query(original_text) if _story_real(_q) else original_text), limit=5)
                 if any(k in _q for k in _CHK):
                     try:
                         _res = (_res or []) + (search_web(original_text + " reviews complaints scam fraud", limit=5) or [])
