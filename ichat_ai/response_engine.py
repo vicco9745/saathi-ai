@@ -587,7 +587,7 @@ def get_response(user_text, history=None, lang_pref=None):
         if _story_real(original_text.lower()) and _ai_input == original_text:
             _ai_input = "Question: " + original_text + "\n\nNo reliable web results were found for this. Do NOT invent a story, facts or dates. Tell the user honestly, in their own language, that you could not find reliable information about this, and offer to try again with a clearer name, or to write a clearly fictional story only if they ask for one."
         ai_answer = ai_provider_answer(_ai_input, history=history, lang_pref=lang_pref)
-        if ai_answer and _ai_input != original_text:
+        if ai_answer and _ai_input != original_text and not _story_real(original_text.lower()):
             try:
                 from ichat_ai.checker.checker import check_reply
                 ai_answer = check_reply(original_text, ai_answer, _ai_input, history=history, lang_pref=lang_pref)
