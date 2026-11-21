@@ -4061,7 +4061,7 @@ function __cvFocus(i,text){
   }catch(_){}
 }
 function startCall(){callActive=true;callMuted=false;renderCallMicIcon();callChunks=[];callOverlay.classList.add('open');callOverlay.classList.remove('chat-open');updateCallActionButton();listenOnce();}
-function stopCall(){callActive=false;callMuted=false;__cvHideSrc();__cvMicClose();__cvStop();clearTimeout(__cvT);__cvPend='';callBusy=false;renderCallMicIcon();if(recognition){try{recognition.abort();}catch(_){}recognition=null;}if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeechKeepAlive();callOverlay.classList.remove('open');callOverlay.classList.remove('chat-open');callChunks=[];}
+function stopCall(){callActive=false;callMuted=false;__cvHideSrc();__cvMicClose();__cvStop();clearTimeout(__cvT);__cvPend='';callBusy=false;renderCallMicIcon();if(recognition){try{recognition.abort();}catch(_){}recognition=null;}if('speechSynthesis' in window)window.speechSynthesis.cancel();stopSpeechKeepAlive();callOverlay.classList.remove('open');callOverlay.classList.remove('chat-open');callChunks=[];try{stopAITyping();}catch(_){}try{updateActionButton();}catch(_){}}
 callAttachBtn.addEventListener('click',(e)=>{e.stopPropagation();callAttachMenu.classList.remove('open');attachBtn.click();});
 document.addEventListener('click',(e)=>{if(!callAttachMenu.contains(e.target)&&e.target!==callAttachBtn)callAttachMenu.classList.remove('open');});
 document.getElementById('callAttachFileOption').addEventListener('click',()=>{callAttachMenu.classList.remove('open');callFileInput.click();});
