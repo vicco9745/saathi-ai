@@ -55,11 +55,56 @@ def fetch_webpage(url):
     return data.strip()
 
 
+import os
+import json
+
+
+def _tavily_search(query, limit=5):
+    key = os.environ.get("TAVILY_API_KEY")
+    if not key:
+        return []
+    try:
+        body = json.dumps({
+            "query": query,
+            "max_results": limit,
+            "search_depth": "basic",
+            "include_raw_content": False,
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            "https://api.tavily.com/search",
+            data=body,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + key,
+            },
+        )
+        resp = urllib.request.urlopen(req, timeout=12)
+        data = json.loads(resp.read().decode("utf-8", "ignore"))
+        out = []
+        for x in data.get("results", []):
+            text = x.get("content", "") or ""
+            out.append({
+                "title": x.get("title", ""),
+                "description": text[:300],
+                "url": x.get("url", ""),
+                "content": text,
+            })
+        print("[tavily] %r -> %d results" % (query, len(out)))
+        return out
+    except Exception as e:
+        print("[tavily] error: %r" % (e,))
+        return []
+
+
 def search_web(query, limit=5):
     query = query.strip()
 
     if not query:
         return []
+
+    _t = _tavily_search(query, limit)
+    if _t:
+        return _t
 
     params = urllib.parse.urlencode({
         "q": query,
