@@ -542,6 +542,13 @@ def get_response(user_text, history=None, lang_pref=None):
             if any(k in _q for k in _FRESH) or any(k in _q for k in _CHK) or _story_real(_q):
                 from ichat_ai.web_search import search_web
                 _res = _story_search(original_text) if _story_real(_q) else search_web(original_text, limit=5)
+                if _story_real(_q):
+                    try:
+                        _sj = _story_subject(original_text)
+                        _more = search_web(_sj + (' पत्नी मृत्यु कारण घटना विस्तार' if any('\u0900' <= _ch <= '\u097F' for _ch in _sj) else ' wife death cause incident full story'), limit=3)
+                        _res = (_res or []) + (_more or [])
+                    except Exception as _me:
+                        print(f"[story-more] skipped: {_me}")
                 if any(k in _q for k in _CHK):
                     try:
                         _res = (_res or []) + (search_web(original_text + " reviews complaints scam fraud", limit=5) or [])
@@ -578,7 +585,7 @@ def get_response(user_text, history=None, lang_pref=None):
                 if _lines:
                     _ai_input = ("Question: " + original_text + "\n\nLatest web search results (use these only as facts to learn from and never copy their wording; they are newer than your training data). If the question is about a story, incident or case, explain it fully and in order: what happened, who was involved, what the trick or fraud was, and where it stands now. Say clearly which parts the results confirm and which are unverified or only rumour. Do not invent details:\n\n" + "\n\n".join(_lines))
                     if _story_real(_q):
-                        _ai_input += "\n\nIMPORTANT: The user wants the REAL story or biography (not a made-up one). Tell it as a flowing narrative in the user's own language, using ONLY facts that appear in the search results above. Do not add any detail, date, number, quote or event that is not in the results. If something is not in the results, leave it out. Do not invent anything. Include the cause and turning point: what triggered the main person's decision (for example a loss, injury or injustice), what they resolved to do and why, then the struggle, the result and the legacy. If the results mention this cause, never skip it."
+                        _ai_input += "\n\nIMPORTANT: The user wants the REAL story or biography (not a made-up one). Tell it as a flowing narrative in the user's own language, using ONLY facts that appear in the search results above. Do not add any detail, date, number, quote or event that is not in the results. If something is not in the results, leave it out. Do not invent anything. Include the cause and turning point: what triggered the main person's decision (for example a loss, injury or injustice), what they resolved to do and why, then the struggle, the result and the legacy. If the results mention this cause, never skip it. Tell the COMPLETE story in detail and in order: early life, family, the cause or turning point, the struggle step by step, the result, and the legacy. Do not summarise or cut it short. Write in pure language of the user with no English words mixed into Hindi. End with one short line saying you can search in even more detail if they want."
                     print(f"[web-first] {len(_lines)} results ai ko diye")
         except Exception as _e:
             print(f"[web-first] failed: {type(_e).__name__}: {_e}")
