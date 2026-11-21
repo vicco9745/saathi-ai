@@ -59,10 +59,49 @@ import os
 import json
 
 
+import time
+
+_CACHE_FILE = "/tmp/tavily_cache.json"
+_CACHE_TTL = 7 * 24 * 3600
+
+
+def _cache_get(key):
+    try:
+        with open(_CACHE_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+        item = data.get(key)
+        if item and time.time() - item["t"] < _CACHE_TTL:
+            return item["r"]
+    except Exception:
+        pass
+    return None
+
+
+def _cache_set(key, results):
+    try:
+        try:
+            with open(_CACHE_FILE, encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            data = {}
+        now = time.time()
+        data = {k: v for k, v in data.items() if now - v["t"] < _CACHE_TTL}
+        data[key] = {"t": now, "r": results}
+        with open(_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+    except Exception:
+        pass
+
+
 def _tavily_search(query, limit=5):
     key = os.environ.get("TAVILY_API_KEY")
     if not key:
         return []
+    _ck = "%s|%d" % (query.strip().lower(), limit)
+    _hit = _cache_get(_ck)
+    if _hit:
+        print("[tavily] cache hit %r -> %d results" % (query, len(_hit)))
+        return _hit
     try:
         body = json.dumps({
             "query": query,
@@ -90,6 +129,8 @@ def _tavily_search(query, limit=5):
                 "content": text,
             })
         print("[tavily] %r -> %d results" % (query, len(out)))
+        if out:
+            _cache_set(_ck, out)
         return out
     except Exception as e:
         print("[tavily] error: %r" % (e,))
