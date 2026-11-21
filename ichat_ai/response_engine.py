@@ -316,6 +316,32 @@ def _story_query(text):
         return text
     return subj + " biography history life story"
 
+def _story_subject(text):
+    import re as _re
+    t = _re.sub(r"[\u0964\u0965]", " ", text or "")
+    t = _re.sub(r"[^\w\s\u0900-\u097F]", " ", t)
+    words = [w for w in t.split() if w.lower() not in _STORY_STOP]
+    return " ".join(words).strip() or (text or "").strip()
+
+def _story_search(text, limit=5):
+    from ichat_ai.web_search import search_web
+    subj = _story_subject(text)
+    deva = any("\u0900" <= ch <= "\u097F" for ch in subj)
+    if deva:
+        cands = [subj + " जीवनी इतिहास", subj + " जीवनी", subj]
+    else:
+        cands = [subj + " biography history life story", subj + " biography", subj]
+    for q in cands:
+        try:
+            r = search_web(q, limit=limit)
+        except Exception as e:
+            print(f"[story-search] crashed {type(e).__name__}: {e}")
+            r = None
+        print(f"[story-search] {q!r} -> {len(r or [])} results")
+        if r:
+            return r
+    return []
+
 def get_response(user_text, history=None, lang_pref=None):
     from ichat_ai.memory.memory import remember, recall
 
@@ -515,7 +541,7 @@ def get_response(user_text, history=None, lang_pref=None):
             _CHK = ("legit", "genuine", "safe", "trusted", "trustworthy", "review", "rating", "complaint", "real or fake", "fake or real", "sahi hai", "bharosa", "bharosemand", "kharab", "worth", "use karne", ".com", ".in", "http", "भरोसा", "भरोसेमंद", "सही है", "सुरक्षित", "रेटिंग", "शिकायत", "असली", "नकली")
             if any(k in _q for k in _FRESH) or any(k in _q for k in _CHK) or _story_real(_q):
                 from ichat_ai.web_search import search_web
-                _res = search_web((_story_query(original_text) if _story_real(_q) else original_text), limit=5)
+                _res = _story_search(original_text) if _story_real(_q) else search_web(original_text, limit=5)
                 if any(k in _q for k in _CHK):
                     try:
                         _res = (_res or []) + (search_web(original_text + " reviews complaints scam fraud", limit=5) or [])
