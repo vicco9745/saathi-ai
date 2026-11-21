@@ -551,7 +551,7 @@ def get_response(user_text, history=None, lang_pref=None):
                 for _i, _r in enumerate(_res or [], 1):
                     _t = (_r.get("title") or "").strip()
                     _d = (_r.get("description") or "").strip()
-                    _c = (_r.get("content") or "").strip()[:250]
+                    _c = (_r.get("content") or "").strip()[:(800 if _story_real(_q) else 250)]
                     _lines.append(f"{_i}. {_t}\n{_d}\n{_c}")
                     if _r.get("url") and _t and len(_web_src) < 8:
                         _web_src.append({"title": _t, "url": _r["url"]})
@@ -578,7 +578,7 @@ def get_response(user_text, history=None, lang_pref=None):
                 if _lines:
                     _ai_input = ("Question: " + original_text + "\n\nLatest web search results (use these only as facts to learn from and never copy their wording; they are newer than your training data). If the question is about a story, incident or case, explain it fully and in order: what happened, who was involved, what the trick or fraud was, and where it stands now. Say clearly which parts the results confirm and which are unverified or only rumour. Do not invent details:\n\n" + "\n\n".join(_lines))
                     if _story_real(_q):
-                        _ai_input += "\n\nIMPORTANT: The user wants the REAL story or biography (not a made-up one). Tell it as a flowing narrative in the user's own language, using ONLY facts that appear in the search results above. Do not add any detail, date, number, quote or event that is not in the results. If something is not in the results, leave it out. Do not invent anything."
+                        _ai_input += "\n\nIMPORTANT: The user wants the REAL story or biography (not a made-up one). Tell it as a flowing narrative in the user's own language, using ONLY facts that appear in the search results above. Do not add any detail, date, number, quote or event that is not in the results. If something is not in the results, leave it out. Do not invent anything. Include the cause and turning point: what triggered the main person's decision (for example a loss, injury or injustice), what they resolved to do and why, then the struggle, the result and the legacy. If the results mention this cause, never skip it."
                     print(f"[web-first] {len(_lines)} results ai ko diye")
         except Exception as _e:
             print(f"[web-first] failed: {type(_e).__name__}: {_e}")
