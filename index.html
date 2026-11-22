@@ -4682,7 +4682,7 @@ if(bars){for(var i=0;i<N;i++){var b=document.createElement('b');var env=0.32+0.6
 var cancel=$('callCancelBtn');
 /* bottom mic: keep the plain mic icon even when muted (colour shows state) */
 var di=$('callDictateIcon'),MICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>';
-function fixMic(){if(di&&di.innerHTML.indexOf('x1="2"')>-1)di.innerHTML=MICON;}
+function fixMic(){/*fixmic69*/}
 if(di&&window.MutationObserver){new MutationObserver(fixMic).observe(di,{childList:true});}
 fixMic();
 /* toast */
