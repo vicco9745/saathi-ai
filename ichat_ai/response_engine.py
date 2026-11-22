@@ -300,9 +300,20 @@ def _is_news_request(msg_lower):
 _STORY_KEYS = ("kahani", "kahaani", "कहानी", "story", "jivani", "jeevani", "जीवनी", "biography", "itihas", "इतिहास", "history of", "life of", "ke bare", "ke baare", "के बारे", "kaun the", "kaun tha", "kaun thi", "कौन थे", "कौन था", "कौन थी")
 _STORY_FICTION = ("nai kahani", "nayi kahani", "naya kahani", "नई कहानी", "नयी कहानी", "काल्पनिक", "kalpnik", "fictional", "imagine", "make up", "ek kahani banao", "ek kahani bana", "एक कहानी बना", "ek kahani likho", "एक कहानी लिख", "write a story", "create a story", "bachchon ki kahani", "bacchon ki kahani", "बच्चों की कहानी")
 
+_STORY_FILLER = ("अच्छी", "अच्छा", "मज़ेदार", "मजेदार", "छोटी", "छोटा", "नई", "नयी", "नया", "सुंदर", "बढ़िया", "बढिया", "कोई", "कुछ", "achhi", "achi", "acchi", "achha", "accha", "majedar", "choti", "chhoti", "nayi", "nai", "naya", "koi", "kuch", "good", "nice", "funny", "short", "new", "a", "an", "some", "one", "please", "plz", "pls", "ab", "फिर", "से", "और", "aur", "fir", "se", "bhi", "भी", "hai", "है", "kar", "कर")
+
+def _story_has_subject(q):
+    import re as _re
+    t = _re.sub(r"[\u0964\u0965]", " ", q or "")
+    t = _re.sub(r"[^\w\s\u0900-\u097F]", " ", t)
+    rest = [w for w in t.split() if w.lower() not in _STORY_STOP and w.lower() not in _STORY_FILLER]
+    return len(rest) > 0
+
 def _story_real(q):
     s = (q or "").lower()
-    return any(k in s for k in _STORY_KEYS) and not any(k in s for k in _STORY_FICTION)
+    if not (any(k in s for k in _STORY_KEYS) and not any(k in s for k in _STORY_FICTION)):
+        return False
+    return _story_has_subject(s)
 
 _STORY_STOP = ("kahani", "kahaani", "कहानी", "suna", "sunao", "sunaao", "सुनाओ", "सुना", "सुनाइए", "दो", "do", "batao", "bataiye", "बताओ", "बताइए", "बता", "poori", "puri", "पूरी", "pura", "पूरा", "jivani", "jeevani", "जीवनी", "ki", "ka", "ke", "की", "का", "के", "ek", "एक", "mujhe", "मुझे", "please", "story", "tell", "me", "about", "the", "bare", "baare", "mein", "में", "बारे", "kaun", "tha", "thi", "थे", "था", "थी")
 
