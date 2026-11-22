@@ -3904,7 +3904,7 @@ function __cvSend(){
   callBusy=true;try{if(recognition)recognition.abort();}catch(_){}
   __cvHideSrc();var fresh={role:'ai',text:'',typing:true};chat.messages.push(fresh);saveChats();renderMessages();
   if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();
-  fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':KEY},body:JSON.stringify({message:q,model:currentModel,memory:(addMemoryOn?memoryNotes:[]),learning:getSmartLearningContext(),allow_web_search:(addWebSearchOn||__cvWantSearch(q)),think:addThinkOn})})
+  fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':KEY},body:JSON.stringify({message:q,model:currentModel,memory:(addMemoryOn?memoryNotes:[]),learning:getSmartLearningContext(),allow_web_search:(addWebSearchOn||__cvWantSearch(q)),/*langcall58*/lang_pref:(function(){try{var l=String(detectSpeechLang(q)||'').split('-')[0].toLowerCase();return l||null;}catch(_){return null;}})(),think:addThinkOn})})
   .then(async function(res){var data=await res.json();if(!res.ok)throw new Error(data.detail||data.error||'API error');return data;})
   .then(function(data){
     fresh.typing=false;fresh.text=data.reply||'Saathi se jawab nahi mila.';if(Array.isArray(data.sources)&&data.sources.length>0)fresh.sources=data.sources.slice(0,10);
