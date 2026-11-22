@@ -302,6 +302,7 @@ _STORY_FICTION = ("nai kahani", "nayi kahani", "naya kahani", "नई कहा�
 
 _STORY_FILLER = ("अच्छी", "अच्छा", "मज़ेदार", "मजेदार", "छोटी", "छोटा", "नई", "नयी", "नया", "सुंदर", "बढ़िया", "बढिया", "कोई", "कुछ", "achhi", "achi", "acchi", "achha", "accha", "majedar", "choti", "chhoti", "nayi", "nai", "naya", "koi", "kuch", "good", "nice", "funny", "short", "new", "a", "an", "some", "one", "please", "plz", "pls", "ab", "फिर", "से", "और", "aur", "fir", "se", "bhi", "भी", "hai", "है", "kar", "कर", "ना", "सी", "सा", "जी", "तो", "ज़रा", "जरा", "ही", "सुनाना", "सुनाने", "सुनाओगे", "सुनाएँ", "सुनाएं", "सुनाइये", "सुनादो", "सुनादे", "सुनाईये", "सुनाओना", "सुनिए", "सुनवाओ", "दीजिए", "दीजिये", "दे", "देना", "लगे", "चाहिए", "सकते", "सकता", "सकती", "हो", "na", "si", "ji", "to", "zara", "tell", "give", "me", "can", "you", "sunana", "bata", "dena", "de", "dijiye")
 _STORY_FILLER = _STORY_FILLER + ("hindi", "english", "hinglish", "हिंदी", "हिन्दी", "अंग्रेज़ी", "अंग्रेजी", "bnao", "banao", "bana", "banakar", "bna", "likho", "likh", "dedo", "बनाओ", "बना", "बनाकर", "बनादो", "लिखो", "लिख", "लिखकर")
+_STORY_FILLER = _STORY_FILLER + ("vah", "vo", "wo", "woh", "wah", "yah", "yeh", "ye", "vahi", "wahi", "वह", "वो", "वही", "यह", "ये", "यही", "kisi", "किसी", "sunao", "suna", "bhi", "भी", "mein", "में", "ek", "एक")
 
 def _story_has_subject(q):
     import re as _re
