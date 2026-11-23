@@ -355,6 +355,15 @@ def _story_search(text, limit=5):
             return r
     return []
 
+
+_FEEL_WORDS = ("udaas", "dukhi", "dukh ho", "dukh hai", "rona", "ro raha", "ro rahi", "pareshan", "akela", "akeli", "gussa", "khush", "thaka", "thaki", "haha", "hehe", "lol", "sad", "lonely", "upset", "angry", "happy", "tired", "depressed", "उदास", "दुखी", "दुख", "रो रहा", "रो रही", "परेशान", "अकेला", "अकेली", "गुस्सा", "खुश", "थक", "हाहा")
+_FACT_WORDS = ("news", "khabar", "price", "rate", "score", "weather", "mausam", "scam", "fraud", "legit", "genuine", ".com", "search", "dhundho", "khojo", "who is", "kaun hai", "खबर", "मौसम", "दाम", "भाव", "स्कोर", "स्कैम", "ठगी", "ढूँढो", "ढूंढो", "खोजो")
+
+def _is_feel_chat(q):
+    q = q.lower()
+    return any(w in q for w in _FEEL_WORDS) and not any(w in q for w in _FACT_WORDS)
+
+
 def get_response(user_text, history=None, lang_pref=None):
     from ichat_ai.memory.memory import remember, recall
 
@@ -552,7 +561,7 @@ def get_response(user_text, history=None, lang_pref=None):
             _q = original_text.lower()
             _FRESH = ("aaj", "abhi", "taaza", "latest", "current", "today", "right now", "price", "rate", "score", "weather", "mausam", "news", "khabar", "result", "who is", "kaun hai", "kaun hain", "kitna", "kitne", "live", "2025", "2026", "khojo", "dhundho", "dhoondo", "find me", "search for", "scam", "fraud", "afwah", "rumour", "paise kamane", "earn money", "ke bare mein", "ढूँढो", "ढूंढो", "खोजो", "अफवाह", "अफ़वाह", "स्कैम", "ठगी", "पैसे कमाने", "के बारे में", "आज", "अभी", "ताज़ा", "ताजा", "मौसम", "दाम", "भाव", "स्कोर", "खबर", "कौन है", "कौन हैं", "कितना", "कितने", "नतीजा", "रिज़ल्ट", "mamla", "kya hua", "dhokha", "viral", "instagram", "मामला", "क्या हुआ", "धोखा", "वायरल", "इंस्टाग्राम")
             _CHK = ("legit", "genuine", "safe", "trusted", "trustworthy", "review", "rating", "complaint", "real or fake", "fake or real", "sahi hai", "bharosa", "bharosemand", "kharab", "worth", "use karne", ".com", ".in", "http", "भरोसा", "भरोसेमंद", "सही है", "सुरक्षित", "रेटिंग", "शिकायत", "असली", "नकली")
-            if any(k in _q for k in _FRESH) or any(k in _q for k in _CHK) or _story_real(_q):
+            if (not _is_feel_chat(_q) and (any(k in _q for k in _FRESH) or any(k in _q for k in _CHK))) or _story_real(_q):
                 from ichat_ai.web_search import search_web
                 _res = _story_search(original_text) if _story_real(_q) else search_web(original_text, limit=5)
                 if _story_real(_q):
