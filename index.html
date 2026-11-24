@@ -3867,7 +3867,7 @@ function listenOnce(){if(!callActive||callMuted||callBusy)return;if(window.__cvM
 function addLiveUserText(text){window.__callTalked=true;let chat=getCurrentChat();if(!chat){chat={id:genId(),title:text.length>28?text.slice(0,28)+'…':text,messages:[]};chats.unshift(chat);currentChatId=chat.id;}if(chat.messages.length===0){chat.title=text.length>28?text.slice(0,28)+'…':text;}const _last=chat.messages[chat.messages.length-1];if(_last&&_last.role==='user'&&_last.liveVoice){_last.text=(_last.text+' '+text).trim();}else{chat.messages.push({role:'user',ts:Date.now(),text:text,liveVoice:true});}saveChats();renderChatList();renderMessages();if(callOverlay.classList.contains('chat-open'))renderCallChatMessages();}
 /*callvoice*/var callBusy=false,__cvPend='',__cvT=null,__cvAudio=null,__cvTok=0;
 function __cvClean(t){return String(t||'').replace(/```[\s\S]*?```/g,' ').replace(/`([^`]*)`/g,'$1').replace(/!?\[([^\]]*)\]\([^)]*\)/g,'$1').replace(/https?:\/\/\S+/g,' ').replace(/[*#_>~|]+/g,' ').replace(/\s+/g,' ').trim();}
-function __cvSplit(t){var out=[],s=t;while(s.length>0&&out.length<16){if(s.length<=200){out.push(s);break;}var cut=-1,m,re=/[\u0964.!?]\s/g,head=s.slice(0,200);while((m=re.exec(head))!==null)cut=m.index+1;if(cut<60)cut=s.lastIndexOf(' ',200);if(cut<1)cut=200;out.push(s.slice(0,cut).trim());s=s.slice(cut).trim();}return out;}
+function __cvSplit(t){var out=[],s=t;while(s.length>0&&out.length<16){var cut=-1,m,re=/[\u0964.!?]\s/g,head=s.slice(0,200);if(out.length===0){m=re.exec(head);if(m&&m.index+1>=12&&m.index+1<s.length)cut=m.index+1;}if(cut<0){if(s.length<=200){out.push(s);break;}re.lastIndex=0;while((m=re.exec(head))!==null)cut=m.index+1;if(cut<60)cut=s.lastIndexOf(' ',200);if(cut<1)cut=200;}out.push(s.slice(0,cut).trim());s=s.slice(cut).trim();}return out;}
 function __cvStop(){__cvTok++;try{if(__cvAudio)__cvAudio.pause();}catch(_){}__cvAudio=null;window.__saathiAudio=null;window.__saathiSpeaking=false;}
 function __cvDone(tok){if(tok!==__cvTok)return;try{__cvCapHide();}catch(_){}window.__saathiSpeaking=false;__cvAudio=null;window.__saathiAudio=null;callBusy=false;if(callActive&&!callMuted)setTimeout(listenOnce,300);}
 function __cvSpeak(text){
@@ -3894,7 +3894,7 @@ function __cvSpeak(text){
   };
   play(0);
 }
-function __cvAsk(t){__cvPend=(__cvPend+' '+t).trim();clearTimeout(__cvT);__cvT=setTimeout(__cvSend,1300);}
+function __cvAsk(t){__cvPend=(__cvPend+' '+t).trim();clearTimeout(__cvT);__cvT=setTimeout(__cvSend,700);}
 function __cvSend(){
   var q=__cvPend;__cvPend='';
   if(!q||!callActive)return;
