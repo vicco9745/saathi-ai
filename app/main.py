@@ -708,7 +708,10 @@ async def tts(body: TTSRequest, key=Depends(require_api_key)):
     if not t:
         raise HTTPException(400, "text khali hai")
     try:
+        import time as _tm
+        _t0 = _tm.time()
         audio = await _tts_provider(t, body.lang)
+        print(f"[tts-time] {len(t)} chars -> {_tm.time()-_t0:.2f}s")
     except Exception as e:
         raise HTTPException(502, "tts fail: " + type(e).__name__)
     return _Resp(content=audio, media_type="audio/mpeg")

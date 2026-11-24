@@ -3893,6 +3893,7 @@ function __cvSpeak(text){
     }).catch(function(){if(i===0)fallback();else __cvDone(tok);});
   };
   play(0);
+  for(var __k=1;__k<Math.min(parts.length,3);__k++)load(__k);
 }
 function __cvAsk(t){__cvPend=(__cvPend+' '+t).trim();clearTimeout(__cvT);__cvT=setTimeout(__cvSend,300);}
 function __cvSend(){
