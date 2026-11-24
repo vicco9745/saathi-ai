@@ -578,3 +578,10 @@ try:
     SYSTEM_INSTRUCTION += INSAAN_RULES
 except Exception:
     pass
+
+try:
+    from ichat_ai.insaan import CHAT_FIRST
+    if "TOP PRIORITY: CASUAL TALK" not in SYSTEM_INSTRUCTION:
+        SYSTEM_INSTRUCTION = CHAT_FIRST + SYSTEM_INSTRUCTION
+except Exception:
+    pass
