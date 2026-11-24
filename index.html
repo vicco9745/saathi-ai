@@ -3894,7 +3894,7 @@ function __cvSpeak(text){
   };
   play(0);
 }
-function __cvAsk(t){__cvPend=(__cvPend+' '+t).trim();clearTimeout(__cvT);__cvT=setTimeout(__cvSend,700);}
+function __cvAsk(t){__cvPend=(__cvPend+' '+t).trim();clearTimeout(__cvT);__cvT=setTimeout(__cvSend,300);}
 function __cvSend(){
   var q=__cvPend;__cvPend='';
   if(!q||!callActive)return;
