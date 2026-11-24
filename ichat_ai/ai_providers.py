@@ -464,12 +464,13 @@ def _call_groq(prompt, history=None, lang_pref=None):
             "max_tokens": 3000,
             "frequency_penalty": 0.6,
             "presence_penalty": 0.3,
+            "reasoning_effort": "low",
         }
         resp = requests.post(url, headers=headers, json=payload, timeout=30)
         if resp.status_code == 429:
             print(f"[groq] HTTP 429 body: {resp.text[:300]}")
             for _fm in ("openai/gpt-oss-20b", "qwen/qwen3.8-27b"):
-                _p2 = {k: v for k, v in payload.items() if k not in ("frequency_penalty", "presence_penalty")}
+                _p2 = {k: v for k, v in payload.items() if k not in ("frequency_penalty", "presence_penalty") and (k != "reasoning_effort" or "gpt-oss" in _fm)}
                 _p2["model"] = _fm
                 try:
                     resp = requests.post(url, headers=headers, json=_p2, timeout=30)
