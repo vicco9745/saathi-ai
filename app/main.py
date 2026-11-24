@@ -615,6 +615,8 @@ def stt(body: STTRequest, key=Depends(require_api_key)):
     lg = (body.lang or "").split("-")[0].lower()
     if lg in ("hi", "en"):
         data["language"] = lg
+    if lg == "hi":
+        data["prompt"] = "यह दो दोस्तों की हिंदी बातचीत है। अरे यार, क्या हुआ? हाँ जी, अच्छा अच्छा। मन उदास है, आज दिन अच्छा गया। साथी, मुझे बताओ।"
     for model in ("whisper-large-v3-turbo", "whisper-large-v3"):
         try:
             d = dict(data)
