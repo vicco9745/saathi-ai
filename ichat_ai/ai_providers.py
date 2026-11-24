@@ -538,16 +538,19 @@ def ai_provider_answer(user_text, history=None, lang_pref=None):
     history: chat history (optional) — frontend se aayi hui.
     lang_pref: chat ki bhasha preference (jaise 'hi', 'en'). Agar set hai to usi bhasha me jawab."""
     for name, fn in _PROVIDERS:
+        _ut = user_text
+        if name != "groq" and lang_pref and str(lang_pref).strip().lower() == "hi":
+            _ut = "(Jawab sirf Hindi mein, Devanagari lipi mein do, chhota aur dost jaisa.)\n" + user_text
         try:
             if name == "groq":
                 result = fn(user_text, history=history, lang_pref=lang_pref)
             else:
-                result = fn(user_text)
+                result = fn(_ut)
         except TypeError:
             try:
-                result = fn(user_text, history=history) if name == "groq" else fn(user_text)
+                result = fn(user_text, history=history) if name == "groq" else fn(_ut)
             except TypeError:
-                result = fn(user_text)
+                result = fn(_ut)
         if result:
             print(f"[ai_providers] answered via {name}")
             return result
