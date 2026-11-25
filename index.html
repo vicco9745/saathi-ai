@@ -3581,7 +3581,7 @@ if(vis!==pt.shown){pt.shown=vis;pt.wrap.forEach(function(w){w.style.display=vis?
 if(vis&&live&&pt.wrap.length){try{pt.wrap[pt.wrap.length-1].scrollIntoView({block:'nearest',behavior:'smooth'});}catch(_){}}}
 });
 acts.style.display=c>=noteOff?'':'none';}
-function fin(){if(nb)nb.innerHTML=linkifyText(String(m.text));}
+function fin(){if(nb)nb.innerHTML=linkifyText(String(m.text));try{const _a=window.__stAct&&window.__stAct.get(m);if(_a)_a.style.display='';}catch(_){}}
 let c=(typeof m.__sc==='number'&&!m.__sdone)?m.__sc:total;
 render(c);
 if(c>=total){fin();}else{
@@ -3609,7 +3609,7 @@ if(m.role==='ai' && m.mediaType && (m.generating || m.typing)){const loaderWrap=
 if(m.role==='ai' && (m.processing==='website' || m.processing==='pdf')){const proc=document.createElement('div');proc.className='ai-processing';proc.innerHTML='<span class="ap-term">&gt;_</span><span class="ap-text">'+getProcessingMessage(m.processing, 0)+'</span><span class="ap-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>';row.appendChild(proc);messagesList.appendChild(row);const textEl = proc.querySelector('.ap-text');const type = m.processing;let msgIdx = 0;const interval = setInterval(()=>{if(!document.body.contains(textEl)){ clearInterval(interval); return; }msgIdx++;textEl.textContent = getProcessingMessage(type, msgIdx);}, 1600);window._processingIntervals = window._processingIntervals || [];window._processingIntervals.push(interval);return;}
 const attachments=m.attachments||(m.attachment?[m.attachment]:[]);
 if(m.role==='ai' && m.mediaType && attachments.length>0 && !m.generating && !m.typing){attachments.forEach(att=>{row.appendChild(buildMediaPreviewTile(att));});if(m.text){const bubble=document.createElement('div');bubble.className='bubble';bubble.innerHTML=linkifyText(m.text);row.appendChild(bubble);}messagesList.appendChild(row);return;}
-if(m.role==='ai'&&m.story&&!m.typing){__buildStoryCard2(m,row);messagesList.appendChild(row);return;}if(attachments.length>0)row.appendChild(buildAttachmentsBlock(attachments));
+if(m.role==='ai'&&m.story&&!m.typing){__buildStoryCard2(m,row);{const _ac=buildMessageActions(m,idx,chat,idx===lastAiIdx);if(typeof m.__sc==='number'&&!m.__sdone){_ac.style.display='none';window.__stAct=window.__stAct||new Map();window.__stAct.set(m,_ac);}row.appendChild(_ac);}messagesList.appendChild(row);return;}if(attachments.length>0)row.appendChild(buildAttachmentsBlock(attachments));
 if(m.text||(m.role==='ai'&&m.typing)){
 const bubble=document.createElement('div');bubble.className='bubble';
 if(m.role==='user'){bubble.classList.add('text-only');attachMessageLongPress(bubble,m);}if(m.role==='user'&&m.liveVoice)bubble.classList.add('live-voice');
