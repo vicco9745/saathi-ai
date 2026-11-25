@@ -3720,6 +3720,23 @@ try{clearTypingState();updateActionButton();}catch(_){}}
 function __bAsync(m,t){
 const done=function(d){const n=(d&&d.labels&&typeof d.labels==='object')?Object.keys(d.labels).length:0;const ui={lang:String((d&&d.lang)||'en'),cur:String((d&&d.cur)||'₹'),labels:(d&&d.labels)||{}};if(n<10)ui.err=(d&&d.err)?String(d.err):('translation incomplete ('+n+'/32)');__bFinish(m,{mode:(d&&d.intent==='show')?'all':'form',draft:{},ui:ui});};
 try{fetch(SAATHI_API_BASE+'/v1/budget-ui2',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({text:t})}).then(function(r){if(!r.ok){return {err:'server '+r.status};}return r.json();}).then(done).catch(function(e){done({err:'network: '+String(e&&e.message||e).slice(0,60)});});}catch(_){done(null);}}
+function __bAsync2(m,t){
+const EN={newBudget:'New Budget',name:'Name',nameHint:'e.g. Home budget',total:'Total budget',totalHint:'Enter amount',expTitle:'Expenses - tick and enter amount',addOwn:'Add your own expense',totalSpent:'Total spent',saving:'Savings',submit:'Submit',needName:'Enter a name',needTotal:'Enter the total budget',budget:'Budget',spent:'Spent',myBudgets:'My budgets',seeAll:'All budgets',noBudget:'No budget saved yet',createNew:'Create a new budget',notFound:'This budget was not found',report:'Budget Report',expense:'Expense',amount:'Amount',allTotalBudget:'Total budget',allTotalSpent:'Total spent',allTotalSaving:'Total savings',c0:'Food',c1:'Rent',c2:'Electricity / Bills',c3:'Travel',c4:'Medicine',c5:'Education',c6:'Entertainment',c7:'Shopping'};
+const G=[['newBudget','name','nameHint','total','totalHint','expTitle','addOwn','totalSpent','saving','submit','needName'],['needTotal','budget','spent','myBudgets','seeAll','noBudget','createNew','notFound','report','expense','amount'],['allTotalBudget','allTotalSpent','allTotalSaving','c0','c1','c2','c3','c4','c5','c6','c7']];
+const errs=[];
+function ask(prompt){return fetch(SAATHI_API_BASE+'/v1/chat',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:prompt,model:currentModel,memory:[],allow_web_search:false,think:false})}).then(function(r){if(!r.ok){throw new Error('server '+r.status);}return r.json();}).then(function(d){const o=String((d&&d.reply)||'');const i=o.indexOf('{'),k=o.lastIndexOf('}');if(i<0||k<i)throw new Error('no json: '+o.slice(0,50));return JSON.parse(o.slice(i,k+1));});}
+function sub(g){const o={};g.forEach(function(k){o[k]=EN[k];});return o;}
+let metaP=null,partsP=[];
+try{
+metaP=ask('The user wrote: '+t+'\nReturn only a JSON object like {"intent":"create","lang":"zh-CN","cur":"¥"}. lang is the BCP-47 code of the language the user wrote in. cur is the currency symbol of the main country of that language. intent is "show" if the user wants to see saved budgets or a report, otherwise "create". No other text.').catch(function(e){errs.push('meta: '+e.message);return {};});
+partsP=G.map(function(g){return ask('The user wrote: '+t+'\nTranslate the values of this JSON object into the language the user wrote in. Keep the same keys. Return only the JSON object, nothing else.\n'+JSON.stringify(sub(g))).then(function(d){const res={};g.forEach(function(k){if(d&&typeof d[k]==='string'&&d[k].trim())res[k]=d[k].trim();});if(!Object.keys(res).length)errs.push('empty reply');return res;}).catch(function(e){errs.push('tr: '+e.message);return {};});});
+}catch(e){errs.push('js: '+e.message);}
+Promise.all([metaP||Promise.resolve({})].concat(partsP)).then(function(a){
+const meta=a[0]||{};const labels={};a.slice(1).forEach(function(r){Object.assign(labels,r);});
+const n=Object.keys(labels).length;
+const ui={lang:String(meta.lang||'en'),cur:String(meta.cur||'₹'),labels:labels};
+if(n<10)ui.err=errs.length?errs.slice(0,2).join(' | ').slice(0,160):('translation incomplete ('+n+'/32)');
+__bFinish(m,{mode:String(meta.intent||'').toLowerCase().indexOf('show')===0?'all':'form',draft:{},ui:ui});});}
 function __budgetHandle(m,text){try{
 const t=String(text||'').trim();
 if(!t||t.length>200||t.indexOf('=== file:')>-1||t.indexOf('```')>-1||t.charAt(0)==='/')return false;
@@ -3737,7 +3754,7 @@ let mode=null;if(createRe.test(t))mode='form';else if(showRe.test(t))mode='all';
 if(!mode)return false;
 __bFinish(m,{mode:mode,draft:{},ui:hing?null:{lang:'en',cur:'₹'}});return true;}
 const other=__bWordRe.test(t.replace(/budget/ig,''));
-if(!ascii||other){if(/[?？؟]/.test(t)||t.length>120)return false;__bAsync(m,t);return true;}
+if(!ascii||other){if(/[?？؟]/.test(t)||t.length>120)return false;__bAsync2(m,t);return true;}
 return false;}catch(_){return false;}}
 function renderMessages(){
 if(window._processingIntervals){window._processingIntervals.forEach(i=>clearInterval(i));window._processingIntervals = [];}
