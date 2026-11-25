@@ -3529,10 +3529,15 @@ if(!document.getElementById('story-css')){const css=document.createElement('styl
 .story-meta svg{width:15px;height:15px}
 .story-title{font-size:24px;line-height:1.35;font-weight:700;color:var(--text);margin-bottom:18px}
 .st-scene{margin-bottom:22px}
-.st-pic{width:100%;aspect-ratio:16/10;background:var(--page-bg);border:1px dashed var(--border);border-radius:16px;margin-bottom:12px}
+.st-pic{width:100%;aspect-ratio:7/3;background:var(--st-bg,#ddd9fb);border-radius:18px;margin-bottom:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--st-fg,#5b45c9);padding:12px;text-align:center}
+.st-pic svg{width:44px;height:44px;stroke-width:1.6}
+.st-cap{font-size:15px;font-weight:500}
+[data-theme="dark"] .story-card{--st-bg:#2b2850;--st-fg:#b9aeff}
+.st-div{display:flex;align-items:center;gap:12px;color:var(--text-muted);font-size:14px;margin:4px 0 16px}
+.st-div:before,.st-div:after{content:"";flex:1;height:1px;background:var(--border)}
 .st-scene p{font-size:17px;line-height:1.8;color:var(--text)}
-.story-actions{display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:16px}
-.story-btn{display:inline-flex;align-items:center;gap:8px;background:var(--panel-bg);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 16px;font-size:15px;font-family:inherit;cursor:pointer}
+.story-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--border);padding-top:16px}
+.story-btn{display:inline-flex;justify-content:center;align-items:center;gap:8px;background:var(--panel-bg);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 16px;font-size:15px;font-family:inherit;cursor:pointer}
 .story-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 `;document.head.appendChild(css);}
 const full=(st.title?st.title+'\n\n':'')+sc.map(x=>x.text).join('\n\n');
@@ -3540,9 +3545,9 @@ const mins=st.minutes||Math.max(1,Math.round(full.length/900));
 const el=document.createElement('div');el.className='story-card';
 el.innerHTML=`<div class="story-meta"><span class="story-tag"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>कहानी</span><span class="story-time"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${mins} मिनट पढ़ने में</span></div>
 <div class="story-title">${esc(st.title)}</div>
-${sc.map(x=>`<div class="st-scene"><div class="st-pic"></div><p>${esc(x.text)}</p></div>`).join('')}
+${sc.map((x,i)=>`${i?'<div class="st-div"><span>दृश्य '+(i+1)+'</span></div>':''}<div class="st-scene"><div class="st-pic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/></svg><span class="st-cap">दृश्य ${i+1}${x.title?': '+esc(x.title):''}</span></div><p>${esc(x.text)}</p></div>`).join('')}
 <div class="story-actions">
-<button class="story-btn primary st-listen"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>सुनो</button>
+<button class="story-btn st-listen"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg>सुनो</button>
 <button class="story-btn st-again"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>फिर से</button>
 <button class="story-btn st-copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>कॉपी</button>
 <button class="story-btn st-share"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>शेयर</button>

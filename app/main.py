@@ -212,7 +212,7 @@ _STORY_VERB = _re_story.compile(r"(suna|bana|likh|bata|de do|tell|write|narrate|
 _STORY_SYSTEM = (
     "Tum kahani likhne wale ho. Sirf ek JSON do, aur kuch nahi, koi backtick nahi.\n"
     "Agar maang kisi asli, aitihasik ya jeevit insaan ki zindagi ya sachchi ghatna ke baare mein hai, to sirf: {\"real\": true}\n"
-    "Warna: {\"real\": false, \"title\": \"...\", \"scenes\": [\"...\", \"...\", \"...\"]}\n"
+    "Warna: {\"real\": false, \"title\": \"...\", \"scenes\": [{\"title\": \"2-4 shabd ka chhota drishya naam\", \"text\": \"...\"}, {\"title\": \"...\", \"text\": \"...\"}, {\"title\": \"...\", \"text\": \"...\"}]}\n"
     "Niyam: exactly 3 scenes, har scene 2 se 4 chhote vakya. Bhasha wahi jo user ne maangi; "
     "agar nahi maangi to user ke sandesh ki bhasha (Hindi ya Hinglish ho to Devanagari Hindi). "
     "Sirf kahani likho: koi film, saal, 'logon ne kaha', lekhak ya sachchi jaankari mat jodo. "
@@ -233,10 +233,10 @@ def _story_card(msg):
         if d.get("real"):
             return None
         title = str(d.get("title", "")).strip()
-        sc = [str(x).strip() for x in d.get("scenes", []) if str(x).strip()]
+        sc = [x for x in d.get("scenes", []) if (x.get("text") if isinstance(x, dict) else x)]
         if not title or len(sc) < 2:
             return None
-        return {"title": title, "scenes": [{"text": x} for x in sc[:6]]}
+        return {"title": title, "scenes": [({"title": str(x.get("title", "")).strip(), "text": str(x.get("text", "")).strip()} if isinstance(x, dict) else {"text": str(x).strip()}) for x in sc[:6]]}
     except Exception:
         return None
 
