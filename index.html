@@ -3684,7 +3684,7 @@ el.innerHTML='<div class="bd-head"><span class="bd-plus">'+__bI.plus+'</span><sp
 +d.items.map(function(it,i){return '<div class="bd-row"><label class="bd-chk"><input type="checkbox" data-i="'+i+'"'+(it.on?' checked':'')+'><span>'+__bEsc(it.n)+'</span></label><input class="bd-in bd-amt" type="number" inputmode="decimal" data-a="'+i+'" placeholder="'+__bEsc(u.cur)+'" value="'+__bEsc(it.amt||'')+'"'+(it.on?'':' disabled')+'></div>';}).join('')
 +'<div class="bd-add"><input class="bd-in" id="bc" placeholder="'+__bEsc(L.addOwn)+'"><button class="bd-btn" id="ba">+</button></div>'
 +'<div class="bd-sum"><span>'+__bEsc(L.totalSpent)+'</span><b id="bs"></b></div><div class="bd-sum"><span>'+__bEsc(L.saving)+'</span><b id="bv"></b></div>'
-+'<div class="bd-err" id="be"></div><button class="bd-btn primary" id="bsub">'+__bI.save+__bEsc(L.submit)+'</button>';
++(bd.ui&&bd.ui.err?'<div class="bd-err">Translation: '+__bEsc(bd.ui.err)+'</div>':'')+'<div class="bd-err" id="be"></div><button class="bd-btn primary" id="bsub">'+__bI.save+__bEsc(L.submit)+'</button>';
 function calc(){const tot=__bNum(d.total);let sp=0;d.items.forEach(function(it){if(it.on)sp+=__bNum(it.amt);});el.querySelector('#bs').textContent=__bFmt(sp,u);const sv=tot-sp;const v=el.querySelector('#bv');v.textContent=__bSv(sv,u);v.className=sv<0?'bd-neg':'';}
 el.querySelector('#bn').oninput=function(e){d.name=e.target.value;};
 el.querySelector('#bt').oninput=function(e){d.total=e.target.value;calc();};
@@ -3718,8 +3718,8 @@ try{const c=getCurrentChat();if(c&&c.title==='New chat'){c.title=__bU(b.ui).L.bu
 try{saveChats();renderMessages();}catch(_){}
 try{clearTypingState();updateActionButton();}catch(_){}}
 function __bAsync(m,t){
-const done=function(d){const ok=d&&d.labels&&typeof d.labels==='object';const ui=ok?{lang:String(d.lang||'en'),cur:String(d.cur||'₹'),labels:d.labels}:{lang:'en',cur:'₹'};__bFinish(m,{mode:(d&&d.intent==='show')?'all':'form',draft:{},ui:ui});};
-try{fetch(SAATHI_API_BASE+'/v1/budget-ui',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({text:t})}).then(function(r){return r.ok?r.json():null;}).then(done).catch(function(){done(null);});}catch(_){done(null);}}
+const done=function(d){const n=(d&&d.labels&&typeof d.labels==='object')?Object.keys(d.labels).length:0;const ui={lang:String((d&&d.lang)||'en'),cur:String((d&&d.cur)||'₹'),labels:(d&&d.labels)||{}};if(n<10)ui.err=(d&&d.err)?String(d.err):('translation incomplete ('+n+'/32)');__bFinish(m,{mode:(d&&d.intent==='show')?'all':'form',draft:{},ui:ui});};
+try{fetch(SAATHI_API_BASE+'/v1/budget-ui2',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({text:t})}).then(function(r){if(!r.ok){return {err:'server '+r.status};}return r.json();}).then(done).catch(function(e){done({err:'network: '+String(e&&e.message||e).slice(0,60)});});}catch(_){done(null);}}
 function __budgetHandle(m,text){try{
 const t=String(text||'').trim();
 if(!t||t.length>200||t.indexOf('=== file:')>-1||t.indexOf('```')>-1||t.charAt(0)==='/')return false;
