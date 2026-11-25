@@ -3608,6 +3608,7 @@ function __bK(b){return '<div class="bd-kpis"><div><span>बजट</span><b>'+__
 function __bItems(b){return (b.items||[]).map(function(it){return '<div class="bd-li"><span>'+__bEsc(it.n)+'</span><span>'+__bFmt(it.amt)+'</span></div>';}).join('');}
 function __bTot(list){return list.reduce(function(a,b){return {total:a.total+b.total,spent:a.spent+b.spent,saved:a.saved+b.saved};},{total:0,spent:0,saved:0});}
 const __bPdfIcon='<svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>';
+const __bI={plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',rupee:'<svg viewBox="0 0 24 24"><path d="M6 4h12M6 9h12M9 4c5 0 7 2 7 5s-2 5-7 5h-3l8 7"/></svg>',list:'<svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11M3.5 18l1.5 1.5L7.5 17"/></svg>',save:'<svg viewBox="0 0 24 24"><path d="M5 3h11l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/></svg>'};
 function __bCss(){if(document.getElementById('bd-css'))return;const c=document.createElement('style');c.id='bd-css';c.textContent=`
 .bd-card{background:var(--panel-bg);border:1px solid var(--border);border-radius:22px;margin:12px 0;padding:18px;white-space:normal;text-align:left;width:100%;color:var(--text)}
 .bd-card svg,.bd-pg svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
@@ -3634,6 +3635,30 @@ function __bCss(){if(document.getElementById('bd-css'))return;const c=document.c
 .bd-pg-in{max-width:640px;margin:0 auto}
 .bd-pg-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .bd-neg{color:var(--danger)}
+.bd-card,.bd-pg{--bd-p:#5b35e8;--bd-p2:#7a4cf5;--bd-soft:#ece8ff;--bd-ink:#1b1464;--bd-bd:#cfc8f3;--bd-bg:#ffffff;--bd-mut:#8a86b0}
+[data-theme="dark"] .bd-card,[data-theme="dark"] .bd-pg{--bd-soft:#2a2550;--bd-ink:#ece9ff;--bd-bd:#4a4290;--bd-bg:#1c1a33;--bd-mut:#9a96c8}
+.bd-card{background:linear-gradient(180deg,var(--bd-soft),var(--panel-bg) 55%);border-color:var(--bd-bd);box-shadow:0 6px 20px rgba(91,53,232,.10)}
+.bd-head{display:inline-flex;align-items:center;gap:12px;background:var(--bd-soft);border-radius:18px;padding:6px 18px 6px 6px;margin-bottom:16px}
+.bd-plus{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--bd-p2),var(--bd-p));color:#fff;display:flex;align-items:center;justify-content:center}
+.bd-plus svg{width:24px;height:24px;stroke-width:2.6}
+.bd-htxt{font-size:19px;font-weight:700;color:var(--bd-ink)}
+.bd-title{color:var(--bd-ink)}
+.bd-fld{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.bd-ic{width:42px;height:42px;border-radius:50%;background:var(--bd-soft);color:var(--bd-p);display:flex;align-items:center;justify-content:center;flex:none;margin-top:2px}
+.bd-ic svg{width:22px;height:22px}
+.bd-fb{flex:1;min-width:0}
+.bd-lbl{font-size:16px;font-weight:700;color:var(--bd-ink);margin:0 0 6px}
+.bd-lbl i{color:#e5484d;font-style:normal}
+.bd-in{border:1.5px solid var(--bd-bd);background:var(--bd-bg);color:var(--bd-ink);border-radius:14px;padding:12px 14px}
+.bd-in::placeholder{color:var(--bd-mut)}
+.bd-in:focus{border-color:var(--bd-p);box-shadow:0 0 0 3px rgba(91,53,232,.15)}
+.bd-chk{color:var(--bd-ink)}
+.bd-chk input{accent-color:var(--bd-p)}
+.bd-btn.primary{background:linear-gradient(135deg,var(--bd-p2),var(--bd-p));border:0;color:#fff;border-radius:16px;padding:15px;font-size:18px;font-weight:700;box-shadow:0 8px 18px rgba(91,53,232,.30)}
+.bd-btn.primary svg{width:22px;height:22px}
+.bd-kpis div{background:var(--bd-soft)}
+.bd-kpis b,.bd-sum b{color:var(--bd-ink)}
+.bd-kpis b.bd-neg,.bd-sum b.bd-neg{color:var(--danger)}
 `;document.head.appendChild(c);}
 function __budgetPdf(list){
 const tt=__bTot(list);
@@ -3658,14 +3683,14 @@ const el=document.createElement('div');el.className='bd-card';
 const bd=m.budget||{};
 function drawForm(){
 const d=bd.draft=bd.draft||{};d.items=d.items||__BCATS.map(function(n){return {n:n,on:false,amt:''};});
-el.innerHTML='<div class="bd-title">नया बजट</div>'
-+'<label class="bd-lbl">नाम</label><input class="bd-in" id="bn" placeholder="जैसे: घर का बजट" value="'+__bEsc(d.name||'')+'">'
-+'<label class="bd-lbl">कुल बजट (₹)</label><input class="bd-in" id="bt" type="number" inputmode="decimal" value="'+__bEsc(d.total||'')+'">'
-+'<label class="bd-lbl">खर्च — टिक लगाओ और रकम भरो</label>'
+el.innerHTML='<div class="bd-head"><span class="bd-plus">'+__bI.plus+'</span><span class="bd-htxt">नया बजट</span></div>'
++'<div class="bd-fld"><span class="bd-ic">'+__bI.user+'</span><div class="bd-fb"><label class="bd-lbl">नाम <i>*</i></label><input class="bd-in" id="bn" placeholder="जैसे: घर का बजट" value="'+__bEsc(d.name||'')+'"></div></div>'
++'<div class="bd-fld"><span class="bd-ic">'+__bI.rupee+'</span><div class="bd-fb"><label class="bd-lbl">कुल बजट (₹) <i>*</i></label><input class="bd-in" id="bt" type="number" inputmode="decimal" placeholder="रकम लिखो" value="'+__bEsc(d.total||'')+'"></div></div>'
++'<div class="bd-fld" style="margin-bottom:8px"><span class="bd-ic">'+__bI.list+'</span><div class="bd-fb"><label class="bd-lbl" style="margin:10px 0 0">खर्च — टिक लगाओ और रकम भरो</label></div></div>'
 +d.items.map(function(it,i){return '<div class="bd-row"><label class="bd-chk"><input type="checkbox" data-i="'+i+'"'+(it.on?' checked':'')+'><span>'+__bEsc(it.n)+'</span></label><input class="bd-in bd-amt" type="number" inputmode="decimal" data-a="'+i+'" placeholder="₹" value="'+__bEsc(it.amt||'')+'"'+(it.on?'':' disabled')+'></div>';}).join('')
 +'<div class="bd-add"><input class="bd-in" id="bc" placeholder="अपना खर्च जोड़ें"><button class="bd-btn" id="ba">+</button></div>'
 +'<div class="bd-sum"><span>कुल खर्च</span><b id="bs">₹0</b></div><div class="bd-sum"><span>बचत</span><b id="bv">₹0</b></div>'
-+'<div class="bd-err" id="be"></div><button class="bd-btn primary" id="bsub">सबमिट</button>';
++'<div class="bd-err" id="be"></div><button class="bd-btn primary" id="bsub">'+__bI.save+'सबमिट</button>';
 function calc(){const tot=__bNum(d.total);let sp=0;d.items.forEach(function(it){if(it.on)sp+=__bNum(it.amt);});el.querySelector('#bs').textContent=__bFmt(sp);const sv=tot-sp;const v=el.querySelector('#bv');v.textContent=__bSv(sv);v.className=sv<0?'bd-neg':'';}
 el.querySelector('#bn').oninput=function(e){d.name=e.target.value;};
 el.querySelector('#bt').oninput=function(e){d.total=e.target.value;calc();};
