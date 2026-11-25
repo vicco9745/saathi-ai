@@ -217,7 +217,9 @@ _STORY_SYSTEM = (
     "agar nahi maangi to user ke sandesh ki bhasha (Hindi ya Hinglish ho to Devanagari Hindi). "
     "Sirf kahani likho: koi film, saal, 'logon ne kaha', lekhak ya sachchi jaankari mat jodo. "
     "Lok-kathao ke paatra (jaise Shekhchilli, Birbal) ki seedhi saral kahani likho. "
-    "Antim scene par ruk jao: koi seekh, nichod, sawaal ya 'aur sunaun' jaisa vakya nahi."
+    "Antim scene par ruk jao: koi seekh, nichod, sawaal ya 'aur sunaun' jaisa vakya nahi. "
+    "JSON mein scenes ke bahar ek key \"note\" bhi do: usi bhasha mein 1-2 chhote vakya jo bataye ki kahani kis baare mein hai aur teen drishyon mein taiyaar hai; "
+    "koi seekh nahi, koi sawaal nahi, 'aur sunaun' jaisa kuch nahi, koi emoji nahi."
 )
 def _story_card(msg):
     t = (msg or "").strip()
@@ -236,7 +238,7 @@ def _story_card(msg):
         sc = [x for x in d.get("scenes", []) if (x.get("text") if isinstance(x, dict) else x)]
         if not title or len(sc) < 2:
             return None
-        return {"title": title, "scenes": [({"title": str(x.get("title", "")).strip(), "text": str(x.get("text", "")).strip()} if isinstance(x, dict) else {"text": str(x).strip()}) for x in sc[:6]]}
+        return {"note": str(d.get("note", "")).strip(), "title": title, "scenes": [({"title": str(x.get("title", "")).strip(), "text": str(x.get("text", "")).strip()} if isinstance(x, dict) else {"text": str(x).strip()}) for x in sc[:6]]}
     except Exception:
         return None
 
@@ -367,7 +369,7 @@ def chat(body: ChatRequest, key=Depends(require_api_key)):
     action = _detect_action(body.message)
     _st = _story_card(body.message)
     if _st:
-        return {"service": "chat", "reply": "", "story": _st, "model": "saathi", "kind": "story"}
+        return {"service": "chat", "reply": _st.get("note", ""), "story": _st, "model": "saathi", "kind": "story"}
 
     if action == "analyze":
         system = (
