@@ -286,7 +286,7 @@ _BUI_GROUPS = [
 ]
 _BUI_META = ("Return ONLY one JSON object, no markdown: {\"intent\": \"create\" or \"show\", \"lang\": \"BCP-47 code of the language of the user message, for example zh-CN, es, ar, ta\", \"cur\": \"currency symbol of the main country of that language\"}. "
              "intent is show if the user wants to see or check saved budgets, savings or a report, otherwise create.")
-_BUI_TR = ("Translate every value of the JSON object after the word strings into the language of the user message. Keep the same keys. "
+_BUI_TR = ("Translate the values of the JSON object into the language of the user message. Keep the same keys. "
            "Return ONLY the JSON object, no markdown, no explanation. Keep each value short and natural.")
 def _bui_json(out):
     import json as _j
@@ -305,13 +305,33 @@ def _budget_ui2(body: _BudgetUIReq, key=Depends(require_api_key)):
         except Exception as e:
             errs.append("meta: " + str(e)[:80])
             return {}
+    def _extract(d, g):
+        if not isinstance(d, dict):
+            return {}
+        for _ in range(3):
+            if any(k in d for k in g):
+                break
+            inner = [v for v in d.values() if isinstance(v, dict)]
+            if not inner:
+                break
+            d = inner[0]
+        res = {k: str(d.get(k, "")).strip() for k in g if str(d.get(k, "")).strip()}
+        if not res:
+            vals = [str(v).strip() for v in d.values() if isinstance(v, str) and str(v).strip()]
+            if len(vals) == len(g):
+                res = dict(zip(g, vals))
+        return res
     def part(g):
+        out = ""
         try:
-            payload = "User message: " + text + "\nstrings: " + _j.dumps({k: _BUI_EN[k] for k in g}, ensure_ascii=False)
-            d = _bui_json(_call_groq(payload, system=_BUI_TR))
-            return {k: str(d.get(k, "")).strip() for k in g if str(d.get(k, "")).strip()}
+            payload = "The user wrote: " + text + "\nTranslate the values of this JSON object into the language the user wrote in. Keep the same keys. Return only the JSON object.\n" + _j.dumps({k: _BUI_EN[k] for k in g}, ensure_ascii=False)
+            out = _call_groq(payload, system=_BUI_TR)
+            res = _extract(_bui_json(out), g)
+            if not res:
+                errs.append("empty: " + out.replace("\n", " ")[:90])
+            return res
         except Exception as e:
-            errs.append("translate: " + str(e)[:80])
+            errs.append("translate: " + str(e)[:50] + " | " + str(out).replace("\n", " ")[:60])
             return {}
     with ThreadPoolExecutor(max_workers=4) as ex:
         fm = ex.submit(meta)
