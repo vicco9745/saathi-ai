@@ -3714,7 +3714,7 @@ el.querySelector('#bp').onclick=function(){__budgetPdf(list,u);};el.querySelecto
 if(bd.mode==='form')drawForm();else if(bd.mode==='saved')drawSaved();else drawAll();
 return el;}
 function __bFinish(m,b){m.typing=false;m.processing=null;m.text='';m.budget=b;
-try{const c=getCurrentChat();if(c&&c.title==='New chat'){c.title=__bU(b.ui).L.budget;c.__autoTitle=false;}}catch(_){}
+try{const c=getCurrentChat();if(c&&c.title==='New chat'){const _L=(b.ui&&b.ui.labels&&b.ui.labels.budget)||'';const _t=String(window.__bT||'').trim();c.title=_L||(_t.length>28?_t.slice(0,28)+'…':_t)||__bU(b.ui).L.budget;c.__autoTitle=false;}}catch(_){}
 try{saveChats();renderMessages();}catch(_){}
 try{clearTypingState();updateActionButton();}catch(_){}}
 function __bAsync(m,t){
@@ -3724,7 +3724,7 @@ function __budgetHandle(m,text){try{
 const t=String(text||'').trim();
 if(!t||t.length>200||t.indexOf('=== file:')>-1||t.indexOf('```')>-1||t.charAt(0)==='/')return false;
 if(/kaise|कैसे|how |what is|क्या होता|मतलब|tips|सलाह/i.test(t))return false;
-const list=__bLoad();const low=t.toLowerCase();
+window.__bT=t;const list=__bLoad();const low=t.toLowerCase();
 for(let i=0;i<list.length;i++){const n=String(list[i].name||'').trim().toLowerCase();if(!n)continue;if(low===n||(__bWordRe.test(t)&&low.indexOf(n)>-1)){__bFinish(m,{mode:'saved',id:list[i].id,ui:list[i].ui||null});return true;}}
 if(!__bWordRe.test(t))return false;
 const ascii=!/[^\x00-\x7F]/.test(t);
