@@ -3355,7 +3355,7 @@ function __describeSite(m,prompt,html){try{fetch(SAATHI_API_BASE+'/v1/describe',
 function __chatArtifact(m,d,prompt){try{if(!d)return false;
 if(d.kind==='website'&&d.html){m.typing=false;m.processing=null;m.attachments=[{kind:'file',name:d.filename||'index.html',content:d.html,origin:'ai'}];m.text=buildGenReply('website',{caption:d.caption,html:d.html,prompt:prompt});try{saveChats();renderMessages();}catch(_){}try{__describeSite(m,prompt,d.html);}catch(_){}try{clearTypingState();updateActionButton();}catch(_){}return true;}
 if(d.kind==='pdf'&&d.pdf_base64){m.processing=null;m.attachments=[{kind:'file',name:d.filename||'generated.pdf',dataUrl:'data:application/pdf;base64,'+d.pdf_base64,origin:'ai'}];m.text=buildGenReply('pdf',{caption:d.caption,prompt:prompt});m.typing=true;try{saveChats();renderMessages();}catch(_){}return true;}
-if(d.kind==='story'&&d.story){m.typing=false;m.processing=null;m.text=String(d.reply||(d.story&&d.story.note)||'');m.story=d.story;try{saveChats();renderMessages();clearTypingState();updateActionButton();}catch(_){}return true;}if(d.kind==='image'&&d.image_url){m.mediaType='photo';m.generating=true;m.text='';try{saveChats();renderMessages();}catch(_){}__imgWait(d.image_url).then(function(u){m.generating=false;m.typing=false;m.attachments=[{kind:'photo',name:'saathi-generated-image',dataUrl:u,origin:'ai'}];m.text='';try{publishToGallery('photo',u);}catch(_){}try{saveChats();renderMessages();clearTypingState();updateActionButton();}catch(_){}}).catch(function(){m.generating=false;m.typing=false;m.mediaType=null;m.text='Image generate nahi ho payi.';try{saveChats();renderMessages();clearTypingState();updateActionButton();}catch(_){}});return true;}
+if(d.kind==='story'&&d.story){m.typing=false;m.processing=null;m.text=String(d.reply||(d.story&&d.story.note)||'');m.story=d.story;m.__sc=0;try{saveChats();renderMessages();clearTypingState();updateActionButton();}catch(_){}return true;}if(d.kind==='image'&&d.image_url){m.mediaType='photo';m.generating=true;m.text='';try{saveChats();renderMessages();}catch(_){}__imgWait(d.image_url).then(function(u){m.generating=false;m.typing=false;m.attachments=[{kind:'photo',name:'saathi-generated-image',dataUrl:u,origin:'ai'}];m.text='';try{publishToGallery('photo',u);}catch(_){}try{saveChats();renderMessages();clearTypingState();updateActionButton();}catch(_){}}).catch(function(){m.generating=false;m.typing=false;m.mediaType=null;m.text='Image generate nahi ho payi.';try{saveChats();renderMessages();clearTypingState();updateActionButton();}catch(_){}});return true;}
 }catch(_){}return false;}
 function linkifyText(text){const escaped=escapeHtml(text);const urlRegex=/(https?:\/\/[^\s<]+)/g;return escaped.replace(urlRegex,url=>'<a href="'+url+'" target="_blank" rel="noopener noreferrer" class="msg-link">'+url+'</a>');}
 
@@ -3557,6 +3557,44 @@ el.querySelector('.st-copy').onclick=()=>{try{navigator.clipboard.writeText(full
 el.querySelector('.st-share').onclick=()=>{try{if(navigator.share)navigator.share({title:st.title||'कहानी',text:full});}catch(_){}};
 return el;}
 /*storytest*/setTimeout(function(){try{if(location.hash!=='#storytest')return;const c=getCurrentChat();if(!c)return;c.messages.push({role:'ai',story:{title:'पुराने स्टेशन की घड़ी',scenes:[{text:'गाँव के छोटे स्टेशन पर एक पुरानी घड़ी लगी थी। उसकी सुइयाँ बरसों से सात बजकर दस मिनट पर रुकी थीं।'},{text:'एक दिन शहर से एक लड़की आई, नाम था अनु। उसने घड़ी को देर तक देखा, फिर सीढ़ी माँगी।'},{text:'शाम तक अनु ने ज़ंग लगे पुर्ज़े साफ़ किए और चाबी घुमाई। टिक। फिर टिक, टिक। सुइयाँ चल पड़ीं।'}]}});renderMessages();}catch(_){}},1500);
+/*story-anim*/function __buildStoryCard2(m,row){
+const el=__buildStoryCard(m);row.appendChild(el);
+const sg=function(t){try{return Array.from(new Intl.Segmenter('hi',{granularity:'grapheme'}).segment(t),function(x){return x.segment;});}catch(_){return Array.from(t);}};
+const titleEl=el.querySelector('.story-title');
+const sceneEls=Array.from(el.querySelectorAll('.st-scene'));
+const acts=el.querySelector('.story-actions');
+let nb=null;if(m.text){nb=document.createElement('div');nb.className='bubble';row.appendChild(nb);}
+const parts=[];let off=0;
+function add(node,txt,wrap){const g=sg(txt);parts.push({node:node,g:g,off:off,wrap:wrap,k:-1,shown:null});off+=g.length;}
+add(titleEl,titleEl.textContent,[]);
+sceneEls.forEach(function(sc){const p=sc.querySelector('p');const dv=sc.previousElementSibling;const w=[sc];if(dv&&dv.classList.contains('st-div'))w.unshift(dv);add(p,p.textContent,w);});
+if(nb)add(nb,String(m.text),[nb]);
+const total=off;
+const noteOff=nb?parts[parts.length-1].off:total;
+let live=false;
+function render(c){
+parts.forEach(function(pt){
+const k=Math.max(0,Math.min(pt.g.length,c-pt.off));
+if(k!==pt.k){pt.k=k;pt.node.textContent=k?pt.g.slice(0,k).join(''):'';}
+const vis=pt.wrap.length===0||c>pt.off;
+if(vis!==pt.shown){pt.shown=vis;pt.wrap.forEach(function(w){w.style.display=vis?'':'none';});
+if(vis&&live&&pt.wrap.length){try{pt.wrap[pt.wrap.length-1].scrollIntoView({block:'nearest',behavior:'smooth'});}catch(_){}}}
+});
+acts.style.display=c>=noteOff?'':'none';}
+function fin(){if(nb)nb.innerHTML=linkifyText(String(m.text));}
+let c=(typeof m.__sc==='number'&&!m.__sdone)?m.__sc:total;
+render(c);
+if(c>=total){fin();}else{
+window.__stTm=window.__stTm||new Map();
+const old=window.__stTm.get(m);if(old)clearInterval(old);
+live=true;
+const id=setInterval(function(){
+if(!el.isConnected){clearInterval(id);return;}
+c=Math.min(total,c+3);m.__sc=c;render(c);
+if(c>=total){clearInterval(id);m.__sdone=true;fin();try{saveChats();}catch(_){}}
+},28);
+window.__stTm.set(m,id);}
+return el;}
 function renderMessages(){
 if(window._processingIntervals){window._processingIntervals.forEach(i=>clearInterval(i));window._processingIntervals = [];}
 pauseAllAds();{const _c=getCurrentChat();if(!_c||!_c.messages.length)pruneAds(new Set());}messagesList.innerHTML='';
@@ -3571,7 +3609,7 @@ if(m.role==='ai' && m.mediaType && (m.generating || m.typing)){const loaderWrap=
 if(m.role==='ai' && (m.processing==='website' || m.processing==='pdf')){const proc=document.createElement('div');proc.className='ai-processing';proc.innerHTML='<span class="ap-term">&gt;_</span><span class="ap-text">'+getProcessingMessage(m.processing, 0)+'</span><span class="ap-chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></span>';row.appendChild(proc);messagesList.appendChild(row);const textEl = proc.querySelector('.ap-text');const type = m.processing;let msgIdx = 0;const interval = setInterval(()=>{if(!document.body.contains(textEl)){ clearInterval(interval); return; }msgIdx++;textEl.textContent = getProcessingMessage(type, msgIdx);}, 1600);window._processingIntervals = window._processingIntervals || [];window._processingIntervals.push(interval);return;}
 const attachments=m.attachments||(m.attachment?[m.attachment]:[]);
 if(m.role==='ai' && m.mediaType && attachments.length>0 && !m.generating && !m.typing){attachments.forEach(att=>{row.appendChild(buildMediaPreviewTile(att));});if(m.text){const bubble=document.createElement('div');bubble.className='bubble';bubble.innerHTML=linkifyText(m.text);row.appendChild(bubble);}messagesList.appendChild(row);return;}
-if(m.role==='ai'&&m.story&&!m.typing){row.appendChild(__buildStoryCard(m));if(m.text){const _sb=document.createElement('div');_sb.className='bubble';_sb.innerHTML=linkifyText(m.text);row.appendChild(_sb);}messagesList.appendChild(row);return;}if(attachments.length>0)row.appendChild(buildAttachmentsBlock(attachments));
+if(m.role==='ai'&&m.story&&!m.typing){__buildStoryCard2(m,row);messagesList.appendChild(row);return;}if(attachments.length>0)row.appendChild(buildAttachmentsBlock(attachments));
 if(m.text||(m.role==='ai'&&m.typing)){
 const bubble=document.createElement('div');bubble.className='bubble';
 if(m.role==='user'){bubble.classList.add('text-only');attachMessageLongPress(bubble,m);}if(m.role==='user'&&m.liveVoice)bubble.classList.add('live-voice');

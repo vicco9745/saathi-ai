@@ -213,12 +213,12 @@ _STORY_SYSTEM = (
     "Tum kahani likhne wale ho. Sirf ek JSON do, aur kuch nahi, koi backtick nahi.\n"
     "Agar maang kisi asli, aitihasik ya jeevit insaan ki zindagi ya sachchi ghatna ke baare mein hai, to sirf: {\"real\": true}\n"
     "Warna: {\"real\": false, \"title\": \"...\", \"scenes\": [{\"title\": \"2-4 shabd ka chhota drishya naam\", \"text\": \"...\"}, {\"title\": \"...\", \"text\": \"...\"}, {\"title\": \"...\", \"text\": \"...\"}]}\n"
-    "Niyam: exactly 3 scenes, har scene 2 se 4 chhote vakya. Bhasha wahi jo user ne maangi; "
+    "Niyam: exactly 3 scenes, har scene 4 se 6 poore vakya, rang-bhara vistaar ke saath (jagah, mahaul, baatcheet, paatron ki harkatein). Bhasha wahi jo user ne maangi; "
     "agar nahi maangi to user ke sandesh ki bhasha (Hindi ya Hinglish ho to Devanagari Hindi). "
     "Sirf kahani likho: koi film, saal, 'logon ne kaha', lekhak ya sachchi jaankari mat jodo. "
     "Lok-kathao ke paatra (jaise Shekhchilli, Birbal) ki seedhi saral kahani likho. "
     "Antim scene par ruk jao: koi seekh, nichod, sawaal ya 'aur sunaun' jaisa vakya nahi. "
-    "JSON mein scenes ke bahar ek key \"note\" bhi do: usi bhasha mein 1-2 chhote vakya jo bataye ki kahani kis baare mein hai aur teen drishyon mein taiyaar hai; "
+    "JSON mein scenes ke bahar ek key \"note\" bhi do: usi bhasha mein 4 se 5 achhe vakya jo bataye ki kahani kis baare mein hai, kaun se paatra hain, kaisa mahaul hai aur kis tarah ki kahani hai (hasya, rahasya, saahas aadi); ant ya nichod mat batao; "
     "koi seekh nahi, koi sawaal nahi, 'aur sunaun' jaisa kuch nahi, koi emoji nahi."
 )
 def _story_card(msg):
