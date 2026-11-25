@@ -3605,7 +3605,7 @@ function __bSave(a){try{localStorage.setItem(__BK,JSON.stringify(a));}catch(_){}
 function __bNum(v){const n=parseFloat(String(v==null?'':v).replace(/[^0-9.]/g,''));return isFinite(n)?n:0;}
 function __bEsc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function __bU(ui){const lang=(ui&&ui.lang)||'hi';const base=lang==='hi'?__BHI:__BEN;const L=Object.assign({},base,(ui&&ui.labels)||{});return {L:L,cur:(ui&&ui.cur)||'₹',lang:lang,loc:lang==='hi'?'hi-IN':(lang==='en'?'en-IN':lang)};}
-function __bDir(el,u){if(/^(ar|he|iw|fa|ur|ps|sd|yi|ckb)/i.test(u.lang)){el.dir='rtl';el.style.textAlign='right';}else{el.dir='ltr';el.style.textAlign='left';}}
+function __bDir(el,u){el.dir='ltr';el.style.textAlign='left';}
 function __bFmt(n,u){const x=Math.round(n);let t;try{t=x.toLocaleString(u.loc);}catch(_){t=String(x);}return u.cur+t;}
 function __bSv(n,u){return (n<0?'−':'')+__bFmt(Math.abs(n),u);}
 function __bDate(ts,u){try{return new Date(ts).toLocaleDateString(u.loc,{day:'numeric',month:'long',year:'numeric'});}catch(_){return '';}}
