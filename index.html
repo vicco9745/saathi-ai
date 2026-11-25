@@ -3518,7 +3518,7 @@ const _L={wrap:wrap,label:label,det:det};procLive.set(m,_L);procPaint(m,_L,false
 btn.addEventListener('click',()=>{pr.open=!pr.open;btn.classList.toggle('open',pr.open);det.style.display=pr.open?'block':'none';try{saveChats();}catch(_){}});
 return wrap;}
 /*story*/function __buildStoryCard(m){
-const st=m.story||{};const sc=Array.isArray(st.scenes)?st.scenes:[];
+const st=m.story||{};const sc=Array.isArray(st.scenes)?st.scenes:[];const ui=(st.ui&&typeof st.ui==='object')?st.ui:{};const L=function(k,d){return String(ui[k]||d);};
 const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
 if(!document.getElementById('story-css')){const css=document.createElement('style');css.id='story-css';css.textContent=`
 .story-card{background:var(--panel-bg);border:1px solid var(--border);border-radius:22px;margin:12px 0;padding:18px;white-space:normal;text-align:left;width:100%}
@@ -3541,18 +3541,18 @@ if(!document.getElementById('story-css')){const css=document.createElement('styl
 .story-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 `;document.head.appendChild(css);}
 const full=(st.title?st.title+'\n\n':'')+sc.map(x=>x.text).join('\n\n');
-const mins=st.minutes||Math.max(1,Math.round(full.length/900));
+const mins=st.minutes||Math.max(1,Math.round(full.length/900));const rdl=L('read','{n} मिनट पढ़ने में');const rd=rdl.indexOf('{n}')>-1?rdl.split('{n}').join(mins):mins+' '+rdl;
 const el=document.createElement('div');el.className='story-card';
-el.innerHTML=`<div class="story-meta"><span class="story-tag"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>कहानी</span><span class="story-time"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${mins} मिनट पढ़ने में</span></div>
+el.innerHTML=`<div class="story-meta"><span class="story-tag"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>${esc(L('story','कहानी'))}</span><span class="story-time"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${esc(rd)}</span></div>
 <div class="story-title">${esc(st.title)}</div>
-${sc.map((x,i)=>`${i?'<div class="st-div"><span>दृश्य '+(i+1)+'</span></div>':''}<div class="st-scene"><div class="st-pic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/></svg><span class="st-cap">दृश्य ${i+1}${x.title?': '+esc(x.title):''}</span></div><p>${esc(x.text)}</p></div>`).join('')}
+${sc.map((x,i)=>`${i?'<div class="st-div"><span>'+esc(L('scene','दृश्य'))+' '+(i+1)+'</span></div>':''}<div class="st-scene"><div class="st-pic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/></svg><span class="st-cap">${esc(L('scene','दृश्य'))} ${i+1}${x.title?': '+esc(x.title):''}</span></div><p>${esc(x.text)}</p></div>`).join('')}
 <div class="story-actions">
-<button class="story-btn st-listen"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg>सुनो</button>
-<button class="story-btn st-again"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>फिर से</button>
-<button class="story-btn st-copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>कॉपी</button>
-<button class="story-btn st-share"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>शेयर</button>
+<button class="story-btn st-listen"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg>${esc(L('listen','सुनो'))}</button>
+<button class="story-btn st-again"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>${esc(L('again','फिर से'))}</button>
+<button class="story-btn st-copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>${esc(L('copy','कॉपी'))}</button>
+<button class="story-btn st-share"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>${esc(L('share','शेयर'))}</button>
 </div>`;
-el.querySelector('.st-listen').onclick=()=>{try{if(typeof speakText==='function'){speakText(full);}else{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(full);u.lang='hi-IN';speechSynthesis.speak(u);}}catch(_){}};
+el.querySelector('.st-listen').onclick=()=>{try{if(typeof speakText==='function'){speakText(full);}else{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(full);u.lang=st.lang||'hi-IN';speechSynthesis.speak(u);}}catch(_){}};
 el.querySelector('.st-copy').onclick=()=>{try{navigator.clipboard.writeText(full);}catch(_){}};
 el.querySelector('.st-share').onclick=()=>{try{if(navigator.share)navigator.share({title:st.title||'कहानी',text:full});}catch(_){}};
 return el;}

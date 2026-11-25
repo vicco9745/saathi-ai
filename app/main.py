@@ -207,11 +207,11 @@ def _needs_lang_check(msg):
 
 
 import re as _re_story, json as _json_story
-_STORY_WORD = _re_story.compile(r"(kahani|kahaani|कहानी|story|stories)", _re_story.I)
+_STORY_WORD = _re_story.compile(r"(\bkahani|\bkahaani|कहानी|कथा|कहाणी|गोष्ट|\bstory|\bstories|\bcuento|\bhistoria|\bhistória|\bhistoire|\bconte\b|\bgeschichte|\bmärchen|\bracconto|\bcerita|\bkisah|\bhikaye|\bkathai|\bgalpo|கதை|গল্প|కథ|કથા|ਕਹਾਣੀ|物語|故事|이야기|قصة|کہانی|\bрассказ|\bистория|\bсказка)", _re_story.I)
 _STORY_VERB = _re_story.compile(r"(suna|bana|likh|bata|de do|tell|write|narrate|सुना|बना|लिख|बता)", _re_story.I)
 _STORY_SYSTEM = (
     "Tum kahani likhne wale ho. Sirf ek JSON do, aur kuch nahi, koi backtick nahi.\n"
-    "Agar maang kisi asli, aitihasik ya jeevit insaan ki zindagi ya sachchi ghatna ke baare mein hai, to sirf: {\"real\": true}\n"
+    "Agar maang kisi asli, aitihasik ya jeevit insaan ki zindagi ya sachchi ghatna ke baare mein hai, ya user asal mein kahani nahi maang raha (jaise Instagram story, news story, kahani ka matlab ya kahani ke baare mein sawaal), to sirf: {\"real\": true}\n"
     "Warna: {\"real\": false, \"title\": \"...\", \"scenes\": [{\"title\": \"2-4 shabd ka chhota drishya naam\", \"text\": \"...\"}, {\"title\": \"...\", \"text\": \"...\"}, {\"title\": \"...\", \"text\": \"...\"}]}\n"
     "Niyam: exactly 3 scenes, har scene 4 se 6 poore vakya, rang-bhara vistaar ke saath (jagah, mahaul, baatcheet, paatron ki harkatein). Bhasha wahi jo user ne maangi; "
     "agar nahi maangi to user ke sandesh ki bhasha (Hindi ya Hinglish ho to Devanagari Hindi). "
@@ -219,13 +219,16 @@ _STORY_SYSTEM = (
     "Lok-kathao ke paatra (jaise Shekhchilli, Birbal) ki seedhi saral kahani likho. "
     "Antim scene par ruk jao: koi seekh, nichod, sawaal ya 'aur sunaun' jaisa vakya nahi. "
     "JSON mein scenes ke bahar ek key \"note\" bhi do: usi bhasha mein 4 se 5 achhe vakya jo bataye ki kahani kis baare mein hai, kaun se paatra hain, kaisa mahaul hai aur kis tarah ki kahani hai (hasya, rahasya, saahas aadi); ant ya nichod mat batao; "
-    "koi seekh nahi, koi sawaal nahi, 'aur sunaun' jaisa kuch nahi, koi emoji nahi."
+    "koi seekh nahi, koi sawaal nahi, 'aur sunaun' jaisa kuch nahi, koi emoji nahi. "
+    "Do aur keys bhi do, scenes ke bahar: \"lang\" (kahani ki bhasha ka BCP-47 code, jaise hi-IN, en-US, ta-IN, bn-IN) aur \"ui\" object jisme usi bhasha mein ye chhote label hon: "
+    "\"story\" (kahani shabd), \"read\" (padhne ka samay, jaise '{n} min read', {n} jagah zaroor rakho), \"scene\" (drishya shabd), "
+    "\"listen\", \"again\", \"copy\", \"share\" (button ke naam, ek-ek shabd)."
 )
 def _story_card(msg):
     t = (msg or "").strip()
     if len(t) > 300 or "```" in t or t.startswith("/"):
         return None
-    if not (_STORY_WORD.search(t) and _STORY_VERB.search(t)):
+    if not _STORY_WORD.search(t):
         return None
     try:
         out = _call_groq(t, system=_STORY_SYSTEM).strip()
@@ -238,7 +241,7 @@ def _story_card(msg):
         sc = [x for x in d.get("scenes", []) if (x.get("text") if isinstance(x, dict) else x)]
         if not title or len(sc) < 2:
             return None
-        return {"note": str(d.get("note", "")).strip(), "title": title, "scenes": [({"title": str(x.get("title", "")).strip(), "text": str(x.get("text", "")).strip()} if isinstance(x, dict) else {"text": str(x).strip()}) for x in sc[:6]]}
+        return {"lang": str(d.get("lang", "")).strip(), "ui": (d.get("ui") if isinstance(d.get("ui"), dict) else {}), "note": str(d.get("note", "")).strip(), "title": title, "scenes": [({"title": str(x.get("title", "")).strip(), "text": str(x.get("text", "")).strip()} if isinstance(x, dict) else {"text": str(x).strip()}) for x in sc[:6]]}
     except Exception:
         return None
 
