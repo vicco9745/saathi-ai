@@ -343,6 +343,24 @@ def _budget_ui2(body: _BudgetUIReq, key=Depends(require_api_key)):
     intent = "show" if str(mt.get("intent", "")).lower().startswith("show") else "create"
     return {"intent": intent, "lang": str(mt.get("lang", "en")).strip() or "en", "cur": str(mt.get("cur", "")).strip(), "labels": labels, "err": "; ".join(errs)}
 
+class _Title2Req(BaseModel):
+    message: str
+_TITLE2_SYSTEM = (
+    "Write a chat title for the user's first message. Use the same language and script as the message. "
+    "4 to 8 words, specific and descriptive about the topic or task, not a generic label. "
+    "No quotes, no emoji, no trailing punctuation, no prefix like Title. Output only the title."
+)
+@app.post("/v1/title2")
+def _title2(body: _Title2Req, key=Depends(require_api_key)):
+    try:
+        out = _call_groq(body.message.strip()[:300], system=_TITLE2_SYSTEM).strip().splitlines()[0].strip()
+        out = out.strip('"\'“”‘’`*# ').rstrip('.।!?。 ')
+        if 2 <= len(out) <= 80:
+            return {"title": out}
+    except Exception:
+        pass
+    return {"title": ""}
+
 def _detect_action(msg: str) -> str:
     base = _detect_action_base(msg)
     if base in ("analyze", "pdf", "website", "image"):
