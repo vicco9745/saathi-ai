@@ -347,7 +347,7 @@ class _Title2Req(BaseModel):
     message: str
 _TITLE2_SYSTEM = (
     "Write a chat title for the user's first message. Use the same language and script as the message. "
-    "4 to 8 words, specific and descriptive about the topic or task, not a generic label. "
+    "About 25 characters long (between 20 and 28), 3 to 5 words, specific and descriptive about the topic or task, not a generic label. For Chinese, Japanese or Korean use 8 to 14 characters. "
     "No quotes, no emoji, no trailing punctuation, no prefix like Title. Output only the title."
 )
 @app.post("/v1/title2")
