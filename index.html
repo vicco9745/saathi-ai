@@ -3847,6 +3847,27 @@ try{saveChats();renderChatList();}catch(_){}
 function apply(x){chat.title=x;chat.__tDone=true;try{saveChats();renderChatList();}catch(_){}}
 fetch(SAATHI_API_BASE+'/v1/title2',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:t.slice(0,300)})}).then(function(r){return r.ok?r.json():null;}).then(function(d){const x=d&&d.title?String(d.title).replace(/["“”]/g,'').trim():'';apply(x&&__tSeg(x).length>=MIN?__tCut(x,MAX+3):local);}).catch(function(){apply(local);});
 }catch(_){}}
+function __autoTitle2(chat,raw){
+try{
+const t=String(raw||'').split('=== file')[0].replace(/\s+/g,' ').trim();
+if(!t)return;
+const cjk=/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(t);
+const MAX=cjk?16:25,MIN=cjk?5:14;
+const local=__tCut(t,MAX);
+chat.__titled=true;chat.__autoTitle=false;chat.title=local;
+try{saveChats();renderChatList();}catch(_){}
+function apply(x){chat.title=x;chat.__tDone=true;try{saveChats();renderChatList();}catch(_){}}
+fetch(SAATHI_API_BASE+'/v1/title2',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':SAATHI_KEY},body:JSON.stringify({message:t.slice(0,300)})}).then(function(r){return r.ok?r.json():null;}).then(function(d){const x=d&&d.title?String(d.title).replace(/["“”]/g,'').trim():'';apply(x&&__tSeg(x).length>=MIN?__tCut(x,MAX+3):local);}).catch(function(){apply(local);});
+}catch(_){}}
+function __bTitleSweep(){
+try{
+const chat=getCurrentChat();
+if(!chat||chat.__tDone||chat.title!=='New chat')return;
+const um=(chat.messages||[]).find(function(x){return x&&x.role==='user'&&typeof x.text==='string'&&x.text.trim();});
+if(!um)return;
+__autoTitle2(chat,um.text);
+}catch(_){}}
+setInterval(__bTitleSweep,1000);
 function renderMessages(){
 if(window._processingIntervals){window._processingIntervals.forEach(i=>clearInterval(i));window._processingIntervals = [];}
 pauseAllAds();{const _c=getCurrentChat();if(!_c||!_c.messages.length)pruneAds(new Set());}messagesList.innerHTML='';
