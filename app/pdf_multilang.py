@@ -1,3 +1,104 @@
+def _generate_chart_png(chart_type, title, data, entry=None, stop=None, target=None, width=7, height=4):
+    """matplotlib se chart PNG banao. Returns bytes ya None."""
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import io as _io
+        import json as _json
+
+        if isinstance(data, str):
+            try:
+                data = _json.loads(data)
+            except Exception:
+                data = []
+        if not data:
+            return None
+
+        fig, ax = plt.subplots(figsize=(width, height), dpi=120)
+        try:
+            if chart_type == "candlestick":
+                for i, c in enumerate(data):
+                    o = float(c.get('open', 0))
+                    h = float(c.get('high', 0))
+                    l = float(c.get('low', 0))
+                    cl = float(c.get('close', 0))
+                    color = '#26a69a' if cl >= o else '#ef5350'
+                    ax.plot([i, i], [l, h], color='#333', linewidth=1, zorder=1)
+                    ax.bar(i, abs(cl - o) or 0.001, bottom=min(o, cl), color=color, width=0.6, zorder=2, edgecolor=color)
+                if entry:
+                    ax.axhline(float(entry), color='blue', linestyle='--', linewidth=1.5, label='Entry ' + str(entry))
+                if stop:
+                    ax.axhline(float(stop), color='red', linestyle='--', linewidth=1.5, label='Stop ' + str(stop))
+                if target:
+                    ax.axhline(float(target), color='green', linestyle='--', linewidth=1.5, label='Target ' + str(target))
+                if entry or stop or target:
+                    ax.legend(loc='upper left', fontsize=8)
+                ax.set_xticks(range(len(data)))
+                ax.set_xticklabels([str(c.get('time', '')) for c in data], fontsize=7)
+            elif chart_type == "line":
+                xs = [d.get('x', i) for i, d in enumerate(data)]
+                ys = [float(d.get('y', d.get('value', 0))) for d in data]
+                ax.plot(xs, ys, color='#10a37f', linewidth=2, marker='o', markersize=5)
+            elif chart_type == "bar":
+                labels = [str(d.get('label', d.get('x', ''))) for d in data]
+                values = [float(d.get('value', d.get('y', 0))) for d in data]
+                ax.bar(labels, values, color='#3b82f6', width=0.6)
+            elif chart_type == "pie":
+                labels = [str(d.get('label', '')) for d in data]
+                values = [float(d.get('value', 0)) for d in data]
+                ax.pie(values, labels=labels, autopct='%1.1f%%', startangle=90)
+                ax.axis('equal')
+            else:
+                xs = list(range(len(data)))
+                ys = [float(d.get('value', 0)) for d in data]
+                ax.plot(xs, ys, color='#10a37f', linewidth=2)
+
+            if title and chart_type != "pie":
+                ax.set_title(title, fontsize=11, fontweight='bold')
+            if chart_type != "pie":
+                ax.grid(True, alpha=0.3)
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+
+            plt.tight_layout()
+            buf = _io.BytesIO()
+            plt.savefig(buf, format='png', dpi=120, bbox_inches='tight', facecolor='white')
+            plt.close(fig)
+            buf.seek(0)
+            return buf.getvalue()
+        except Exception as _e:
+            print("[chart] inner error: " + str(_e))
+            try:
+                plt.close(fig)
+            except Exception:
+                pass
+            return None
+    except Exception as _e:
+        print("[chart] matplotlib error: " + str(_e))
+        return None
+
+
+def _download_image_bytes(url, timeout=8):
+    """URL ya data-URL se image bytes laao. Returns bytes ya None."""
+    try:
+        if not url:
+            return None
+        if url.startswith('data:image'):
+            import base64 as _b64
+            _header, _data = url.split(',', 1)
+            return _b64.b64decode(_data)
+        import requests as _r
+        _resp = _r.get(url, timeout=timeout, headers={'User-Agent': 'Mozilla/5.0'})
+        if _resp.status_code == 200:
+            return _resp.content
+    except Exception as _e:
+        print("[img] error: " + str(_e))
+    return None
+
+
+
+
 def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
     """Universal PDF — text + charts + images + tables + boxes + pagebreak."""
     import re as _re
@@ -156,7 +257,29 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
     _os.makedirs(cd, exist_ok=True)
 
     def _dl(sn, bold=False):
-        if sn not in FM: sn = 'latin'
+        if sn not in FM:
+            sn = 'latin'
+
+        # Android ka local Devanagari font: no internet required
+        if sn == 'devanagari':
+            import os
+            from fontTools.ttLib import TTFont
+            from fontTools.varLib.instancer import instantiateVariableFont
+
+            source = "/system/fonts/NotoSansDevanagari-VF.ttf"
+            weight = 700 if bold else 400
+            filename = "NotoSansDevanagari-" + str(weight) + ".ttf"
+            destination = os.path.join(cd, filename)
+
+            if os.path.exists(source):
+                if not os.path.exists(destination):
+                    font = TTFont(source)
+                    instantiateVariableFont(
+                        font, {"wght": weight}, inplace=True
+                    )
+                    font.save(destination)
+                return destination
+
         u, f = FM[sn]
         if bold:
             u = u.replace('-Regular', '-Bold'); f = f.replace('-Regular', '-Bold')
@@ -182,7 +305,24 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
             pdf.add_font('MF', '', pp)
             pdf.add_font('MF', 'B', bp if bp != pp else pp)
             ff = 'MF'
-        except Exception as e: print('[pdf] fontload ' + str(e))
+        except Exception as e:
+            print('[pdf] fontload ' + str(e))
+
+    # Mixed-language fallback: Hindi + English
+    try:
+        latin_pp = _dl('latin', False)
+        latin_bp = _dl('latin', True) or latin_pp
+
+        if latin_pp:
+            pdf.add_font('LatinFallback', '', latin_pp)
+            pdf.add_font('LatinFallback', 'B', latin_bp)
+            pdf.set_fallback_fonts(
+                ['LatinFallback'],
+                exact_match=False
+            )
+            print('[pdf] Latin fallback enabled')
+    except Exception as e:
+        print('[pdf] fallback font:', e)
 
     def SF(style='', size=11, color=None):
         try: pdf.set_font(ff, style, size)
@@ -200,19 +340,19 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
             title = b[1]; break
 
     if title:
-        bh = pdf.h * 0.42
+        bh = pdf.h * 0.24
         pdf.set_fill_color(*T['header_band']); pdf.rect(0, 0, pdf.w, bh, 'F')
         pdf.set_fill_color(*T['accent']); pdf.rect(0, bh, pdf.w, 2, 'F')
         pdf.set_text_color(*T['header_text'])
         try: pdf.set_font(ff, 'B', 26)
         except Exception: pdf.set_font('Helvetica', 'B', 26)
-        pdf.set_xy(20, bh * 0.32)
+        pdf.set_xy(20, bh * 0.28)
         pdf.multi_cell(pdf.w - 40, 12, title[:70], align='C')
         pdf.set_fill_color(*T['accent'])
-        cy = bh * 0.32 + 30
+        cy = bh - 12
         for i in range(3): pdf.ellipse(pdf.w/2 - 12 + i*12, cy, 5, 5, 'F')
-        pdf.set_y(bh + 25)
-        skipped = True
+        pdf.set_y(bh + 16)
+        skipped = False
     else:
         skipped = False
 
@@ -354,6 +494,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
             SF('', 11, T['text']); pdf.multi_cell(0, 7, bd); pdf.ln(2.5)
 
     total = pdf.page_no()
+    pdf.set_auto_page_break(auto=False)
     for i in range(1, total + 1):
         pdf.page = i
         pdf.set_y(pdf.h - 15)
