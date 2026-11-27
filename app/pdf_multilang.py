@@ -368,7 +368,15 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
             ctype = bd.get('type', 'line')
             ctitle = bd.get('title', '')
             entry = bd.get('entry'); stop = bd.get('stop'); target = bd.get('target')
-            png = _generate_chart_png(ctype, ctitle, data_json, entry, stop, target)
+            png = None
+            if ctype == 'candlestick':
+                try:
+                    from app.mt5_chart import mt5_chart_png as _mt5
+                    png = _mt5(bd)
+                except Exception as _e:
+                    print('[pdf] mt5 chart ' + str(_e))
+            if not png:
+                png = _generate_chart_png(ctype, ctitle, data_json, entry, stop, target)
             if png:
                 import tempfile as _tf
                 with _tf.NamedTemporaryFile(suffix='.png', delete=False) as t:

@@ -995,6 +995,10 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
         "Report about a city, country, market, company or topic: introduction, key facts, several sections, a table of key figures, conclusion. "
         "Book or story: chapters as h2 with full flowing paragraphs. Notes or study material: headings, short points, examples. "
         "Budget, trading or profit and loss: tables with the columns the user gave, plus a summary box. Catalogue or brochure: a section per product or service with a short description table. "
+        "CANDLE CHARTS (trading): only if the user gave real candle data (time, open, high, low, close), as a list, table or CSV. Never make up candles or prices. "
+        "Write <chart type='candlestick' symbol='XAUUSD' tf='M5' title='Gold vs US-Dollar' side='sell' entry='3565.44' stop='3568.00' target='3554.92' data='[{\"time\":\"01:55\",\"open\":3562.09,\"high\":3562.67,\"low\":3558.33,\"close\":3560.05}]'/> "
+        "with symbol, tf, side (sell or buy), entry, stop and target only if the user gave them. The data attribute is in SINGLE quotes with valid JSON. "
+        "Use at most 100 candles per chart tag; for a longer period split it into several chart tags by time range, each with a short h3 before it. "
         "QUALITY: no repeated sentences, no filler, consistent headings, short paragraphs, no text that cuts off in the middle."
     )
     _ctx = _pdf_web_context(body.prompt)
