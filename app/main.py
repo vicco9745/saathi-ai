@@ -908,6 +908,8 @@ def _pdf_page_from_prompt(t):
 def _pdf_web_context(prompt):
     import os, re, datetime
     from concurrent.futures import ThreadPoolExecutor
+    if len(re.findall(r"\d", prompt or "")) > 40:
+        return ""
     key = os.environ.get("TAVILY_API_KEY") or os.environ.get("TAVILY_KEY") or ""
     if not key:
         print("PDF search: TAVILY_API_KEY not set")
@@ -999,6 +1001,9 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
         "Write <chart type='candlestick' symbol='XAUUSD' tf='M5' title='Gold vs US-Dollar' side='sell' entry='3565.44' stop='3568.00' target='3554.92' data='[{\"time\":\"01:55\",\"open\":3562.09,\"high\":3562.67,\"low\":3558.33,\"close\":3560.05}]'/> "
         "with symbol, tf, side (sell or buy), entry, stop and target only if the user gave them. The data attribute is in SINGLE quotes with valid JSON. "
         "Use at most 100 candles per chart tag; for a longer period split it into several chart tags by time range, each with a short h3 before it. "
+        "WHEN THE USER SUPPLIED DATA (candles, numbers, a table): use only that data and keep the text short: title, one summary line, the chart or table, and a small table of the given levels. "
+        "Do not add analysis, pip counts, strategy, reasons, history, code examples or any fact the user did not give, and never write the word chart or box tag in the text. "
+        "Every chart and box tag must stand on its own line, not inside a sentence. "
         "QUALITY: no repeated sentences, no filler, consistent headings, short paragraphs, no text that cuts off in the middle."
     )
     _ctx = _pdf_web_context(body.prompt)

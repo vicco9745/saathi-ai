@@ -189,6 +189,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
         def handle_data(self, data):
             if self.tag: self.txt.append(data)
 
+    html = _re.sub(r'(<<(?:CHART|IMG|BOX|TABLE)_B_\d+>>|<<PAGEBREAK_B>>)', r'<p>\1</p>', html)
     parser = _P()
     try: parser.feed(html)
     except Exception as _e: print('[pdf] parse: ' + str(_e))
