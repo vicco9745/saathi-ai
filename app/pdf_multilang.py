@@ -364,7 +364,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
             continue
 
         if bt == 'chart':
-            _np(90)
+            _np(150 if bd.get('type') == 'candlestick' else 90)
             data_json = bd.get('data', '[]')
             ctype = bd.get('type', 'line')
             ctitle = bd.get('title', '')
@@ -384,7 +384,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
                     t.write(png); tpath = t.name
                 try:
                     y = pdf.get_y()
-                    _cw = min(pdf.w - 36, max(60, (pdf.h - y - 30) * 7 / 4)); pdf.image(tpath, x=(pdf.w - _cw) / 2, y=y, w=_cw)
+                    _cw = min(pdf.w - 36, max(60, (pdf.h - y - 30) * (7 / 6.2 if ctype == 'candlestick' else 7 / 4))); pdf.image(tpath, x=(pdf.w - _cw) / 2, y=y, w=_cw)
                     pdf.ln(4)
                 except Exception as e: print('[pdf] chart embed ' + str(e))
                 finally:

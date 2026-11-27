@@ -45,7 +45,7 @@ def mt5_chart_png(a):
         mid = (lo + hi) / 2
         fmt = '{:.2f}' if mid >= 100 else ('{:.3f}' if mid >= 10 else '{:.5f}')
         last = rows[-1][4]
-        fig, ax = plt.subplots(figsize=(7, 4.6), dpi=150)
+        fig, ax = plt.subplots(figsize=(7, 6.2), dpi=150)
         fig.subplots_adjust(left=0.03, right=0.86, top=0.85, bottom=0.12)
         tiny = (hi - lo) * 0.002
         for i, (t, o, h, l, c) in enumerate(rows):
@@ -59,7 +59,7 @@ def mt5_chart_png(a):
         def hl(y, color, ls, left, tagbg, tagfg, tagec):
             ax.axhline(y, color=color, linestyle=ls, linewidth=1.1, zorder=3)
             if left:
-                ax.text(0.01, y, left, transform=tr, color=color, fontsize=8, va='bottom', ha='left', zorder=5)
+                ax.annotate(left, xy=(0.01, y), xycoords=tr, xytext=(0, 3), textcoords='offset points', color=color, fontsize=8, va='bottom', ha='left', zorder=5)
             ax.text(1.01, y, fmt.format(y), transform=tr, color=tagfg, fontsize=7.5, va='center', ha='left', zorder=6, clip_on=False,
                     bbox=dict(boxstyle='square,pad=0.25', facecolor=tagbg, edgecolor=tagec, linewidth=1))
 
