@@ -963,13 +963,13 @@ def _pdf_web_context(prompt):
 
 def _pdf_theme_from_prompt(t):
     t = (t or "").lower()
-    if any(x in t for x in ["premium", "gold", "black", "luxury", "dark theme"]):
+    if any(x in t for x in ["premium", "golden", "black", "luxury", "dark theme"]):
         return "premium"
     if any(x in t for x in ["colorful", "colourful", "rainbow", "kids", "रंगीन", "बच्चों"]):
         return "colorful"
     if any(x in t for x in ["book", "ebook", "e-book", "chapter", "novel", "किताब", "उपन्यास"]):
         return "book"
-    if any(x in t for x in ["business", "report", "stock", "market", "trading", "profit", "invoice", "budget", "financial", "dark blue", "navy", "रिपोर्ट", "बिज़नेस", "बजट", "शेयर"]):
+    if any(x in t for x in ["business", "report", "stock", "market", "trading", "candle", "xauusd", "forex", "chart", "profit", "invoice", "budget", "financial", "dark blue", "navy", "रिपोर्ट", "बिज़नेस", "बजट", "शेयर"]):
         return "business"
     return "auto"
 

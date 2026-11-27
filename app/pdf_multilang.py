@@ -189,7 +189,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
         def handle_data(self, data):
             if self.tag: self.txt.append(data)
 
-    html = _re.sub(r'(<<(?:CHART|IMG|BOX|TABLE)_B_\d+>>|<<PAGEBREAK_B>>)', r'<p>\1</p>', html)
+    html = _re.sub(r'<<((?:CHART|IMG|BOX|TABLE)_B_\d+|PAGEBREAK_B)>>', r'<p>&lt;&lt;\1&gt;&gt;</p>', html)
     parser = _P()
     try: parser.feed(html)
     except Exception as _e: print('[pdf] parse: ' + str(_e))
@@ -478,7 +478,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
             pdf.set_fill_color(*bc); pdf.rect(18, y, pdf.w - 36, 12, 'F')
             pdf.set_fill_color(*T['accent']); pdf.rect(18, y, 3, 12, 'F')
             pdf.set_xy(26, y + 3)
-            SF('B', 14, T['accent2'] if T['light'] else T['accent'])
+            SF('B', 14, T['accent2'] if T['light'] else T['bg'])
             pdf.multi_cell(pdf.w - 48, 8, bd)
             pdf.ln(4)
         elif bt == 'h3':
