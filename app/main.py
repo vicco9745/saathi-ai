@@ -881,6 +881,30 @@ def voice(body: GenericRequest, key=Depends(require_api_key)):
     record_usage(key, "voice")
     raise HTTPException(501, "Voice model/provider अभी connect नहीं है")
 
+def _pdf_page_from_prompt(t):
+    import re as _r
+    t = (t or "").lower()
+    S = {"a0": (841, 1189), "a1": (594, 841), "a2": (420, 594), "a3": (297, 420), "a4": (210, 297), "a5": (148, 210), "a6": (105, 148),
+         "letter": (215.9, 279.4), "legal": (215.9, 355.6), "tabloid": (279.4, 431.8)}
+    fmt = S["a4"]
+    cm = _r.search(r"(\d+(?:\.\d+)?)\s*(?:x|×|by)\s*(\d+(?:\.\d+)?)\s*(mm|cm|inch|in)\b", t)
+    ak = _r.search(r"\ba([0-6])\b", t)
+    if cm:
+        f = {"mm": 1.0, "cm": 10.0, "inch": 25.4, "in": 25.4}[cm.group(3)]
+        w, h = float(cm.group(1)) * f, float(cm.group(2)) * f
+        if 50 <= w <= 1500 and 50 <= h <= 1500:
+            fmt = (min(w, h), max(w, h))
+    elif ak:
+        fmt = S["a" + ak.group(1)]
+    elif _r.search(r"\btabloid\b", t):
+        fmt = S["tabloid"]
+    elif _r.search(r"us letter|\bletter (size|format|page)", t):
+        fmt = S["letter"]
+    elif _r.search(r"\blegal (size|format|page|paper)", t):
+        fmt = S["legal"]
+    orient = "L" if _r.search(r"landscape|horizontal|आड़ा|आड़े|चौड़ा", t) else "P"
+    return fmt, orient
+
 def _pdf_theme_from_prompt(t):
     t = (t or "").lower()
     if any(x in t for x in ["premium", "gold", "black", "luxury", "dark theme"]):
@@ -909,8 +933,14 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
         "Use tables wherever data is compared or listed (first row th headers, equal number of cells in every row). "
         "Put <pagebreak/> between major sections when the document is long (more than 2 pages). "
         "LENGTH: write enough real content for the number of pages the user asked for, about 300 words per page; if no length is given, 2 to 4 pages. "
-        "ACCURACY: never invent prices, market data, trading results, statistics, names or facts. "
-        "Use only data the user supplied. Where data is needed but missing, leave a clearly marked empty field such as [fill in] in the table. "
+        "ACCURACY: write well-known general facts (history, geography, how things work) correctly and in full. "
+        "Never invent live or specific numbers: prices, market data, trading results, statistics, personal names, dates of events you are unsure about. "
+        "Use only numbers the user supplied; where such a number is needed but missing, leave a clearly marked [fill in] in the table. "
+        "DOCUMENT TYPES: adapt the structure to the request. Invoice or bill: title, a table of items with quantity, rate and amount, then totals and payment details as empty [fill in] fields. "
+        "Resume or CV: the name as h1, then Summary, Experience, Education, Skills. Certificate: short formal text with [name] and [date] fields. "
+        "Report about a city, country, market, company or topic: introduction, key facts, several sections, a table of key figures, conclusion. "
+        "Book or story: chapters as h2 with full flowing paragraphs. Notes or study material: headings, short points, examples. "
+        "Budget, trading or profit and loss: tables with the columns the user gave, plus a summary box. Catalogue or brochure: a section per product or service with a short description table. "
         "QUALITY: no repeated sentences, no filler, consistent headings, short paragraphs, no text that cuts off in the middle."
     )
     html_body = _call_groq(body.prompt, system=system)
@@ -922,7 +952,8 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
 
     try:
         from app.pdf_multilang import _build_pdf_multilang
-        pdf_bytes = _build_pdf_multilang(html_body, theme=_pdf_theme_from_prompt(body.prompt))
+        _pg = _pdf_page_from_prompt(body.prompt)
+        pdf_bytes = _build_pdf_multilang(html_body, theme=_pdf_theme_from_prompt(body.prompt), page_format=_pg[0], orientation=_pg[1])
     except Exception as e:
         raise HTTPException(500, "PDF banane mein problem: " + str(e))
 

@@ -99,7 +99,7 @@ def _download_image_bytes(url, timeout=8):
 
 
 
-def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
+def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 297), orientation="P") -> bytes:
     """Universal PDF — text + charts + images + tables + boxes + pagebreak."""
     import re as _re
     import os as _os
@@ -292,7 +292,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
     pp = _dl(script, False)
     bp = _dl(script, True) or pp
 
-    pdf = _FPDF(format='A4')
+    pdf = _FPDF(orientation=orientation, format=page_format)
     pdf.set_auto_page_break(auto=True, margin=22)
     pdf.set_margins(18, 18, 18)
     pdf.add_page()
@@ -375,7 +375,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto") -> bytes:
                     t.write(png); tpath = t.name
                 try:
                     y = pdf.get_y()
-                    pdf.image(tpath, x=18, y=y, w=pdf.w - 36)
+                    _cw = min(pdf.w - 36, max(60, (pdf.h - y - 30) * 7 / 4)); pdf.image(tpath, x=(pdf.w - _cw) / 2, y=y, w=_cw)
                     pdf.ln(4)
                 except Exception as e: print('[pdf] chart embed ' + str(e))
                 finally:
