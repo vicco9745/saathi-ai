@@ -384,7 +384,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
                     t.write(png); tpath = t.name
                 try:
                     y = pdf.get_y()
-                    _cw = min(pdf.w - 36, max(60, (pdf.h - y - 30) * (7 / 6.2 if ctype == 'candlestick' else 7 / 4))); pdf.image(tpath, x=(pdf.w - _cw) / 2, y=y, w=_cw)
+                    _cw = min(pdf.w - 36, max(60, (pdf.h - y - 30) * (7 / 6.2 if ctype == 'candlestick' else 7 / 4))); pdf.image(tpath, x=(pdf.w - _cw) / 2, y=y, w=_cw); pdf.set_y(y + _cw * (6.2 / 7 if ctype == 'candlestick' else 4 / 7))
                     pdf.ln(4)
                 except Exception as e: print('[pdf] chart embed ' + str(e))
                 finally:
