@@ -905,6 +905,60 @@ def _pdf_page_from_prompt(t):
     orient = "L" if _r.search(r"landscape|horizontal|आड़ा|आड़े|चौड़ा", t) else "P"
     return fmt, orient
 
+def _pdf_web_context(prompt):
+    import os, re, datetime
+    from concurrent.futures import ThreadPoolExecutor
+    key = os.environ.get("TAVILY_API_KEY") or os.environ.get("TAVILY_KEY") or ""
+    if not key:
+        print("PDF search: TAVILY_API_KEY not set")
+        return ""
+    try:
+        q = _call_groq(prompt, system=(
+            "If writing the document the user asks for needs facts from the internet "
+            "(news, prices, markets, companies, places, people, statistics, recent events, current data), "
+            "reply with 1 to 3 short web search queries, one per line, no numbering, no explanation. "
+            "If no web facts are needed (for example a bill, resume, certificate or plain template), reply exactly NONE."
+        ))
+    except Exception:
+        return ""
+    lines = [re.sub(r"^\s*(?:[-*]|\d+[.)])\s+", "", l).strip() for l in (q or "").splitlines() if l.strip()]
+    if not lines or lines[0].upper().startswith("NONE"):
+        return ""
+    qs = [l[:200] for l in lines[:3]]
+    def one(qq):
+        try:
+            import requests
+            r = requests.post(
+                "https://api.tavily.com/search",
+                headers={"Authorization": "Bearer " + key},
+                json={"api_key": key, "query": qq, "search_depth": "advanced", "max_results": 5, "include_answer": True},
+                timeout=25,
+            )
+            if r.status_code != 200:
+                print("PDF search http", r.status_code)
+                return None
+            return r.json()
+        except Exception as e:
+            print("PDF search error", repr(e)[:120])
+            return None
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        res = list(ex.map(one, qs))
+    parts = []
+    for qq, d in zip(qs, res):
+        if not d:
+            continue
+        if d.get("answer"):
+            parts.append("SUMMARY for " + qq + ": " + str(d["answer"])[:600])
+        for it in (d.get("results") or [])[:5]:
+            parts.append("- " + str(it.get("title", ""))[:120] + " (" + str(it.get("url", "")) + "): " + str(it.get("content", ""))[:600])
+    if not parts:
+        return ""
+    return (
+        "WEB SOURCES (fetched on " + datetime.date.today().isoformat() + "; use these for current facts, numbers and dates, "
+        "name the source next to each such number, and end the document with an h2 Sources section listing the sources used):\n"
+        + "\n".join(parts)[:9000]
+    )
+
 def _pdf_theme_from_prompt(t):
     t = (t or "").lower()
     if any(x in t for x in ["premium", "gold", "black", "luxury", "dark theme"]):
@@ -935,7 +989,7 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
         "LENGTH: write enough real content for the number of pages the user asked for, about 300 words per page; if no length is given, 2 to 4 pages. "
         "ACCURACY: write well-known general facts (history, geography, how things work) correctly and in full. "
         "Never invent live or specific numbers: prices, market data, trading results, statistics, personal names, dates of events you are unsure about. "
-        "Use only numbers the user supplied; where such a number is needed but missing, leave a clearly marked [fill in] in the table. "
+        "Use only numbers the user supplied or that appear in the WEB SOURCES block of the request; where such a number is needed but in neither, leave a clearly marked [fill in] in the table. "
         "DOCUMENT TYPES: adapt the structure to the request. Invoice or bill: title, a table of items with quantity, rate and amount, then totals and payment details as empty [fill in] fields. "
         "Resume or CV: the name as h1, then Summary, Experience, Education, Skills. Certificate: short formal text with [name] and [date] fields. "
         "Report about a city, country, market, company or topic: introduction, key facts, several sections, a table of key figures, conclusion. "
@@ -943,7 +997,8 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
         "Budget, trading or profit and loss: tables with the columns the user gave, plus a summary box. Catalogue or brochure: a section per product or service with a short description table. "
         "QUALITY: no repeated sentences, no filler, consistent headings, short paragraphs, no text that cuts off in the middle."
     )
-    html_body = _call_groq(body.prompt, system=system)
+    _ctx = _pdf_web_context(body.prompt)
+    html_body = _call_groq(body.prompt + (("\n\n" + _ctx) if _ctx else ""), system=system)
     html_body = html_body.strip()
     if "```" in html_body:
         html_body = html_body.replace("```html", "").replace("```", "").strip()
