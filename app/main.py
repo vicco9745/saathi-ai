@@ -1035,6 +1035,86 @@ def _pdf_long_html(prompt, ctx, system):
         parts.append("<p>[Stopped early: time limit reached, " + str(len(parts)) + " of " + str(len(secs)) + " pages written]</p>")
     return "<html>" + "<pagebreak/>".join(parts) + "</html>"
 
+_PD_CLASSIFY = (
+    "Decide how the user wants the PDF made. Answer exactly DESIGN if they want a visually designed page: poster, flyer, brochure, menu, "
+    "invitation, certificate, greeting card, visiting card, infographic, banner, cover page, magazine or newsletter page, creative resume or CV, "
+    "price list or catalogue page, or they say design. Answer exactly DOCUMENT if they want a written document: report, essay, notes, book, "
+    "letter, bill or invoice, plain form, or anything that is mostly text and tables. Reply with one word only."
+)
+def _pdf_design_pages(prompt):
+    import re
+    from concurrent.futures import ThreadPoolExecutor
+    t = (prompt or "").strip()
+    if not t:
+        return None
+    try:
+        c = _call_groq(t, system=_PD_CLASSIFY)
+    except Exception:
+        return None
+    if not (c or "").strip().upper().startswith("DESIGN"):
+        return None
+    fmt, orient = _pdf_page_from_prompt(t)
+    w, h = round(fmt[0], 1), round(fmt[1], 1)
+    if orient == "L":
+        w, h = h, w
+    m = re.search(r"(\d{1,2})\s*[-]?\s*(?:pages?|pgs?|पन्ने|पन्नों|पन्ना|पेज|पृष्ठ)", t, re.I)
+    n = max(1, min(int(m.group(1)), 12)) if m else 1
+    base = (
+        "You are a professional graphic designer. Output ONLY the complete HTML of ONE page, starting with <!DOCTYPE html>, no markdown, no explanation. "
+        "The page is exactly one <div class=\"page\"> that is " + str(w) + "mm wide and " + str(h) + "mm tall "
+        "(width:" + str(w) + "mm;height:" + str(h) + "mm;overflow:hidden;position:relative;box-sizing:border-box); body has margin:0. "
+        "Use one inline <style> block only. No JavaScript, no external files, fonts, images or links, no <img>, no filter, backdrop-filter or blend modes. "
+        "Use font-family: sans-serif. Decorate with CSS gradients, solid shapes, borders and inline SVG. "
+        "DESIGN: a bold, modern, professional look that a person would be proud of: a strong colour palette of 3 or 4 colours, a large headline, "
+        "clear hierarchy between headline, subheading and body, generous spacing and aligned blocks. "
+        "Size text for the page: body text about 3.5mm, headline 12 to 20 percent of the page width. Nothing may overflow the page or overlap by accident. "
+        "Write all visible text in the same language as the user's request, with real useful content for the request. "
+        "Never invent prices, phone numbers, addresses, dates or names the user did not give; where needed, write [fill in]."
+    )
+    def clean(x):
+        x = (x or "").replace("```html", "").replace("```", "").strip()
+        i = x.lower().find("<!doctype")
+        if i < 0:
+            i = x.lower().find("<html")
+        if i < 0:
+            i = x.lower().find("<div")
+        if i < 0:
+            return None
+        x = x[i:]
+        x = re.sub(r"<script\b.*?</script>", "", x, flags=re.I | re.S)
+        x = re.sub(r"<link\b[^>]*>", "", x, flags=re.I)
+        x = re.sub(r"<img\b[^>]*>", "", x, flags=re.I)
+        x = re.sub(r"@import[^;]*;", "", x, flags=re.I)
+        x = re.sub(r"url\(\s*['\"]?https?:[^)]*\)", "none", x, flags=re.I)
+        if "</html>" not in x.lower():
+            x += "</div></body></html>"
+        return x if (len(x) > 250 and "<div" in x.lower()) else None
+    def gen(i, css):
+        extra = ""
+        if n > 1:
+            extra = (" This is page " + str(i + 1) + " of " + str(n) + " of the same document. Use exactly the same colour palette and fonts as the CSS of page 1 below, "
+                     "with a different layout suited to this page (for example cover, content pages, closing page).")
+            if css:
+                extra += "\nPAGE 1 CSS:\n" + css
+        for _ in range(2):
+            try:
+                x = clean(_call_groq(t + (("\n\nWrite page " + str(i + 1) + " of " + str(n) + ".") if n > 1 else ""), system=base + extra))
+                if x:
+                    return x
+            except Exception as e:
+                print("PDF design error", repr(e)[:120])
+        return None
+    p1 = gen(0, "")
+    if not p1:
+        return None
+    pages = [p1]
+    if n > 1:
+        css = "\n".join(re.findall(r"<style[^>]*>(.*?)</style>", p1, flags=re.I | re.S))[:2500]
+        with ThreadPoolExecutor(max_workers=3) as ex:
+            more = list(ex.map(lambda i: gen(i, css), range(1, n)))
+        pages += [x for x in more if x]
+    return {"pages": pages, "mm": [w, h]}
+
 def _pdf_theme_from_prompt(t):
     t = (t or "").lower()
     if any(x in t for x in ["premium", "golden", "black", "luxury", "dark theme"]):
@@ -1080,6 +1160,9 @@ def pdf(body: GenericRequest, key=Depends(require_api_key)):
         "Every chart and box tag must stand on its own line, not inside a sentence. "
         "QUALITY: no repeated sentences, no filler, consistent headings, short paragraphs, no text that cuts off in the middle."
     )
+    _dz = _pdf_design_pages(body.prompt)
+    if _dz:
+        return {"design_pages": _dz["pages"], "page_mm": _dz["mm"], "filename": "saathi.pdf", "caption": ""}
     _ctx = _pdf_web_context(body.prompt)
     html_body = _pdf_long_html(body.prompt, _ctx, system)
     html_body = html_body.strip()
