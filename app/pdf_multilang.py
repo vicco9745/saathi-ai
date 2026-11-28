@@ -369,6 +369,8 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
 
     for bt, bd in final:
         if bt == 'pagebreak':
+            if pdf.get_y() < 40:
+                continue
             pdf.add_page()
             pdf.set_fill_color(*T['bg']); pdf.rect(0, 0, pdf.w, pdf.h, 'F')
             continue
