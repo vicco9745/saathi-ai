@@ -112,6 +112,7 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
         "colorful": {"bg": (255,255,255), "text": (30,30,50), "accent": (255,87,87), "accent2": (255,152,0), "muted": (130,130,150), "header_band": (255,87,87), "header_text": (255,255,255), "light": True},
         "business": {"bg": (255,255,255), "text": (26,26,46), "accent": (30,58,138), "accent2": (59,130,246), "muted": (110,110,130), "header_band": (30,58,138), "header_text": (255,255,255), "light": True},
         "book": {"bg": (253,248,240), "text": (60,40,20), "accent": (139,69,19), "accent2": (160,82,45), "muted": (140,120,100), "header_band": (253,248,240), "header_text": (139,69,19), "light": True},
+        "guide": {"bg": (255,255,255), "text": (33,43,54), "accent": (26,54,93), "accent2": (47,111,190), "muted": (110,120,135), "header_band": (232,240,254), "header_text": (26,54,93), "light": True, "guide": True},
         "auto": {"bg": (255,255,255), "text": (26,26,46), "accent": (16,163,127), "accent2": (13,139,108), "muted": (110,110,130), "header_band": (16,163,127), "header_text": (255,255,255), "light": True},
     }
 
@@ -340,7 +341,16 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
         if b[0] in ('h1','h2') and isinstance(b[1], str):
             title = b[1]; break
 
-    if title:
+    if title and T.get('guide'):
+        pdf.set_y(28)
+        SF('B', 24, T['accent'])
+        pdf.multi_cell(0, 12, title[:90], align='C')
+        _gy = pdf.get_y() + 3
+        pdf.set_draw_color(205, 215, 230); pdf.set_line_width(0.4)
+        pdf.line(18, _gy, pdf.w - 18, _gy)
+        pdf.set_y(_gy + 8)
+        skipped = False
+    elif title:
         bh = pdf.h * 0.24
         pdf.set_fill_color(*T['header_band']); pdf.rect(0, 0, pdf.w, bh, 'F')
         pdf.set_fill_color(*T['accent']); pdf.rect(0, bh, pdf.w, 2, 'F')
@@ -461,7 +471,12 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
         skipped = True
         _np(25)
 
-        if bt == 'h1':
+        if T.get('guide') and bt in ('h1', 'h2', 'h3'):
+            if bt == 'h3':
+                pdf.ln(2); SF('B', 13, T['accent2']); pdf.multi_cell(0, 8, bd); pdf.ln(1.5)
+            else:
+                pdf.ln(4 if bt == 'h1' else 3); SF('B', 18 if bt == 'h1' else 15, T['accent']); pdf.multi_cell(0, 9, bd); pdf.ln(1.5)
+        elif bt == 'h1':
             pdf.ln(4); y = pdf.get_y()
             pdf.set_fill_color(*T['accent']); pdf.rect(18, y, 4, 11, 'F')
             pdf.set_xy(26, y); SF('B', 17, T['accent'])
@@ -506,9 +521,18 @@ def _build_pdf_multilang(html_body: str, theme: str = "auto", page_format=(210, 
     pdf.set_auto_page_break(auto=False)
     for i in range(1, total + 1):
         pdf.page = i
-        pdf.set_y(pdf.h - 15)
-        SF('', 9, T['muted'])
-        pdf.cell(0, 6, '— ' + str(i) + ' —', align='C')
+        if T.get('guide'):
+            pdf.set_draw_color(215, 220, 230); pdf.set_line_width(0.3)
+            pdf.line(18, pdf.h - 18, pdf.w - 18, pdf.h - 18)
+            pdf.set_y(pdf.h - 15)
+            SF('', 8, T['muted'])
+            _tt = str(title or '')[:70]
+            pdf.cell(pdf.w - 70, 6, _tt, align='L')
+            pdf.cell(0, 6, ('पेज ' if _re.search(r'[\u0900-\u097F]', _tt) else 'Page ') + str(i), align='R')
+        else:
+            pdf.set_y(pdf.h - 15)
+            SF('', 9, T['muted'])
+            pdf.cell(0, 6, '— ' + str(i) + ' —', align='C')
 
     out = pdf.output()
     return bytes(out) if not isinstance(out, bytes) else out

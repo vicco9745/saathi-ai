@@ -1130,8 +1130,8 @@ def _pdf_theme_from_prompt(t):
     if any(x in t for x in ["book", "ebook", "e-book", "chapter", "novel", "किताब", "उपन्यास"]):
         return "book"
     if any(x in t for x in ["business", "report", "stock", "market", "trading", "candle", "xauusd", "forex", "chart", "profit", "invoice", "budget", "financial", "dark blue", "navy", "रिपोर्ट", "बिज़नेस", "बजट", "शेयर"]):
-        return "business"
-    return "auto"
+        return "guide"
+    return "guide"
 
 @app.post("/v1/pdf")
 def pdf(body: GenericRequest, key=Depends(require_api_key)):
